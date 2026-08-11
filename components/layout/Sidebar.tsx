@@ -3,12 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LucideIcon } from 'lucide-react'
 
 interface NavItem {
   label: string
   href: string
-  icon: LucideIcon
+  icon: React.ReactNode
 }
 
 interface SidebarProps {
@@ -37,7 +36,6 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-          const Icon = item.icon
           return (
             <Link
               key={item.href}
@@ -49,7 +47,7 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
                   : 'text-brand-300 hover:bg-brand-800 hover:text-white'
               )}
             >
-              <Icon className="w-4 h-4 flex-shrink-0" />
+              {item.icon}
               {item.label}
             </Link>
           )

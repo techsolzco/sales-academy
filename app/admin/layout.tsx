@@ -5,10 +5,10 @@ import { SignOutButton } from '@/components/auth/SignOutButton'
 import { LayoutDashboard, Users, BookOpen, Settings } from 'lucide-react'
 
 const adminNavItems = [
-  { label: 'Dashboard',  href: '/admin',          icon: LayoutDashboard },
-  { label: 'Salesmen',   href: '/admin/salesmen',  icon: Users },
-  { label: 'Courses',    href: '/admin/courses',   icon: BookOpen },
-  { label: 'Settings',   href: '/admin/settings',  icon: Settings },
+  { label: 'Dashboard',  href: '/admin',          icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Salesmen',   href: '/admin/salesmen',  icon: <Users className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Courses',    href: '/admin/courses',   icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Settings',   href: '/admin/settings',  icon: <Settings className="w-4 h-4 flex-shrink-0" /> },
 ]
 
 export default async function AdminLayout({

@@ -5,9 +5,9 @@ import { SignOutButton } from '@/components/auth/SignOutButton'
 import { LayoutDashboard, GraduationCap, User } from 'lucide-react'
 
 const salesmanNavItems = [
-  { label: 'Dashboard',    href: '/dashboard',          icon: LayoutDashboard },
-  { label: 'My Training',  href: '/dashboard/training', icon: GraduationCap },
-  { label: 'Profile',      href: '/dashboard/profile',  icon: User },
+  { label: 'Dashboard',    href: '/dashboard',          icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'My Training',  href: '/dashboard/training', icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Profile',      href: '/dashboard/profile',  icon: <User className="w-4 h-4 flex-shrink-0" /> },
 ]
 
 export default async function DashboardLayout({

@@ -1,10 +1,163 @@
-export default function TrainingPage() {
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { BookOpen, Clock, CheckCircle, ChevronRight } from 'lucide-react'
+import { getGreeting } from '@/lib/utils'
+
+function ProgressRing({ pct }: { pct: number }) {
+  const r = 20, c = 2 * Math.PI * r
+  const offset = c - (pct / 100) * c
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">My Training</h1>
-      <p className="text-gray-400 text-sm">Your assigned courses and progress.</p>
-      <div className="mt-8 rounded-xl border border-dashed border-gray-200 bg-white p-12 text-center">
-        <p className="text-gray-400 text-sm">Your training courses will appear here.</p>
+    <svg width="52" height="52" className="flex-shrink-0 -rotate-90">
+      <circle cx="26" cy="26" r={r} fill="none" stroke="#e5e7eb" strokeWidth="4" />
+      <circle cx="26" cy="26" r={r} fill="none" stroke="#4f6ef7" strokeWidth="4"
+        strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
+      <text x="26" y="26" textAnchor="middle" dominantBaseline="central" className="rotate-90"
+        style={{ fontSize: 10, fill: '#374151', fontWeight: 700, transform: 'rotate(90deg)', transformOrigin: '26px 26px' }}>
+        {pct}%
+      </text>
+    </svg>
+  )
+}
+
+export default async function TrainingPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name').eq('id', user.id).single()
+
+  // Get all assigned courses with their status
+  const { data: assignments } = await supabase
+    .from('course_assignments')
+    .select('course_id, assigned_at, due_date')
+    .eq('user_id', user.id)
+
+  if (!assignments || assignments.length === 0) {
+    return (
+      <div className="p-8 animate-fade-in">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Your assigned training courses will appear here.</p>
+        </div>
+        <div className="text-center py-20 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
+          <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+          No courses assigned yet. Check back soon!
+        </div>
+      </div>
+    )
+  }
+
+  const courseIds = assignments.map(a => a.course_id)
+
+  // Fetch published courses
+  const { data: courses } = await supabase
+    .from('courses')
+    .select('*')
+    .in('id', courseIds)
+    .eq('status', 'published')
+
+  if (!courses || courses.length === 0) {
+    return (
+      <div className="p-8 animate-fade-in">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
+          </h1>
+        </div>
+        <div className="text-center py-20 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
+          No published courses yet. Check back soon!
+        </div>
+      </div>
+    )
+  }
+
+  // Get all lessons for these courses (for progress calc)
+  const { data: modules } = await supabase
+    .from('modules').select('id, course_id').in('course_id', courseIds)
+
+  const moduleIds = (modules ?? []).map(m => m.id)
+  const { data: lessons } = moduleIds.length > 0
+    ? await supabase.from('lessons').select('id, module_id').in('module_id', moduleIds)
+    : { data: [] }
+
+  // Build course→lesson map
+  const moduleCoursMap = Object.fromEntries((modules ?? []).map(m => [m.id, m.course_id]))
+  const lessonsByCourse = (lessons ?? []).reduce<Record<string, string[]>>((acc, l) => {
+    const cid = moduleCoursMap[l.module_id]
+    if (cid) { if (!acc[cid]) acc[cid] = []; acc[cid].push(l.id) }
+    return acc
+  }, {})
+
+  // Get user's lesson progress
+  const lessonIds = (lessons ?? []).map(l => l.id)
+  const { data: progress } = lessonIds.length > 0
+    ? await supabase
+        .from('lesson_progress')
+        .select('lesson_id')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+        .in('lesson_id', lessonIds)
+    : { data: [] }
+
+  const completedSet = new Set((progress ?? []).map(p => p.lesson_id))
+
+  const assignmentByCourse = Object.fromEntries(assignments.map(a => [a.course_id, a]))
+
+  return (
+    <div className="p-8 animate-fade-in">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
+        </h1>
+        <p className="text-gray-400 text-sm mt-1">
+          {courses.length} course{courses.length !== 1 ? 's' : ''} assigned to you
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {courses.map(course => {
+          const allLessons = lessonsByCourse[course.id] ?? []
+          const completed = allLessons.filter(id => completedSet.has(id)).length
+          const total = allLessons.length
+          const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+          const isComplete = pct === 100 && total > 0
+          const assignment = assignmentByCourse[course.id]
+
+          return (
+            <Link
+              key={course.id}
+              href={`/dashboard/training/${course.id}`}
+              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:shadow-sm transition group"
+            >
+              <ProgressRing pct={pct} />
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h3 className="font-semibold text-gray-900 text-sm truncate">{course.title}</h3>
+                  {isComplete && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />}
+                </div>
+                {course.category && <p className="text-xs text-gray-400">{course.category}</p>}
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-300">
+                  <span>{completed}/{total} lessons</span>
+                  {course.estimated_duration_minutes && (
+                    <span className="flex items-center gap-0.5">
+                      <Clock className="w-3 h-3" /> {course.estimated_duration_minutes} min
+                    </span>
+                  )}
+                  {assignment?.due_date && (
+                    <span>Due {new Date(assignment.due_date).toLocaleDateString()}</span>
+                  )}
+                </div>
+              </div>
+
+              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-500 transition flex-shrink-0" />
+            </Link>
+          )
+        })}
       </div>
     </div>
   )

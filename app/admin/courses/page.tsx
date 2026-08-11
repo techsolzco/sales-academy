@@ -1,11 +1,91 @@
-export default function AdminCoursesPage() {
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { CourseCard } from '@/components/admin/CourseCard'
+import { BookOpen, Plus } from 'lucide-react'
+
+export default async function AdminCoursesPage() {
+  const supabase = await createClient()
+
+  const { data: courses } = await supabase
+    .from('courses')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  // Fetch module counts and assignment counts in parallel
+  const [{ data: moduleCounts }, { data: assignmentCounts }] = await Promise.all([
+    supabase.from('modules').select('course_id'),
+    supabase.from('course_assignments').select('course_id'),
+  ])
+
+  const moduleCountMap = (moduleCounts ?? []).reduce<Record<string, number>>((acc, m) => {
+    acc[m.course_id] = (acc[m.course_id] ?? 0) + 1
+    return acc
+  }, {})
+
+  const assignmentCountMap = (assignmentCounts ?? []).reduce<Record<string, number>>((acc, a) => {
+    acc[a.course_id] = (acc[a.course_id] ?? 0) + 1
+    return acc
+  }, {})
+
+  const published = (courses ?? []).filter(c => c.status === 'published').length
+  const drafts = (courses ?? []).filter(c => c.status === 'draft').length
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Courses</h1>
-      <p className="text-gray-400 text-sm">Create and manage training courses.</p>
-      <div className="mt-8 rounded-xl border border-dashed border-gray-200 bg-white p-12 text-center">
-        <p className="text-gray-400 text-sm">Course management coming in the next phase.</p>
+    <div className="p-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Courses</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            {courses?.length ?? 0} total · {published} published · {drafts} draft
+          </p>
+        </div>
+        <Link
+          href="/admin/courses/new"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition shadow-sm"
+        >
+          <Plus className="w-4 h-4" /> Create New Course
+        </Link>
       </div>
+
+      {/* Empty state */}
+      {(!courses || courses.length === 0) && (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center mb-4">
+            <BookOpen className="w-8 h-8 text-brand-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">No courses yet</h2>
+          <p className="text-gray-400 text-sm mb-6 max-w-sm">
+            Create your first course — give it a name, add modules and lessons, then assign it to your sales team.
+          </p>
+          <Link
+            href="/admin/courses/new"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition"
+          >
+            <Plus className="w-4 h-4" /> Create First Course
+          </Link>
+        </div>
+      )}
+
+      {/* Course grid */}
+      {courses && courses.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+          {courses.map(course => (
+            <CourseCard
+              key={course.id}
+              id={course.id}
+              title={course.title}
+              description={course.description}
+              thumbnail_url={course.thumbnail_url}
+              category={course.category}
+              difficulty={course.difficulty}
+              status={course.status}
+              moduleCount={moduleCountMap[course.id] ?? 0}
+              assignmentCount={assignmentCountMap[course.id] ?? 0}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

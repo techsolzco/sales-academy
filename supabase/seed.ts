@@ -16,6 +16,7 @@
 // Load env vars from .env.local before anything else
 import { config } from 'node:process'
 import { createClient } from '@supabase/supabase-js'
+import ws from 'ws'
 
 // Manual dotenv load for tsx scripts (no dotenv package needed)
 import { readFileSync } from 'node:fs'
@@ -51,6 +52,9 @@ if (!supabaseUrl || !serviceRoleKey) {
 // Admin client — bypasses RLS for seeding
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
+  // Node.js 20 has no native WebSocket — supply the `ws` package as transport
+  global: { fetch: fetch as typeof fetch },
+  realtime: { transport: ws as unknown as typeof WebSocket },
 })
 
 const SEED_USERS = [
