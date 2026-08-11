@@ -51,6 +51,12 @@ ALTER TABLE public.lessons
   ADD COLUMN IF NOT EXISTS status        text NOT NULL DEFAULT 'draft'
     CHECK (status IN ('draft', 'published', 'archived'));
 
+-- ── STEP 6.1: Update content_blocks type check constraint ─────────────────
+ALTER TABLE public.content_blocks DROP CONSTRAINT IF EXISTS content_blocks_type_check;
+
+ALTER TABLE public.content_blocks ADD CONSTRAINT content_blocks_type_check
+  CHECK (type IN ('text', 'heading', 'image', 'youtube', 'pdf', 'link', 'quote', 'callout', 'video', 'file', 'quiz'));
+
 -- ── STEP 7: Recreate all RLS policies using the new status column ──────────
 
 -- courses: salesmen see published only
