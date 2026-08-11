@@ -2,13 +2,21 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
-import { LayoutDashboard, Users, BookOpen, Settings } from 'lucide-react'
+import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
+import {
+  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings
+} from 'lucide-react'
 
 const adminNavItems = [
-  { label: 'Dashboard',  href: '/admin',          icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Salesmen',   href: '/admin/salesmen',  icon: <Users className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Courses',    href: '/admin/courses',   icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Settings',   href: '/admin/settings',  icon: <Settings className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Dashboard',   href: '/admin',             icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Salesmen',    href: '/admin/salesmen',     icon: <Users className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Courses',     href: '/admin/courses',      icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'FAQs',        href: '/admin/faqs',         icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Scripts',     href: '/admin/scripts',      icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Voice Notes', href: '/admin/voice-notes',  icon: <Mic className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Objections',  href: '/admin/objections',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Tools',       href: '/admin/tools',        icon: <Wrench className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Settings',    href: '/admin/settings',     icon: <Settings className="w-4 h-4 flex-shrink-0" /> },
 ]
 
 export default async function AdminLayout({
@@ -29,7 +37,6 @@ export default async function AdminLayout({
     .eq('id', user.id)
     .single()
 
-  // Double-check role at the layout level (middleware is the first line of defence)
   if (profile?.role !== 'admin') {
     redirect('/dashboard')
   }
@@ -41,16 +48,26 @@ export default async function AdminLayout({
         footer={
           <div className="space-y-1">
             <div className="px-3 py-2">
-              <p className="text-xs font-medium text-white truncate">{profile.full_name}</p>
-              <p className="text-xs text-brand-400 truncate">{profile.email}</p>
+              <p className="text-xs font-medium text-white truncate">{profile?.full_name}</p>
+              <p className="text-xs text-brand-400 truncate">{profile?.email}</p>
             </div>
             <SignOutButton />
           </div>
         }
       />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-30">
+          <GlobalSearchBar />
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-700 font-semibold uppercase tracking-wider">
+              Admin Portal
+            </span>
+          </div>
+        </header>
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

@@ -116,29 +116,127 @@ export interface LessonProgress {
   updated_at: string
 }
 
-export type AuditAction =
-  | 'user.created'
-  | 'user.updated'
-  | 'user.deactivated'
-  | 'course.created'
-  | 'course.published'
-  | 'assignment.created'
-  | 'lesson.completed'
+// ─── Phase 3 Knowledge Base Types ──────────────────────────────────────────
 
-export interface AuditLog {
+export interface FAQ {
   id: string
-  actor_id: string
-  action: AuditAction
-  target_type: string
-  target_id: string | null
-  metadata: Record<string, unknown> | null
+  question: string
+  short_answer: string
+  detailed_answer: string | null
+  customer_ready_answer: string | null
+  category: string
+  tags: string[]
+  priority: number
+  status: Status
   created_at: string
+  updated_at: string
 }
 
-export interface AuthUser {
+export type ScriptType =
+  | 'greeting'
+  | 'whatsapp'
+  | 'voice_note_script'
+  | 'follow_up'
+  | 'closing'
+  | 'payment'
+  | 'objection_response'
+  | 'upsell'
+  | 'cross_sell'
+  | 'after_sales'
+  | 'review_request'
+  | 'warranty_explanation'
+
+export interface SalesScript {
   id: string
-  email: string
-  profile: Profile
+  title: string
+  script_type: ScriptType
+  language: string
+  content: string
+  when_to_use: string | null
+  related_product: string | null
+  related_objection: string | null
+  tags: string[]
+  status: Status
+  created_at: string
+  updated_at: string
+}
+
+export interface ScriptCopy {
+  id: string
+  user_id: string
+  script_id: string
+  copied_at: string
+}
+
+export interface VoiceNote {
+  id: string
+  title: string
+  audio_url: string
+  transcript: string | null
+  purpose: string | null
+  when_to_send: string | null
+  related_lesson_id: string | null
+  language: string
+  duration_seconds: number | null
+  key_points: string[]
+  status: Status
+  created_at: string
+  updated_at: string
+}
+
+export interface Objection {
+  id: string
+  objection_text: string
+  meaning: string | null
+  recommended_response: string
+  alternative_response: string | null
+  do_not_say: string | null
+  related_product: string | null
+  related_lesson_id: string | null
+  difficulty: Difficulty | null
+  status: Status
+  created_at: string
+  updated_at: string
+}
+
+export type ToolCategory =
+  | 'AI Tools'
+  | 'Design Tools'
+  | 'Video Tools'
+  | 'Marketing Tools'
+  | 'Research Tools'
+  | 'Productivity'
+  | 'Sales'
+  | 'Automation'
+
+export interface Tool {
+  id: string
+  name: string
+  logo_url: string | null
+  description: string | null
+  website_url: string | null
+  category: ToolCategory
+  pricing: string | null
+  best_for: string | null
+  features: string[]
+  tutorial_link: string | null
+  youtube_tutorial_link: string | null
+  tags: string[]
+  status: Status
+  created_at: string
+  updated_at: string
+}
+
+// ─── Global Search Types ───────────────────────────────────────────────────
+
+export interface SearchResultItem {
+  id: string
+  type: 'faq' | 'script' | 'voice_note' | 'objection' | 'tool' | 'lesson'
+  title: string
+  description: string | null
+  url: string
+  category?: string
+  tags?: string[]
 }
 
 // ─── Enriched types for UI ─────────────────────────────────────────────────
