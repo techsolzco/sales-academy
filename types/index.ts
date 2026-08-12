@@ -34,6 +34,7 @@ export interface Course {
   estimated_duration_minutes: number | null
   status: Status
   visibility: Visibility
+  qualifying_for_reseller?: boolean
   created_by: string
   created_at: string
   updated_at: string
@@ -336,5 +337,32 @@ export interface UserPreferences {
   user_id: string
   language: 'en' | 'ur'
   updated_at: string
+}
+
+export interface ResellerApplication {
+  id: string
+  user_id: string
+  status: 'pending' | 'approved' | 'rejected'
+  notes: string | null
+  rejection_reason: string | null
+  requested_at: string
+  reviewed_at: string | null
+  profile?: Pick<Profile, 'id' | 'full_name' | 'email' | 'avatar_url'>
+}
+
+export interface Commission {
+  id: string
+  reseller_id: string
+  amount: number
+  description: string
+  status: 'pending' | 'paid'
+  created_at: string
+  paid_at: string | null
+}
+
+export interface ResellerProfile extends Profile {
+  commission_count?: number
+  total_paid?: number
+  total_pending?: number
 }
 

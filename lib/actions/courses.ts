@@ -28,6 +28,7 @@ export interface CourseInput {
   estimated_duration_minutes?: number
   status?: Status
   visibility?: Visibility
+  qualifying_for_reseller?: boolean
 }
 
 // ─── Create ───────────────────────────────────────────────────────────────

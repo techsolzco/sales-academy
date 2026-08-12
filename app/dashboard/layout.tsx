@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare
+  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck
 } from 'lucide-react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { LanguageToggle } from '@/components/layout/LanguageToggle'
@@ -36,7 +36,7 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, full_name, email')
+    .select('role, full_name, email, is_reseller')
     .eq('id', user.id)
     .single()
 
@@ -44,11 +44,16 @@ export default async function DashboardLayout({
     redirect('/admin')
   }
 
+  const navItems = [
+    ...salesmanNavItems,
+    ...(profile?.is_reseller ? [{ label: 'Sales Partner', href: '/dashboard/reseller', icon: <BadgeCheck className="w-4 h-4 flex-shrink-0" /> }] : [])
+  ]
+
   return (
     <LanguageProvider>
       <div className="flex min-h-screen bg-gray-50">
       <Sidebar
-        navItems={salesmanNavItems}
+        navItems={navItems}
         footer={
           <div className="space-y-1">
             <div className="px-3 py-2">
