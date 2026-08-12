@@ -4,12 +4,16 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User
+  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare
 } from 'lucide-react'
+import { LanguageProvider } from '@/lib/i18n/LanguageContext'
+import { LanguageToggle } from '@/components/layout/LanguageToggle'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
   { label: 'My Training', href: '/dashboard/training',   icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Community',   href: '/dashboard/community',  icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
   { label: 'FAQs',        href: '/dashboard/faqs',       icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Scripts',     href: '/dashboard/scripts',    icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Voice Notes', href: '/dashboard/voice-notes',icon: <Mic className="w-4 h-4 flex-shrink-0" /> },
@@ -41,7 +45,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <LanguageProvider>
+      <div className="flex min-h-screen bg-gray-50">
       <Sidebar
         navItems={salesmanNavItems}
         footer={
@@ -57,7 +62,9 @@ export default async function DashboardLayout({
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-30">
           <GlobalSearchBar />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <LanguageToggle />
+            <NotificationBell userId={user.id} />
             <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wider">
               Sales Portal
             </span>
@@ -67,6 +74,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
-    </div>
+      </div>
+    </LanguageProvider>
   )
 }

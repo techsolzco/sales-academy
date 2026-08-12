@@ -4,12 +4,17 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings
+  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus
 } from 'lucide-react'
+import { LanguageProvider } from '@/lib/i18n/LanguageContext'
+import { LanguageToggle } from '@/components/layout/LanguageToggle'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 
 const adminNavItems = [
   { label: 'Dashboard',   href: '/admin',             icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Salesmen',    href: '/admin/salesmen',     icon: <Users className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Enrollments', href: '/admin/enrollments',  icon: <UserPlus className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Community',   href: '/admin/community',    icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Courses',     href: '/admin/courses',      icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
   { label: 'FAQs',        href: '/admin/faqs',         icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Scripts',     href: '/admin/scripts',      icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
@@ -42,7 +47,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <LanguageProvider>
+      <div className="flex min-h-screen bg-gray-50">
       <Sidebar
         navItems={adminNavItems}
         footer={
@@ -58,7 +64,9 @@ export default async function AdminLayout({
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-30">
           <GlobalSearchBar />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <LanguageToggle />
+            <NotificationBell userId={user.id} />
             <span className="text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-700 font-semibold uppercase tracking-wider">
               Admin Portal
             </span>
@@ -68,6 +76,7 @@ export default async function AdminLayout({
           {children}
         </main>
       </div>
-    </div>
+      </div>
+    </LanguageProvider>
   )
 }

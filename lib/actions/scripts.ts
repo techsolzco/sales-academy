@@ -90,6 +90,12 @@ export async function logScriptCopy(scriptId: string): Promise<ActionResult> {
       .insert({ user_id: user.id, script_id: scriptId })
 
     if (error) return { error: error.message }
+
+    // Award first_script_copy badge (fire & forget)
+    import('@/lib/actions/badges').then(({ checkAndAwardBadge }) => {
+      checkAndAwardBadge(user.id, 'first_script_copy').catch(() => {})
+    }).catch(() => {})
+
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }

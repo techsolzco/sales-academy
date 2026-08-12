@@ -263,3 +263,78 @@ export interface TrainingCourse extends Course {
   completed_lessons: number
   total_lessons: number
 }
+
+// ─── Phase 4 Types ─────────────────────────────────────────────────────────
+
+export interface EnrollmentApplication {
+  id: string
+  full_name: string
+  email: string
+  phone: string | null
+  knowledge_level: 'beginner' | 'intermediate' | 'advanced' | null
+  desired_course: string | null
+  reason: string | null
+  prior_experience: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  rejection_reason: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AppNotification {
+  id: string
+  user_id: string | null
+  title: string
+  body: string | null
+  type: 'info' | 'enrollment' | 'badge' | 'community' | 'system'
+  link: string | null
+  read: boolean
+  created_at: string
+}
+
+export interface Badge {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  icon: string
+  criteria_description: string | null
+  created_at: string
+}
+
+export interface UserBadge {
+  id: string
+  user_id: string
+  badge_id: string
+  earned_at: string
+}
+
+export interface CommunityPost {
+  id: string
+  user_id: string
+  content: string
+  post_type: 'general' | 'assignment_update' | 'announcement'
+  is_pinned: boolean
+  is_deleted: boolean
+  created_at: string
+  updated_at: string
+  profile?: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>
+  replies?: CommunityReply[]
+}
+
+export interface CommunityReply {
+  id: string
+  post_id: string
+  user_id: string
+  content: string
+  is_deleted: boolean
+  created_at: string
+  profile?: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>
+}
+
+export interface UserPreferences {
+  user_id: string
+  language: 'en' | 'ur'
+  updated_at: string
+}
+

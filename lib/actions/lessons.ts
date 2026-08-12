@@ -131,6 +131,37 @@ export async function markLessonComplete(
     .single()
 
   if (error) return { error: error.message }
+
+  // Award badges (fire & forget)
+  import('@/lib/actions/badges').then(({ checkAndAwardBadge }) => {
+    checkAndAwardBadge(user.id, 'first_lesson').catch(() => {})
+
+    // Check if entire course is now complete
+    supabase
+      .from('lessons')
+      .select('id, modules!inner(course_id)')
+      .eq('modules.course_id', courseId)
+      .then(async ({ data: courseLessons }) => {
+        if (!courseLessons?.length) return
+        const { data: progress } = await supabase
+          .from('lesson_progress')
+          .select('lesson_id')
+          .eq('user_id', user.id)
+          .eq('completed', true)
+        const completedIds = new Set((progress ?? []).map(p => p.lesson_id))
+        const allDone = courseLessons.every(l => completedIds.has(l.id))
+        if (allDone) {
+          checkAndAwardBadge(user.id, 'first_course').catch(() => {})
+          // Check 5 courses
+          const { count } = await supabase
+            .from('course_assignments')
+            .select('course_id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+          if ((count ?? 0) >= 5) checkAndAwardBadge(user.id, 'five_courses').catch(() => {})
+        }
+      })
+  }).catch(() => {})
+
   revalidatePath(`/dashboard/training/${courseId}`)
   revalidatePath(`/dashboard/training`)
   return { data }

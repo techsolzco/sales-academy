@@ -13,13 +13,13 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options as Parameters<typeof supabaseResponse.cookies.set>[2])
           )
         },
       },
@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
   const isPublicPath =
     pathname === '/' ||
     pathname.startsWith('/auth') ||
+    pathname.startsWith('/register') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/auth') ||
     pathname === '/favicon.ico'
@@ -57,9 +58,18 @@ export async function middleware(request: NextRequest) {
   // We do this server-side so the client cannot fake their role.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, status')
     .eq('id', user.id)
     .single()
+
+  if (profile && profile.status !== 'active') {
+    if (pathname !== '/auth/pending') {
+      const pendingUrl = request.nextUrl.clone()
+      pendingUrl.pathname = '/auth/pending'
+      return NextResponse.redirect(pendingUrl)
+    }
+    return supabaseResponse
+  }
 
   const role = profile?.role
 

@@ -1,47 +1,54 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { AvatarUpload } from '@/components/profile/AvatarUpload'
+import { BadgeGrid } from '@/components/profile/BadgeGrid'
+import { fetchUserBadges } from '@/lib/actions/badges'
+import { User, Mail, Briefcase } from 'lucide-react'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  if (!user) redirect('/auth/login')
+
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, email, department, joining_date, avatar_url')
-    .eq('id', user!.id)
+    .select('*')
+    .eq('id', user.id)
     .single()
 
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">My Profile</h1>
-      <p className="text-gray-400 text-sm">Your account details.</p>
+  const userBadges = await fetchUserBadges(user.id)
 
-      <div className="mt-6 bg-white rounded-xl border border-gray-100 shadow-sm p-6 max-w-lg">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-lg">
-            {profile?.full_name?.[0] ?? '?'}
+  const initials = profile?.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'U'
+
+  return (
+    <div className="p-8 max-w-4xl mx-auto space-y-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="h-32 bg-brand-600"></div>
+        <div className="px-8 pb-8">
+          <div className="-mt-12 mb-4">
+            <AvatarUpload userId={user.id} currentAvatarUrl={profile?.avatar_url} initials={initials} />
           </div>
           <div>
-            <p className="font-semibold text-gray-900">{profile?.full_name}</p>
-            <p className="text-sm text-gray-400">{profile?.email}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{profile?.full_name}</h1>
+            <div className="mt-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Mail className="w-4 h-4" /> {profile?.email}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Briefcase className="w-4 h-4" /> {profile?.department || 'Sales Department'}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <User className="w-4 h-4" /> Role: <span className="uppercase font-semibold text-brand-600">{profile?.role}</span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-3">
-          {profile?.department && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Department</span>
-              <span className="text-gray-700 font-medium">{profile.department}</span>
-            </div>
-          )}
-          {profile?.joining_date && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Joined</span>
-              <span className="text-gray-700 font-medium">
-                {new Date(profile.joining_date).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-        </div>
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">My Badges</h2>
+        <BadgeGrid badges={userBadges || []} />
       </div>
     </div>
   )
