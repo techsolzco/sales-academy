@@ -419,3 +419,92 @@ export interface DirectMessage {
   sender?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
 }
 
+export interface Assignment {
+  id: string
+  title: string
+  instructions: string
+  due_date: string | null
+  course_id: string | null
+  lesson_id: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+  course?: { id: string; name: string } | null
+  lesson?: { id: string; title: string } | null
+}
+
+export interface AssignmentSubmission {
+  id: string
+  assignment_id: string
+  user_id: string
+  response_text: string | null
+  file_url: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  feedback: string | null
+  submitted_at: string
+  reviewed_at: string | null
+  reviewed_by: string | null
+  assignment?: Pick<Assignment, 'id' | 'title'>
+  profile?: Pick<Profile, 'id' | 'full_name' | 'email' | 'avatar_url'>
+}
+
+export interface Quiz {
+  id: string
+  lesson_id: string | null
+  title: string
+  description: string | null
+  pass_score: number
+  created_by: string
+  created_at: string
+  updated_at: string
+  questions?: QuizQuestion[]
+}
+
+export interface QuizQuestion {
+  id: string
+  quiz_id: string
+  question_text: string
+  points: number
+  order_index: number
+  created_at: string
+  options?: QuizOption[]
+}
+
+export interface QuizOption {
+  id: string
+  question_id: string
+  option_text: string
+  is_correct: boolean
+  order_index: number
+}
+
+export interface QuizAttempt {
+  id: string
+  quiz_id: string
+  user_id: string
+  score: number
+  max_score: number
+  percentage: number
+  passed: boolean
+  completed_at: string
+}
+
+export interface QuizAttemptAnswer {
+  id: string
+  attempt_id: string
+  question_id: string
+  selected_option_id: string | null
+  is_correct: boolean
+  question?: QuizQuestion
+  selected_option?: QuizOption | null
+}
+
+export interface QuizAttemptResult {
+  attemptId: string
+  score: number
+  maxScore: number
+  percentage: number
+  passed: boolean
+  correctCount: number
+  totalCount: number
+}

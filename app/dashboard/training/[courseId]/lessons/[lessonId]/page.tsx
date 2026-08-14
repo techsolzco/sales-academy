@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LessonViewer } from '@/components/training/LessonViewer'
-import { ChevronLeft, Clock, Star } from 'lucide-react'
+import { ChevronLeft, Clock, Star, Brain } from 'lucide-react'
+import { fetchQuizForLesson } from '@/lib/actions/quizzes'
 
 export default async function LessonViewerPage({
   params,
@@ -51,6 +52,8 @@ export default async function LessonViewerPage({
 
   const isCompleted = progress?.completed ?? false
 
+  const quiz = await fetchQuizForLesson(params.lessonId)
+
   return (
     <div className="p-8 max-w-3xl animate-fade-in">
       <Link
@@ -93,6 +96,17 @@ export default async function LessonViewerPage({
           blocks={blocks ?? []}
           isCompleted={isCompleted}
         />
+
+        {quiz && (
+          <div className="mt-12 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+            <Brain className="w-10 h-10 text-brand-600 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-gray-900">Lesson Quiz</h3>
+            <p className="text-gray-500 mb-6">{quiz.title} · Pass score: {quiz.pass_score}%</p>
+            <Link href={`/dashboard/quiz/${quiz.id}`} className="inline-block bg-brand-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-brand-700 transition-colors">
+              Take Quiz
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )
