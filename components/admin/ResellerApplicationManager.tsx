@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ResellerApplication, approveResellerApplication, rejectResellerApplication } from '@/lib/actions/reseller'
+import { approveResellerApplication, rejectResellerApplication } from '@/lib/actions/reseller'
+import type { ResellerApplication } from '@/types'
 import { Check, X, Link as LinkIcon } from 'lucide-react'
 
 export function ResellerApplicationManager({
@@ -64,7 +65,7 @@ export function ResellerApplicationManager({
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${app.status === 'approved' ? 'bg-green-100 text-green-700' : app.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                   {app.status.toUpperCase()}
                 </span>
-                <span className="text-xs text-gray-400">{new Date(app.created_at).toLocaleDateString()}</span>
+                <span className="text-xs text-gray-400">{new Date(app.requested_at).toLocaleDateString()}</span>
               </div>
             </div>
 
