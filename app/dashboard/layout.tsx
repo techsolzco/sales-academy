@@ -4,8 +4,9 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck
+  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy
 } from 'lucide-react'
+import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { LanguageToggle } from '@/components/layout/LanguageToggle'
 import { NotificationBell } from '@/components/layout/NotificationBell'
@@ -13,7 +14,10 @@ import { NotificationBell } from '@/components/layout/NotificationBell'
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
   { label: 'My Training', href: '/dashboard/training',   icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Leaderboard', href: '/dashboard/leaderboard',icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Community',   href: '/dashboard/community',  icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Chat',        href: '/dashboard/chat',       icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Support',     href: '/dashboard/support',    icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'FAQs',        href: '/dashboard/faqs',       icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Scripts',     href: '/dashboard/scripts',    icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Voice Notes', href: '/dashboard/voice-notes',icon: <Mic className="w-4 h-4 flex-shrink-0" /> },
@@ -79,6 +83,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
+      <WhatsAppButton />
       </div>
     </LanguageProvider>
   )

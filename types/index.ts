@@ -366,3 +366,56 @@ export interface ResellerProfile extends Profile {
   total_pending?: number
 }
 
+export interface LeaderboardEntry {
+  user_id: string
+  full_name: string
+  avatar_url: string | null
+  courses_completed: number
+  lessons_completed: number
+  scripts_copied: number
+  score: number
+  rank: number
+}
+
+export interface SupportTicket {
+  id: string
+  user_id: string
+  subject: string
+  description: string
+  category: string
+  status: 'open' | 'in-progress' | 'resolved' | 'closed'
+  created_at: string
+  updated_at: string
+  profile?: Pick<Profile, 'id' | 'full_name' | 'email' | 'avatar_url'>
+  messages?: TicketMessage[]
+}
+
+export interface TicketMessage {
+  id: string
+  ticket_id: string
+  sender_id: string
+  content: string
+  created_at: string
+  sender?: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>
+}
+
+export interface Conversation {
+  id: string
+  participant_a: string
+  participant_b: string
+  last_message_at: string
+  created_at: string
+  profile_a?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
+  profile_b?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
+}
+
+export interface DirectMessage {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string
+  read: boolean
+  created_at: string
+  sender?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
+}
+
