@@ -508,3 +508,27 @@ export interface QuizAttemptResult {
   correctCount: number
   totalCount: number
 }
+
+export interface Meeting {
+  id: string
+  title: string
+  description: string | null
+  scheduled_at: string
+  room_name: string
+  jitsi_url: string
+  course_id: string | null
+  visibility: 'public' | 'invited'
+  created_by: string
+  created_at: string
+  updated_at: string
+  course?: { id: string; title: string } | null
+  invitee_count?: number
+}
+
+export interface MeetingInvitee {
+  id: string
+  meeting_id: string
+  user_id: string
+  invited_at: string
+  profile?: Pick<Profile, 'id' | 'full_name' | 'email' | 'avatar_url'>
+}
