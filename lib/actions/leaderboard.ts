@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { LeaderboardEntry } from '@/types'
 
 // SCORING WEIGHTS — adjust these values to change the leaderboard formula
-export const LEADERBOARD_WEIGHTS = {
+const LEADERBOARD_WEIGHTS = {
   courseCompleted: 300,  // points per fully completed course
   lessonCompleted: 10,   // points per individual lesson completed
   scriptCopied: 50,      // points per script copied

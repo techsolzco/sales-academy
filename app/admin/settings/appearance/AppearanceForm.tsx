@@ -28,11 +28,16 @@ export function AppearanceForm({
   async function handleSave() {
     setLoading(true)
     try {
-      await updateThemeSettings('admin', adminData as Partial<ThemeSettings>)
-      await updateThemeSettings('salesman', salesmanData as Partial<ThemeSettings>)
+      const r1 = await updateThemeSettings('admin', adminData as Partial<ThemeSettings>)
+      if (!r1?.success) throw new Error(r1?.error || 'Unknown error updating admin theme')
+      
+      const r2 = await updateThemeSettings('salesman', salesmanData as Partial<ThemeSettings>)
+      if (!r2?.success) throw new Error(r2?.error || 'Unknown error updating salesman theme')
+
       alert('Themes updated successfully!')
-    } catch (e) {
-      alert('Failed to update themes')
+    } catch (e: any) {
+      console.error(e)
+      alert('Failed to update themes: ' + e.message)
     } finally {
       setLoading(false)
     }
