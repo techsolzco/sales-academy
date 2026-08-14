@@ -87,7 +87,7 @@ export default async function AdminLayout({
             </span>
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gray-50 min-h-full">
           {children}
         </main>
       </div>

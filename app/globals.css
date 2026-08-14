@@ -24,6 +24,17 @@
     --input: 220 13% 91%;
     --ring: 225 74% 52%;
     --radius: 0.5rem;
+    /* Brand color shades — overridden by ThemeInjector */
+    --brand-50:  225 74% 97%;
+    --brand-100: 225 74% 92%;
+    --brand-200: 225 74% 84%;
+    --brand-300: 225 74% 74%;
+    --brand-400: 225 74% 62%;
+    --brand-500: 225 74% 50%;
+    --brand-600: 225 74% 40%;
+    --brand-700: 225 74% 32%;
+    --brand-800: 225 74% 22%;
+    --brand-900: 225 74% 14%;
   }
 
   .dark {

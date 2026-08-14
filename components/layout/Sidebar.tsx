@@ -1,10 +1,9 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useSidebar } from './SidebarContext'
-import { useEffect } from 'react'
+import { useEffect, useTransition, useState } from 'react'
 import { X } from 'lucide-react'
 
 interface NavItem {
@@ -20,11 +19,25 @@ interface SidebarProps {
 
 export function Sidebar({ navItems, footer }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
+  const [isPending, startTransition] = useTransition()
+  // Track which href was clicked for instant visual feedback
+  const [pendingHref, setPendingHref] = useState<string | null>(null)
 
+  // Close sidebar on route change + clear pending state
   useEffect(() => {
     setIsOpen(false)
+    setPendingHref(null)
   }, [pathname, setIsOpen])
+
+  function handleNavClick(href: string) {
+    if (href === pathname) return
+    setPendingHref(href)
+    startTransition(() => {
+      router.push(href)
+    })
+  }
 
   return (
     <>
@@ -58,23 +71,30 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          // Show as active if it's the current page OR if it's been clicked and pending
+          const isCurrentRoute = pathname === item.href || pathname.startsWith(item.href + '/')
+          const isPendingItem = pendingHref === item.href
+          const isActive = isPendingItem || (isCurrentRoute && !pendingHref)
           return (
-            <Link
+            <button
               key={item.href}
-              href={item.href}
+              onClick={() => handleNavClick(item.href)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left',
                 isActive
                   ? 'bg-brand-700 text-white'
-                  : 'text-brand-300 hover:bg-brand-800 hover:text-white'
+                  : 'text-brand-300 hover:bg-brand-800 hover:text-white',
+                isPendingItem && 'opacity-80'
               )}
             >
               {item.icon}
-              {item.label}
-            </Link>
+              <span className="flex-1">{item.label}</span>
+              {isPendingItem && isPending && (
+                <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              )}
+            </button>
           )
         })}
       </nav>

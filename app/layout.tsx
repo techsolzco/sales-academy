@@ -5,6 +5,9 @@ import { createClient } from '@/lib/supabase/server'
 import { fetchThemeSettings } from '@/lib/actions/theme'
 import { ThemeInjector } from '@/components/layout/ThemeInjector'
 
+// Always fetch fresh theme from DB on every request so saved colors apply immediately
+export const dynamic = 'force-dynamic'
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
