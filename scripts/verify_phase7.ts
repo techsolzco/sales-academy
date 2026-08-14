@@ -163,7 +163,7 @@ async function main() {
   await check('Fetch all submissions join (admin view)', async () => {
     if (!assignmentId) throw new Error('No assignmentId')
     const { data, error } = await svc.from('assignment_submissions')
-      .select('*, profile:profiles(id,full_name,email), assignment:assignments(id,title)')
+      .select('*, profile:profiles!user_id(id,full_name,email), assignment:assignments(id,title)')
       .eq('assignment_id', assignmentId)
     if (error) throw new Error(error.message)
     if (!data?.length) throw new Error('No submissions found')

@@ -229,7 +229,7 @@ export async function fetchAllSubmissions(assignmentId?: string): Promise<Assign
     .from('assignment_submissions')
     .select(`
       *,
-      profile:profiles(id, full_name, email, avatar_url),
+      profile:profiles!user_id(id, full_name, email, avatar_url),
       assignment:assignments(id, title)
     `)
     .order('submitted_at', { ascending: false })
