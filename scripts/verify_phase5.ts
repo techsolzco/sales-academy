@@ -85,33 +85,35 @@ async function main() {
   let testCourseId: string | null = null
 
   await check('Set qualifying_for_reseller=true on a course', async () => {
-    // Get or create a course
-    const { data: courses } = await service.from('courses').select('id, name').limit(1)
+    // Only select 'id' to avoid any schema cache issues with other columns
+    const { data: courses } = await service.from('courses').select('id').limit(1)
     if (!courses?.length) {
       // create a minimal course
+      const adminId = (await service.from('profiles').select('id').eq('role', 'admin').limit(1).single()).data?.id ?? '00000000-0000-0000-0000-000000000000'
       const { data, error } = await service.from('courses').insert({
         name: 'Verify P5 Course',
         slug: `verify-p5-${Date.now()}`,
         status: 'published',
         visibility: 'all',
         qualifying_for_reseller: true,
-        created_by: (await service.from('profiles').select('id').eq('role', 'admin').limit(1).single()).data?.id ?? '00000000-0000-0000-0000-000000000000',
-      }).select().single()
+        created_by: adminId,
+      }).select('id').single()
       if (error) throw new Error(error.message)
       testCourseId = data.id
-      return `Created test course: ${data.name}`
+      return `Created and flagged test course id=${data.id}`
     }
     testCourseId = courses[0].id
     const { error } = await service.from('courses').update({ qualifying_for_reseller: true }).eq('id', testCourseId)
     if (error) throw new Error(error.message)
-    return `Set qualifying_for_reseller=true on: ${courses[0].name}`
+    return `Set qualifying_for_reseller=true on course id=${testCourseId}`
   })
 
   await check('Query qualifying courses returns results', async () => {
-    const { data, error } = await service.from('courses').select('id,name,qualifying_for_reseller').eq('qualifying_for_reseller', true)
+    // Select only id + qualifying_for_reseller to avoid stale cache on unrelated columns
+    const { data, error } = await service.from('courses').select('id, qualifying_for_reseller').eq('qualifying_for_reseller', true)
     if (error) throw new Error(error.message)
     if (!data?.length) throw new Error('No qualifying courses found')
-    return `${data.length} qualifying course(s)`
+    return `${data.length} qualifying course(s) with flag=true`
   })
 
   // ── 3. RESELLER APPLICATION LIFECYCLE ────────────────────────────────────
