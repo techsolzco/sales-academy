@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, BookOpen } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,9 +54,12 @@ export default async function AssignmentsAdminPage() {
           <tbody className="divide-y divide-gray-100">
             {stats.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                  <BookOpen className="w-8 h-8 mx-auto mb-3 text-gray-400" />
-                  <p>No assignments created yet.</p>
+                <td colSpan={4} className="p-8">
+                  <EmptyState 
+                    icon={BookOpen} 
+                    title="No assignments created yet" 
+                    description="Create assignments for your courses." 
+                  />
                 </td>
               </tr>
             ) : (

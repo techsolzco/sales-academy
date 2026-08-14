@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { CourseCard } from '@/components/admin/CourseCard'
 import { BookOpen, Plus } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default async function AdminCoursesPage() {
   const supabase = await createClient()
@@ -50,21 +51,13 @@ export default async function AdminCoursesPage() {
 
       {/* Empty state */}
       {(!courses || courses.length === 0) && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center mb-4">
-            <BookOpen className="w-8 h-8 text-brand-400" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">No courses yet</h2>
-          <p className="text-gray-400 text-sm mb-6 max-w-sm">
-            Create your first course — give it a name, add modules and lessons, then assign it to your sales team.
-          </p>
-          <Link
-            href="/admin/courses/new"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition"
-          >
-            <Plus className="w-4 h-4" /> Create First Course
-          </Link>
-        </div>
+        <EmptyState 
+          icon={BookOpen} 
+          title="No courses yet" 
+          description="Create your first course  give it a name, add modules and lessons, then assign it to your sales team." 
+          actionLabel="Create First Course" 
+          actionHref="/admin/courses/new" 
+        />
       )}
 
       {/* Course grid */}

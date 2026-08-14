@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useSidebar } from './SidebarContext'
+import { useEffect } from 'react'
+import { X } from 'lucide-react'
 
 interface NavItem {
   label: string
@@ -17,11 +20,27 @@ interface SidebarProps {
 
 export function Sidebar({ navItems, footer }: SidebarProps) {
   const pathname = usePathname()
+  const { isOpen, setIsOpen } = useSidebar()
+
+  useEffect(() => {
+    setIsOpen(false)
+  }, [pathname, setIsOpen])
 
   return (
-    <aside className="w-64 min-h-screen bg-brand-900 border-r border-brand-800 flex flex-col">
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      <aside className={cn(
+        "fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-brand-900 border-r border-brand-800 flex flex-col transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-brand-800">
+      <div className="px-6 py-5 border-b border-brand-800 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center flex-shrink-0">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -30,6 +49,12 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
           </div>
           <span className="text-white font-semibold text-sm tracking-tight">Sales Academy</span>
         </div>
+        <button 
+          onClick={() => setIsOpen(false)}
+          className="md:hidden text-brand-300 hover:text-white"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -61,5 +86,6 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
         </div>
       )}
     </aside>
+    </>
   )
 }

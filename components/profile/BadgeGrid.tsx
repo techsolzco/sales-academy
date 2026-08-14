@@ -15,7 +15,7 @@ export function BadgeGrid({ badges }: Props) {
         return (
           <div
             key={b.badge.id || idx}
-            className={`relative flex flex-col items-center p-4 rounded-2xl border text-center transition-all ${
+            className={`relative flex flex-col items-center p-4 rounded-2xl border text-center transition-all hover:-translate-y-1 hover:shadow-md ${
               isEarned
                 ? 'bg-white border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.2)]'
                 : 'bg-gray-50 border-gray-100 grayscale opacity-50'

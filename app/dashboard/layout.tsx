@@ -10,6 +10,8 @@ import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { LanguageToggle } from '@/components/layout/LanguageToggle'
 import { NotificationBell } from '@/components/layout/NotificationBell'
+import { SidebarProvider } from '@/components/layout/SidebarContext'
+import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
@@ -57,7 +59,8 @@ export default async function DashboardLayout({
 
   return (
     <LanguageProvider>
-      <div className="flex min-h-screen bg-gray-50">
+      <SidebarProvider>
+        <div className="flex min-h-screen bg-gray-50">
       <Sidebar
         navItems={navItems}
         footer={
@@ -70,10 +73,13 @@ export default async function DashboardLayout({
           </div>
         }
       />
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-30">
-          <GlobalSearchBar />
-          <div className="flex items-center gap-4">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
+        <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-2">
+            <SidebarMobileToggle />
+            <GlobalSearchBar />
+          </div>
+          <div className="flex items-center gap-2 md:gap-4">
             <LanguageToggle />
             <NotificationBell userId={user.id} />
             <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wider">
@@ -87,6 +93,7 @@ export default async function DashboardLayout({
       </div>
       <WhatsAppButton />
       </div>
+      </SidebarProvider>
     </LanguageProvider>
   )
 }

@@ -532,3 +532,12 @@ export interface MeetingInvitee {
   invited_at: string
   profile?: Pick<Profile, 'id' | 'full_name' | 'email' | 'avatar_url'>
 }
+
+export interface ThemeSettings {
+  id: string
+  portal: 'admin' | 'salesman'
+  primary_color: string
+  accent_color: string
+  theme_mode: 'system' | 'light' | 'dark'
+  updated_at: string
+}

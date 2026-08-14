@@ -1,0 +1,44 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+import { ThemeSettings } from '@/types'
+
+export async function fetchThemeSettings(portal: 'admin' | 'salesman'): Promise<ThemeSettings | null> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('theme_settings')
+    .select('*')
+    .eq('portal', portal)
+    .single()
+
+  if (error) {
+    console.error('Error fetching theme settings:', error)
+    return null
+  }
+
+  return data
+}
+
+export async function updateThemeSettings(portal: 'admin' | 'salesman', data: Partial<ThemeSettings>) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('theme_settings')
+    .update({
+        primary_color: data.primary_color,
+        accent_color: data.accent_color,
+        theme_mode: data.theme_mode,
+        updated_at: new Date().toISOString()
+    })
+    .eq('portal', portal)
+
+  if (error) {
+    console.error('Error updating theme settings:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  return { success: true }
+}

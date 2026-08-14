@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Video, Calendar } from 'lucide-react'
 import { fetchMyMeetings } from '@/lib/actions/meetings'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
@@ -110,11 +111,11 @@ export default async function DashboardMeetingsPage() {
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-4">Upcoming Meetings</h2>
           {upcoming.length === 0 ? (
-             <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
-                <Video className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No upcoming meetings scheduled</h3>
-                <p className="text-gray-500 max-w-sm mx-auto">When admins schedule meetings with you, they will appear here.</p>
-             </div>
+            <EmptyState 
+              icon={Video} 
+              title="No upcoming meetings scheduled" 
+              description="When admins schedule meetings with you, they will appear here." 
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {upcoming.map(renderMeetingCard)}

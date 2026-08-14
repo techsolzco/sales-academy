@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Brain } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,9 +42,12 @@ export default async function QuizzesAdminPage() {
           <tbody className="divide-y divide-gray-100">
             {(!quizzes || quizzes.length === 0) ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                  <Brain className="w-8 h-8 mx-auto mb-3 text-gray-400" />
-                  <p>No quizzes created yet.</p>
+                <td colSpan={4} className="p-8">
+                  <EmptyState 
+                    icon={Brain} 
+                    title="No quizzes created yet" 
+                    description="Create quizzes to test your team's knowledge." 
+                  />
                 </td>
               </tr>
             ) : (
