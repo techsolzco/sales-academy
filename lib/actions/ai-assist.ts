@@ -38,12 +38,16 @@ ${settings.tone_examples}`
 }
 
 // Models tried in order — first success wins.
-// gemini-3.5-flash confirmed working. Aliases kept as fallbacks.
+// Shifted to 3.7 and 3.6 as primary to help avoid high demand on older/other models.
 const GEMINI_MODELS = [
-  'gemini-3.5-flash',
+  'gemini-3.7-flash',
   'gemini-3.6-flash',
+  'gemini-3.5-flash',
   'gemini-flash-latest',
 ]
+
+const MAX_RETRIES = 2
+const RETRY_DELAY_MS = 2500
 
 async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {
   const key = process.env.GEMINI_API_KEY
@@ -61,38 +65,53 @@ async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: bo
 
   let lastError = 'AI request failed.'
 
-  for (const model of GEMINI_MODELS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    })
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    for (const model of GEMINI_MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      })
 
-    if (response.status === 429) {
-      throw new Error('AI is busy right now — please try again in a moment.')
+      if (response.status === 429 || response.status === 503 || response.status === 500) {
+        // High demand / rate limited — try the next model in the list
+        lastError = `Model ${model} is currently busy (HTTP ${response.status}).`
+        continue 
+      }
+
+      if (response.status === 404 || response.status === 403) {
+        // This model is unavailable for this key — try next
+        const errData = await response.json().catch(() => ({}))
+        lastError = (errData as any)?.error?.message ?? `Model ${model} unavailable (${response.status})`
+        continue
+      }
+
+      if (!response.ok) {
+        // Bad request or other client errors shouldn't be retried
+        const errData = await response.json().catch(() => ({}))
+        throw new Error((errData as any)?.error?.message ?? `AI request failed with status ${response.status}`)
+      }
+
+      const data = await response.json()
+      const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+      if (!text) {
+        lastError = 'AI returned an empty response.'
+        continue // Treat empty response like an error and try next model
+      }
+      
+      return text
     }
 
-    if (response.status === 404 || response.status === 403) {
-      // This model is unavailable for this key — try next
-      const errData = await response.json().catch(() => ({}))
-      lastError = (errData as any)?.error?.message ?? `Model ${model} unavailable (${response.status})`
-      continue
+    // If we've tried all models and haven't succeeded, but have retries left:
+    if (attempt < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS))
     }
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}))
-      throw new Error((errData as any)?.error?.message ?? `AI request failed with status ${response.status}`)
-    }
-
-    const data = await response.json()
-    const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!text) throw new Error('AI returned an empty response. Please try again.')
-    return text
   }
 
-  throw new Error(lastError)
+  // If we get here, all models and retries failed due to being busy or unavailable.
+  throw new Error('AI is currently experiencing high demand. Please wait a moment and try again.')
 }
 
 async function logUsage(userId: string, feature: 'ai_assist' | 'quick_create' | 'ask_ai' | 'test_ai', contentType?: string | null, instruction?: string | null) {
