@@ -37,41 +37,62 @@ ${settings.locked_facts}
 ${settings.tone_examples}`
 }
 
-async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+// Models tried in order — first success wins.
+// gemini-3.5-flash confirmed working. Aliases kept as fallbacks.
+const GEMINI_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-flash-latest',
+]
+
+async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {
+  const key = process.env.GEMINI_API_KEY
+  if (!key) throw new Error('GEMINI_API_KEY is not configured on the server.')
+
+  const body = JSON.stringify({
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ parts: [{ text: userPrompt }], role: 'user' }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+      responseMimeType: jsonMode ? 'application/json' : 'text/plain',
     },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ parts: [{ text: userPrompt }], role: "user" }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1024,
-        responseMimeType: jsonMode ? "application/json" : "text/plain"
-      }
-    })
   })
 
-  if (response.status === 429) {
-    throw new Error('AI is busy right now — please try again in a moment.')
+  let lastError = 'AI request failed.'
+
+  for (const model of GEMINI_MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    })
+
+    if (response.status === 429) {
+      throw new Error('AI is busy right now — please try again in a moment.')
+    }
+
+    if (response.status === 404 || response.status === 403) {
+      // This model is unavailable for this key — try next
+      const errData = await response.json().catch(() => ({}))
+      lastError = (errData as any)?.error?.message ?? `Model ${model} unavailable (${response.status})`
+      continue
+    }
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}))
+      throw new Error((errData as any)?.error?.message ?? `AI request failed with status ${response.status}`)
+    }
+
+    const data = await response.json()
+    const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (!text) throw new Error('AI returned an empty response. Please try again.')
+    return text
   }
 
-  if (!response.ok) {
-    throw new Error(`AI Request failed with status ${response.status}`)
-  }
-
-  const data = await response.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-  
-  if (!text) {
-    throw new Error('AI returned an empty response')
-  }
-
-  return text
+  throw new Error(lastError)
 }
 
 async function logUsage(userId: string, feature: 'ai_assist' | 'quick_create' | 'ask_ai' | 'test_ai', contentType?: string | null, instruction?: string | null) {
