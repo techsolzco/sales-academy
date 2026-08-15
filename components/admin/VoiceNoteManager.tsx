@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, Search, Mic } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { VoiceNoteFormModal } from '@/components/admin/VoiceNoteFormModal'
 import { AudioPlayer } from '@/components/audio/AudioPlayer'
+import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteVoiceNote } from '@/lib/actions/voice-notes'
 import type { VoiceNote } from '@/types'
 
@@ -12,6 +13,7 @@ export function VoiceNoteManager({ initialNotes }: { initialNotes: VoiceNote[] }
   const [notes, setNotes] = useState(initialNotes)
   const [search, setSearch] = useState('')
   const [selectedNote, setSelectedNote] = useState<VoiceNote | null>(null)
+  const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -26,13 +28,26 @@ export function VoiceNoteManager({ initialNotes }: { initialNotes: VoiceNote[] }
   })
 
   function handleCreate() {
+    setAiDraft(null)
     setSelectedNote(null)
     setIsModalOpen(true)
   }
 
   function handleEdit(note: VoiceNote) {
+    setAiDraft(null)
     setSelectedNote(note)
     setIsModalOpen(true)
+  }
+
+  function handleQuickCreate(data: Record<string, unknown>) {
+    setAiDraft({ ...data, status: 'draft' })
+    setSelectedNote(null)
+    setIsModalOpen(true)
+  }
+
+  function handleClose() {
+    setIsModalOpen(false)
+    setAiDraft(null)
   }
 
   function handleDelete(id: string) {
@@ -60,12 +75,18 @@ export function VoiceNoteManager({ initialNotes }: { initialNotes: VoiceNote[] }
           />
         </div>
 
-        <button
-          onClick={handleCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" /> Add Voice Note
-        </button>
+        <div className="flex items-center gap-2">
+          <QuickCreateButton
+            contentType="voice_note"
+            onCreated={handleQuickCreate}
+          />
+          <button
+            onClick={handleCreate}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add Voice Note
+          </button>
+        </div>
       </div>
 
       {/* Cards */}
@@ -114,7 +135,8 @@ export function VoiceNoteManager({ initialNotes }: { initialNotes: VoiceNote[] }
       <VoiceNoteFormModal
         voiceNote={selectedNote}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleClose}
+        defaultValues={aiDraft || undefined}
       />
     </div>
   )

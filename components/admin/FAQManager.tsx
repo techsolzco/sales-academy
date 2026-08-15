@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Plus, Edit, Trash2, Search, HelpCircle, Loader2 } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
+import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteFAQ } from '@/lib/actions/faqs'
 import type { FAQ } from '@/types'
 
@@ -12,6 +13,7 @@ export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [selectedFaq, setSelectedFaq] = useState<FAQ | null>(null)
+  const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -29,13 +31,26 @@ export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
   })
 
   function handleCreate() {
+    setAiDraft(null)
     setSelectedFaq(null)
     setIsModalOpen(true)
   }
 
   function handleEdit(faq: FAQ) {
+    setAiDraft(null)
     setSelectedFaq(faq)
     setIsModalOpen(true)
+  }
+
+  function handleQuickCreate(data: Record<string, unknown>) {
+    setAiDraft({ ...data, status: 'draft' })
+    setSelectedFaq(null)
+    setIsModalOpen(true)
+  }
+
+  function handleClose() {
+    setIsModalOpen(false)
+    setAiDraft(null)
   }
 
   function handleDelete(id: string) {
@@ -65,12 +80,18 @@ export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
           </div>
         </div>
 
-        <button
-          onClick={handleCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" /> Add FAQ
-        </button>
+        <div className="flex items-center gap-2">
+          <QuickCreateButton
+            contentType="faq"
+            onCreated={handleQuickCreate}
+          />
+          <button
+            onClick={handleCreate}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add FAQ
+          </button>
+        </div>
       </div>
 
       {/* Category Pills */}
@@ -160,7 +181,8 @@ export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
       <FAQFormModal
         faq={selectedFaq}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleClose}
+        defaultValues={aiDraft || undefined}
       />
     </div>
   )

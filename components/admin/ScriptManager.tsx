@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Plus, Edit, Trash2, Search, FileText } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
+import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteScript } from '@/lib/actions/scripts'
 import type { SalesScript, ScriptType } from '@/types'
 
@@ -18,6 +19,7 @@ export function ScriptManager({
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState<string>('All')
   const [selectedScript, setSelectedScript] = useState<SalesScript | null>(null)
+  const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -35,13 +37,26 @@ export function ScriptManager({
   })
 
   function handleCreate() {
+    setAiDraft(null)
     setSelectedScript(null)
     setIsModalOpen(true)
   }
 
   function handleEdit(script: SalesScript) {
+    setAiDraft(null)
     setSelectedScript(script)
     setIsModalOpen(true)
+  }
+
+  function handleQuickCreate(data: Record<string, unknown>) {
+    setAiDraft({ ...data, status: 'draft' })
+    setSelectedScript(null)
+    setIsModalOpen(true)
+  }
+
+  function handleClose() {
+    setIsModalOpen(false)
+    setAiDraft(null)
   }
 
   function handleDelete(id: string) {
@@ -69,12 +84,18 @@ export function ScriptManager({
           />
         </div>
 
-        <button
-          onClick={handleCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" /> Add Script
-        </button>
+        <div className="flex items-center gap-2">
+          <QuickCreateButton
+            contentType="script"
+            onCreated={handleQuickCreate}
+          />
+          <button
+            onClick={handleCreate}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add Script
+          </button>
+        </div>
       </div>
 
       {/* Script Type Filter */}
@@ -160,7 +181,8 @@ export function ScriptManager({
       <ScriptFormModal
         script={selectedScript}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleClose}
+        defaultValues={aiDraft || undefined}
       />
     </div>
   )

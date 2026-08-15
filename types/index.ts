@@ -541,3 +541,24 @@ export interface ThemeSettings {
   theme_mode: 'system' | 'light' | 'dark'
   updated_at: string
 }
+
+export interface AiTrainingSettings {
+  id: string
+  persona_instructions: string
+  sales_style_rules: string
+  locked_facts: string
+  tone_examples: string
+  updated_at: string
+  updated_by: string | null
+}
+
+export interface AiUsageLog {
+  id: string
+  user_id: string
+  feature: 'ai_assist' | 'quick_create' | 'ask_ai' | 'test_ai'
+  content_type: string | null
+  instruction: string | null
+  created_at: string
+}
+
+export type AiContentType = 'tool' | 'faq' | 'script' | 'objection' | 'voice_note'

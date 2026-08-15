@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video
+  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video, Sparkles
 } from 'lucide-react'
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
@@ -15,6 +15,7 @@ import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Ask AI',      href: '/dashboard/ai-help',    icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
   { label: 'My Training', href: '/dashboard/training',   icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Leaderboard', href: '/dashboard/leaderboard',icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Community',   href: '/dashboard/community',  icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },

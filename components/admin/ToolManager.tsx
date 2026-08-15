@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Plus, Edit, Trash2, Search, Wrench, ExternalLink, Play } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ToolFormModal } from '@/components/admin/ToolFormModal'
+import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteTool } from '@/lib/actions/tools'
 import type { Tool } from '@/types'
 
@@ -12,6 +13,7 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
+  const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -29,13 +31,26 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
   })
 
   function handleCreate() {
+    setAiDraft(null)
     setSelectedTool(null)
     setIsModalOpen(true)
   }
 
   function handleEdit(tool: Tool) {
+    setAiDraft(null)
     setSelectedTool(tool)
     setIsModalOpen(true)
+  }
+
+  function handleQuickCreate(data: Record<string, unknown>) {
+    setAiDraft({ ...data, status: 'draft' })
+    setSelectedTool(null)
+    setIsModalOpen(true)
+  }
+
+  function handleClose() {
+    setIsModalOpen(false)
+    setAiDraft(null)
   }
 
   function handleDelete(id: string) {
@@ -63,12 +78,18 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
           />
         </div>
 
-        <button
-          onClick={handleCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" /> Add Tool
-        </button>
+        <div className="flex items-center gap-2">
+          <QuickCreateButton
+            contentType="tool"
+            onCreated={handleQuickCreate}
+          />
+          <button
+            onClick={handleCreate}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add Tool
+          </button>
+        </div>
       </div>
 
       {/* Category Filter */}
@@ -174,7 +195,8 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
       <ToolFormModal
         tool={selectedTool}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleClose}
+        defaultValues={aiDraft || undefined}
       />
     </div>
   )

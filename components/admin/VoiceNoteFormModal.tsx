@@ -5,30 +5,32 @@ import { useRouter } from 'next/navigation'
 import { X, Loader2, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { createVoiceNote, updateVoiceNote } from '@/lib/actions/voice-notes'
-import type { VoiceNote, Status } from '@/types'
+import type { VoiceNote, Status, AiContentType } from '@/types'
+import { AiAssistButton } from '@/components/ai/AiAssistButton'
 
 interface VoiceNoteFormModalProps {
   voiceNote?: VoiceNote | null
   isOpen: boolean
   onClose: () => void
+  defaultValues?: Record<string, any>
 }
 
-export function VoiceNoteFormModal({ voiceNote, isOpen, onClose }: VoiceNoteFormModalProps) {
+export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues }: VoiceNoteFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
   const [form, setForm] = useState({
-    title: voiceNote?.title ?? '',
-    audio_url: voiceNote?.audio_url ?? '',
-    transcript: voiceNote?.transcript ?? '',
-    purpose: voiceNote?.purpose ?? '',
-    when_to_send: voiceNote?.when_to_send ?? '',
-    language: voiceNote?.language ?? 'English',
-    duration_seconds: voiceNote?.duration_seconds?.toString() ?? '',
-    key_points: voiceNote?.key_points?.join(', ') ?? '',
-    status: (voiceNote?.status ?? 'published') as Status,
+    title: defaultValues?.title ?? voiceNote?.title ?? '',
+    audio_url: defaultValues?.audio_url ?? voiceNote?.audio_url ?? '',
+    transcript: defaultValues?.transcript ?? voiceNote?.transcript ?? '',
+    purpose: defaultValues?.purpose ?? voiceNote?.purpose ?? '',
+    when_to_send: defaultValues?.when_to_send ?? voiceNote?.when_to_send ?? '',
+    language: defaultValues?.language ?? voiceNote?.language ?? 'English',
+    duration_seconds: defaultValues?.duration_seconds?.toString() ?? voiceNote?.duration_seconds?.toString() ?? '',
+    key_points: (Array.isArray(defaultValues?.key_points) ? defaultValues?.key_points.join(', ') : defaultValues?.key_points) ?? voiceNote?.key_points?.join(', ') ?? '',
+    status: (defaultValues?.status ?? voiceNote?.status ?? 'published') as Status,
   })
 
   if (!isOpen) return null
@@ -77,7 +79,7 @@ export function VoiceNoteFormModal({ voiceNote, isOpen, onClose }: VoiceNoteForm
         when_to_send: form.when_to_send || undefined,
         language: form.language || 'English',
         duration_seconds: form.duration_seconds ? parseInt(form.duration_seconds) : undefined,
-        key_points: form.key_points ? form.key_points.split(',').map(k => k.trim()).filter(Boolean) : [],
+        key_points: form.key_points ? form.key_points.split(',').map((k: string) => k.trim()).filter(Boolean) : [],
         status: form.status,
       }
 
@@ -167,7 +169,15 @@ export function VoiceNoteFormModal({ voiceNote, isOpen, onClose }: VoiceNoteForm
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Transcript (Searchable)</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-700">Transcript (Searchable)</label>
+              <AiAssistButton
+                contentType="voice_note"
+                fieldName="transcript"
+                existingContext={JSON.stringify({ title: form.title, purpose: form.purpose })}
+                onResult={(text) => setForm(f => ({ ...f, transcript: text }))}
+              />
+            </div>
             <textarea
               rows={4}
               value={form.transcript}

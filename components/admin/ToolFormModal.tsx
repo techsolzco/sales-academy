@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createTool, updateTool } from '@/lib/actions/tools'
-import type { Tool, ToolCategory, Status } from '@/types'
+import type { Tool, ToolCategory, Status, AiContentType } from '@/types'
+import { AiAssistButton } from '@/components/ai/AiAssistButton'
 
 const CATEGORIES: ToolCategory[] = [
   'AI Tools', 'Design Tools', 'Video Tools', 'Marketing Tools',
@@ -15,26 +16,27 @@ interface ToolFormModalProps {
   tool?: Tool | null
   isOpen: boolean
   onClose: () => void
+  defaultValues?: Record<string, any>
 }
 
-export function ToolFormModal({ tool, isOpen, onClose }: ToolFormModalProps) {
+export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    name: tool?.name ?? '',
-    logo_url: tool?.logo_url ?? '',
-    description: tool?.description ?? '',
-    website_url: tool?.website_url ?? '',
-    category: (tool?.category ?? 'Sales') as ToolCategory,
-    pricing: tool?.pricing ?? '',
-    best_for: tool?.best_for ?? '',
-    features: tool?.features?.join(', ') ?? '',
-    tutorial_link: tool?.tutorial_link ?? '',
-    youtube_tutorial_link: tool?.youtube_tutorial_link ?? '',
-    tags: tool?.tags?.join(', ') ?? '',
-    status: (tool?.status ?? 'published') as Status,
+    name: defaultValues?.name ?? tool?.name ?? '',
+    logo_url: defaultValues?.logo_url ?? tool?.logo_url ?? '',
+    description: defaultValues?.description ?? tool?.description ?? '',
+    website_url: defaultValues?.website_url ?? tool?.website_url ?? '',
+    category: (defaultValues?.category ?? tool?.category ?? 'Sales') as ToolCategory,
+    pricing: defaultValues?.pricing ?? tool?.pricing ?? '',
+    best_for: defaultValues?.best_for ?? tool?.best_for ?? '',
+    features: (Array.isArray(defaultValues?.features) ? defaultValues?.features.join(', ') : defaultValues?.features) ?? tool?.features?.join(', ') ?? '',
+    tutorial_link: defaultValues?.tutorial_link ?? tool?.tutorial_link ?? '',
+    youtube_tutorial_link: defaultValues?.youtube_tutorial_link ?? tool?.youtube_tutorial_link ?? '',
+    tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? tool?.tags?.join(', ') ?? '',
+    status: (defaultValues?.status ?? tool?.status ?? 'published') as Status,
   })
 
   if (!isOpen) return null
@@ -51,10 +53,10 @@ export function ToolFormModal({ tool, isOpen, onClose }: ToolFormModalProps) {
         category: form.category,
         pricing: form.pricing || undefined,
         best_for: form.best_for || undefined,
-        features: form.features ? form.features.split(',').map(f => f.trim()).filter(Boolean) : [],
+        features: form.features ? form.features.split(',').map((f: string) => f.trim()).filter(Boolean) : [],
         tutorial_link: form.tutorial_link || undefined,
         youtube_tutorial_link: form.youtube_tutorial_link || undefined,
-        tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
         status: form.status,
       }
 
@@ -126,7 +128,15 @@ export function ToolFormModal({ tool, isOpen, onClose }: ToolFormModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Description</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-700">Description</label>
+              <AiAssistButton
+                contentType="tool"
+                fieldName="description"
+                existingContext={JSON.stringify({ name: form.name, category: form.category, pricing: form.pricing })}
+                onResult={(text) => setForm(f => ({ ...f, description: text }))}
+              />
+            </div>
             <textarea
               rows={2}
               value={form.description}
@@ -148,7 +158,15 @@ export function ToolFormModal({ tool, isOpen, onClose }: ToolFormModalProps) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Best For</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-gray-700">Best For</label>
+                <AiAssistButton
+                  contentType="tool"
+                  fieldName="best_for"
+                  existingContext={JSON.stringify({ name: form.name, category: form.category, pricing: form.pricing })}
+                  onResult={(text) => setForm(f => ({ ...f, best_for: text }))}
+                />
+              </div>
               <input
                 value={form.best_for}
                 onChange={e => setForm(f => ({ ...f, best_for: e.target.value }))}

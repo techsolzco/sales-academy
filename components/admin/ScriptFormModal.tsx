@@ -4,7 +4,8 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createScript, updateScript } from '@/lib/actions/scripts'
-import type { SalesScript, ScriptType, Status } from '@/types'
+import type { SalesScript, ScriptType, Status, AiContentType } from '@/types'
+import { AiAssistButton } from '@/components/ai/AiAssistButton'
 
 const SCRIPT_TYPES: { type: ScriptType; label: string }[] = [
   { type: 'greeting', label: 'Greeting' },
@@ -25,23 +26,24 @@ interface ScriptFormModalProps {
   script?: SalesScript | null
   isOpen: boolean
   onClose: () => void
+  defaultValues?: Record<string, any>
 }
 
-export function ScriptFormModal({ script, isOpen, onClose }: ScriptFormModalProps) {
+export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: ScriptFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    title: script?.title ?? '',
-    script_type: (script?.script_type ?? 'whatsapp') as ScriptType,
-    language: script?.language ?? 'English',
-    content: script?.content ?? '',
-    when_to_use: script?.when_to_use ?? '',
-    related_product: script?.related_product ?? '',
-    related_objection: script?.related_objection ?? '',
-    tags: script?.tags?.join(', ') ?? '',
-    status: (script?.status ?? 'published') as Status,
+    title: defaultValues?.title ?? script?.title ?? '',
+    script_type: (defaultValues?.script_type ?? script?.script_type ?? 'whatsapp') as ScriptType,
+    language: defaultValues?.language ?? script?.language ?? 'English',
+    content: defaultValues?.content ?? script?.content ?? '',
+    when_to_use: defaultValues?.when_to_use ?? script?.when_to_use ?? '',
+    related_product: defaultValues?.related_product ?? script?.related_product ?? '',
+    related_objection: defaultValues?.related_objection ?? script?.related_objection ?? '',
+    tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? script?.tags?.join(', ') ?? '',
+    status: (defaultValues?.status ?? script?.status ?? 'published') as Status,
   })
 
   if (!isOpen) return null
@@ -58,7 +60,7 @@ export function ScriptFormModal({ script, isOpen, onClose }: ScriptFormModalProp
         when_to_use: form.when_to_use || undefined,
         related_product: form.related_product || undefined,
         related_objection: form.related_objection || undefined,
-        tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
         status: form.status,
       }
 
@@ -132,7 +134,15 @@ export function ScriptFormModal({ script, isOpen, onClose }: ScriptFormModalProp
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Script Content *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-700">Script Content *</label>
+              <AiAssistButton
+                contentType="script"
+                fieldName="content"
+                existingContext={JSON.stringify({ title: form.title, script_type: form.script_type, language: form.language, when_to_use: form.when_to_use })}
+                onResult={(text) => setForm(f => ({ ...f, content: text }))}
+              />
+            </div>
             <textarea
               required
               rows={5}

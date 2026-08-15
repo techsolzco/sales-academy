@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Plus, Edit, Trash2, Search, AlertCircle } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
+import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteObjection } from '@/lib/actions/objections'
 import type { Objection } from '@/types'
 
@@ -11,6 +12,7 @@ export function ObjectionManager({ initialObjections }: { initialObjections: Obj
   const [objections, setObjections] = useState(initialObjections)
   const [search, setSearch] = useState('')
   const [selectedObjection, setSelectedObjection] = useState<Objection | null>(null)
+  const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -25,13 +27,26 @@ export function ObjectionManager({ initialObjections }: { initialObjections: Obj
   })
 
   function handleCreate() {
+    setAiDraft(null)
     setSelectedObjection(null)
     setIsModalOpen(true)
   }
 
   function handleEdit(objection: Objection) {
+    setAiDraft(null)
     setSelectedObjection(objection)
     setIsModalOpen(true)
+  }
+
+  function handleQuickCreate(data: Record<string, unknown>) {
+    setAiDraft({ ...data, status: 'draft' })
+    setSelectedObjection(null)
+    setIsModalOpen(true)
+  }
+
+  function handleClose() {
+    setIsModalOpen(false)
+    setAiDraft(null)
   }
 
   function handleDelete(id: string) {
@@ -59,12 +74,18 @@ export function ObjectionManager({ initialObjections }: { initialObjections: Obj
           />
         </div>
 
-        <button
-          onClick={handleCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" /> Add Objection
-        </button>
+        <div className="flex items-center gap-2">
+          <QuickCreateButton
+            contentType="objection"
+            onCreated={handleQuickCreate}
+          />
+          <button
+            onClick={handleCreate}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add Objection
+          </button>
+        </div>
       </div>
 
       {/* List */}
@@ -139,7 +160,8 @@ export function ObjectionManager({ initialObjections }: { initialObjections: Obj
       <ObjectionFormModal
         objection={selectedObjection}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleClose}
+        defaultValues={aiDraft || undefined}
       />
     </div>
   )

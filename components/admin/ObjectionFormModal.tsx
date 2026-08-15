@@ -4,28 +4,30 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createObjection, updateObjection } from '@/lib/actions/objections'
-import type { Objection, Difficulty, Status } from '@/types'
+import type { Objection, Difficulty, Status, AiContentType } from '@/types'
+import { AiAssistButton } from '@/components/ai/AiAssistButton'
 
 interface ObjectionFormModalProps {
   objection?: Objection | null
   isOpen: boolean
   onClose: () => void
+  defaultValues?: Record<string, any>
 }
 
-export function ObjectionFormModal({ objection, isOpen, onClose }: ObjectionFormModalProps) {
+export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }: ObjectionFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    objection_text: objection?.objection_text ?? '',
-    meaning: objection?.meaning ?? '',
-    recommended_response: objection?.recommended_response ?? '',
-    alternative_response: objection?.alternative_response ?? '',
-    do_not_say: objection?.do_not_say ?? '',
-    related_product: objection?.related_product ?? '',
-    difficulty: (objection?.difficulty ?? 'beginner') as Difficulty,
-    status: (objection?.status ?? 'published') as Status,
+    objection_text: defaultValues?.objection_text ?? objection?.objection_text ?? '',
+    meaning: defaultValues?.meaning ?? objection?.meaning ?? '',
+    recommended_response: defaultValues?.recommended_response ?? objection?.recommended_response ?? '',
+    alternative_response: defaultValues?.alternative_response ?? objection?.alternative_response ?? '',
+    do_not_say: defaultValues?.do_not_say ?? objection?.do_not_say ?? '',
+    related_product: defaultValues?.related_product ?? objection?.related_product ?? '',
+    difficulty: (defaultValues?.difficulty ?? objection?.difficulty ?? 'beginner') as Difficulty,
+    status: (defaultValues?.status ?? objection?.status ?? 'published') as Status,
   })
 
   if (!isOpen) return null
@@ -97,7 +99,15 @@ export function ObjectionFormModal({ objection, isOpen, onClose }: ObjectionForm
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-emerald-700 mb-1">✅ Recommended Response *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-emerald-700">✅ Recommended Response *</label>
+              <AiAssistButton
+                contentType="objection"
+                fieldName="recommended_response"
+                existingContext={JSON.stringify({ objection_text: form.objection_text, meaning: form.meaning })}
+                onResult={(text) => setForm(f => ({ ...f, recommended_response: text }))}
+              />
+            </div>
             <textarea
               required
               rows={3}
@@ -120,7 +130,15 @@ export function ObjectionFormModal({ objection, isOpen, onClose }: ObjectionForm
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Alternative Backup Response</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-700">Alternative Backup Response</label>
+              <AiAssistButton
+                contentType="objection"
+                fieldName="alternative_response"
+                existingContext={JSON.stringify({ objection_text: form.objection_text, meaning: form.meaning })}
+                onResult={(text) => setForm(f => ({ ...f, alternative_response: text }))}
+              />
+            </div>
             <textarea
               rows={2}
               value={form.alternative_response}

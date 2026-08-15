@@ -4,28 +4,30 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createFAQ, updateFAQ } from '@/lib/actions/faqs'
-import type { FAQ, Status } from '@/types'
+import type { FAQ, Status, AiContentType } from '@/types'
+import { AiAssistButton } from '@/components/ai/AiAssistButton'
 
 interface FAQFormModalProps {
   faq?: FAQ | null
   isOpen: boolean
   onClose: () => void
+  defaultValues?: Record<string, any>
 }
 
-export function FAQFormModal({ faq, isOpen, onClose }: FAQFormModalProps) {
+export function FAQFormModal({ faq, isOpen, onClose, defaultValues }: FAQFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    question: faq?.question ?? '',
-    short_answer: faq?.short_answer ?? '',
-    detailed_answer: faq?.detailed_answer ?? '',
-    customer_ready_answer: faq?.customer_ready_answer ?? '',
-    category: faq?.category ?? 'General',
-    tags: faq?.tags?.join(', ') ?? '',
-    priority: faq?.priority?.toString() ?? '0',
-    status: (faq?.status ?? 'published') as Status,
+    question: defaultValues?.question ?? faq?.question ?? '',
+    short_answer: defaultValues?.short_answer ?? faq?.short_answer ?? '',
+    detailed_answer: defaultValues?.detailed_answer ?? faq?.detailed_answer ?? '',
+    customer_ready_answer: defaultValues?.customer_ready_answer ?? faq?.customer_ready_answer ?? '',
+    category: defaultValues?.category ?? faq?.category ?? 'General',
+    tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? faq?.tags?.join(', ') ?? '',
+    priority: defaultValues?.priority?.toString() ?? faq?.priority?.toString() ?? '0',
+    status: (defaultValues?.status ?? faq?.status ?? 'published') as Status,
   })
 
   if (!isOpen) return null
@@ -40,7 +42,7 @@ export function FAQFormModal({ faq, isOpen, onClose }: FAQFormModalProps) {
         detailed_answer: form.detailed_answer || undefined,
         customer_ready_answer: form.customer_ready_answer || undefined,
         category: form.category || 'General',
-        tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
         priority: parseInt(form.priority) || 0,
         status: form.status,
       }
@@ -87,7 +89,15 @@ export function FAQFormModal({ faq, isOpen, onClose }: FAQFormModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Short Answer *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-700">Short Answer *</label>
+              <AiAssistButton
+                contentType="faq"
+                fieldName="short_answer"
+                existingContext={JSON.stringify({ question: form.question, category: form.category })}
+                onResult={(text) => setForm(f => ({ ...f, short_answer: text }))}
+              />
+            </div>
             <textarea
               required
               rows={2}
@@ -99,7 +109,15 @@ export function FAQFormModal({ faq, isOpen, onClose }: FAQFormModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Customer-Ready Answer (Copyable)</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-700">Customer-Ready Answer (Copyable)</label>
+              <AiAssistButton
+                contentType="faq"
+                fieldName="customer_ready_answer"
+                existingContext={JSON.stringify({ question: form.question, category: form.category })}
+                onResult={(text) => setForm(f => ({ ...f, customer_ready_answer: text }))}
+              />
+            </div>
             <textarea
               rows={3}
               value={form.customer_ready_answer}
@@ -110,7 +128,15 @@ export function FAQFormModal({ faq, isOpen, onClose }: FAQFormModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Detailed Answer (Internal)</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-700">Detailed Answer (Internal)</label>
+              <AiAssistButton
+                contentType="faq"
+                fieldName="detailed_answer"
+                existingContext={JSON.stringify({ question: form.question, category: form.category })}
+                onResult={(text) => setForm(f => ({ ...f, detailed_answer: text }))}
+              />
+            </div>
             <textarea
               rows={3}
               value={form.detailed_answer}
