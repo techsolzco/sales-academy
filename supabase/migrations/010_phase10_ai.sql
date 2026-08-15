@@ -1,6 +1,7 @@
 -- ============================================================
 --  Sales Academy — Phase 10: AI Assistant System
 --  Run in Supabase SQL Editor after 009_phase9.sql
+--  Idempotent: safe to re-run even if objects already exist
 -- ============================================================
 
 -- ── 1. AI TRAINING SETTINGS (single-row config) ───────────────────────────
@@ -33,16 +34,19 @@ ALTER TABLE public.ai_training_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_usage_log         ENABLE ROW LEVEL SECURITY;
 
 -- ai_training_settings: admin full access only
+DROP POLICY IF EXISTS "ai_training: admin full access" ON public.ai_training_settings;
 CREATE POLICY "ai_training: admin full access"
   ON public.ai_training_settings FOR ALL
   USING (public.current_user_role() = 'admin')
   WITH CHECK (public.current_user_role() = 'admin');
 
--- ai_usage_log: admin sees all; users insert own; no salesman SELECT
+-- ai_usage_log: admin sees all; authenticated users insert own
+DROP POLICY IF EXISTS "ai_usage_log: admin can read all" ON public.ai_usage_log;
 CREATE POLICY "ai_usage_log: admin can read all"
   ON public.ai_usage_log FOR SELECT
   USING (public.current_user_role() = 'admin');
 
+DROP POLICY IF EXISTS "ai_usage_log: authenticated can insert own" ON public.ai_usage_log;
 CREATE POLICY "ai_usage_log: authenticated can insert own"
   ON public.ai_usage_log FOR INSERT
   WITH CHECK (user_id = auth.uid());
