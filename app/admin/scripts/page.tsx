@@ -5,7 +5,7 @@ import { Breadcrumb } from '@/components/admin/Breadcrumb'
 export default async function AdminScriptsPage() {
   const supabase = await createClient()
 
-  const [scriptsRes, copiesRes] = await Promise.all([
+  const [scriptsRes, copiesRes, toolsRes] = await Promise.all([
     supabase
       .from('scripts')
       .select('*')
@@ -14,7 +14,15 @@ export default async function AdminScriptsPage() {
     supabase
       .from('script_copies')
       .select('script_id'),
+      
+    supabase
+      .from('tools')
+      .select('id, name')
+      .eq('status', 'published')
+      .order('name'),
   ])
+
+  const tools = toolsRes.data ?? []
 
   const copyCounts: Record<string, number> = {}
   for (const row of copiesRes.data ?? []) {
@@ -38,6 +46,7 @@ export default async function AdminScriptsPage() {
       <ScriptManager
         initialScripts={scriptsRes.data ?? []}
         copyCounts={copyCounts}
+        tools={tools}
       />
     </div>
   )

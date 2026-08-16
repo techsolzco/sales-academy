@@ -1,35 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
+import { submitPasswordResetRequest } from '@/lib/actions/password-reset'
+import { Key, Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [form, setForm] = useState({ email: '', full_name: '' })
+  const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  const supabase = createClient()
-
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
+    if (!form.email.trim()) { setError('Please enter your email.'); return }
     setError(null)
-
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${location.origin}/auth/reset-password`,
+    startTransition(async () => {
+      const res = await submitPasswordResetRequest(form.email, form.full_name)
+      if (res.error) { setError(res.error); return }
+      setSubmitted(true)
     })
-
-    setLoading(false)
-
-    if (resetError) {
-      setError('Something went wrong. Please try again.')
-      return
-    }
-
-    setSent(true)
   }
 
   return (
@@ -42,56 +32,44 @@ export default function ForgotPasswordPage() {
         Back to sign in
       </Link>
 
-      {sent ? (
-        <div className="text-center animate-fade-in">
-          <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-white mb-2">Check your email</h2>
-          <p className="text-brand-200 text-sm">
-            We&apos;ve sent a password reset link to <strong className="text-white">{email}</strong>.
-            It will expire in 1 hour.
-          </p>
-        </div>
-      ) : (
-        <>
-          <h2 className="text-xl font-semibold text-white mb-1">Reset your password</h2>
-          <p className="text-brand-200 text-sm mb-6">
-            Enter your email and we&apos;ll send you a reset link.
-          </p>
-
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-sm animate-fade-in">
-              {error}
+      <div className="max-w-md w-full mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+              <Key className="w-5 h-5 text-brand-600" />
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="reset-email" className="block text-sm font-medium text-brand-100 mb-1.5">
-                Email address
-              </label>
-              <input
-                id="reset-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 transition text-sm"
-              />
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Request Password Reset</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Admin will reset your password manually</p>
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              id="btn-reset-password"
-              className="w-full py-2.5 rounded-lg bg-white text-brand-700 font-semibold hover:bg-brand-50 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {loading ? 'Sending…' : 'Send reset link'}
-            </button>
-          </form>
-        </>
-      )}
+          {submitted ? (
+            <div className="text-center py-4">
+              <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Request Submitted!</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">An admin will review your request and provide a temporary password. Please check back or contact your manager.</p>
+              <Link href="/auth/login" className="inline-block mt-6 text-brand-600 hover:underline text-sm font-medium">← Back to Login</Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Your Email *</label>
+                <input type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="your@email.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Your Name (optional)</label>
+                <input type="text" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400" placeholder="Helps admin identify you" />
+              </div>
+              <button type="submit" disabled={isPending} className="w-full py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 disabled:opacity-60 flex items-center justify-center gap-2">
+                {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                Submit Request
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video, Sparkles
+  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video, Sparkles, Megaphone, ScrollText
 } from 'lucide-react'
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
@@ -13,6 +13,7 @@ import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
 import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
+import { ToastProvider } from '@/components/ui/ToastContext'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
@@ -29,7 +30,9 @@ const salesmanNavItems = [
   { label: 'Assignments', href: '/dashboard/assignments', icon: <ClipboardList className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Meetings',    href: '/dashboard/meetings',   icon: <Video className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Tools',       href: '/dashboard/tools',      icon: <Wrench className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Profile',     href: '/dashboard/profile',    icon: <User className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Policies',       href: '/dashboard/policies',       icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Announcements',  href: '/dashboard/announcements',  icon: <Megaphone className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Profile',        href: '/dashboard/profile',        icon: <User className="w-4 h-4 flex-shrink-0" /> },
 ]
 
 export default async function DashboardLayout({
@@ -54,15 +57,28 @@ export default async function DashboardLayout({
     redirect('/admin')
   }
 
+  const { data: notifCounts } = await supabase
+    .from('notifications')
+    .select('type')
+    .eq('user_id', user.id)
+    .eq('read', false)
+
+  const countByType = (type: string) => notifCounts?.filter(n => n.type === type).length ?? 0
+
   const navItems = [
-    ...salesmanNavItems,
+    ...salesmanNavItems.map(item => {
+      if (item.label === 'Assignments') return { ...item, badge: countByType('assignment') > 0 ? countByType('assignment') : (countByType('badge') > 0 ? countByType('badge') : undefined) }
+      if (item.label === 'Community') return { ...item, badge: countByType('community') > 0 ? countByType('community') : undefined }
+      return item
+    }),
     ...(profile?.is_reseller ? [{ label: 'Sales Partner', href: '/dashboard/reseller', icon: <BadgeCheck className="w-4 h-4 flex-shrink-0" /> }] : [])
   ]
 
   return (
     <LanguageProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen bg-gray-50">
+      <ToastProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Sidebar
         navItems={navItems}
         footer={
@@ -96,7 +112,8 @@ export default async function DashboardLayout({
       </div>
       <WhatsAppButton />
       </div>
-      </SidebarProvider>
+        </SidebarProvider>
+      </ToastProvider>
     </LanguageProvider>
   )
 }

@@ -50,3 +50,14 @@ export async function updateAvatar(avatarUrl: string): Promise<ActionResult> {
   return { data: undefined }
 }
 
+export async function updateProfile(data: { full_name?: string; bio?: string; phone?: string }): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+  if (error) return { error: error.message }
+  return { data: undefined }
+}

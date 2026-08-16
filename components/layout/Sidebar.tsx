@@ -10,6 +10,7 @@ interface NavItem {
   label: string
   href: string
   icon: React.ReactNode
+  badge?: number
 }
 
 interface SidebarProps {
@@ -91,6 +92,11 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
             >
               {item.icon}
               <span className="flex-1">{item.label}</span>
+              {item.badge && item.badge > 0 && (
+                <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
+                  {item.badge > 99 ? '99+' : item.badge}
+                </span>
+              )}
               {isPendingItem && isPending && (
                 <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
               )}

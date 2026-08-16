@@ -94,11 +94,33 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, initialMe
 
   if (!conversationId || !otherUser) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-gray-50/50 rounded-2xl border border-gray-100 text-gray-400">
-        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100">
-          <User className="w-8 h-8 text-gray-300" />
+      <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Empty State Body */}
+        <div className="flex-1 flex flex-col items-center justify-center bg-gray-50/50 text-gray-400">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100">
+            <User className="w-8 h-8 text-gray-300" />
+          </div>
+          <p className="font-medium text-gray-500">Select a conversation to start chatting</p>
         </div>
-        <p className="font-medium text-gray-500">Select a conversation to start chatting</p>
+        
+        {/* Disabled Input Box */}
+        <div className="p-4 bg-white border-t border-gray-100">
+          <form className="flex gap-2">
+            <input
+              type="text"
+              disabled
+              placeholder="Select a conversation to start chatting..."
+              className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <button
+              type="button"
+              disabled
+              className="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex-shrink-0"
+            >
+              <Send className="w-4 h-4 ml-0.5" />
+            </button>
+          </form>
+        </div>
       </div>
     )
   }

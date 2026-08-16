@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AvatarUpload } from '@/components/profile/AvatarUpload'
+import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
 import { BadgeGrid } from '@/components/profile/BadgeGrid'
 import { fetchUserBadges } from '@/lib/actions/badges'
 import { User, Mail, Briefcase, ExternalLink } from 'lucide-react'
@@ -92,6 +93,8 @@ export default async function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <ProfileEditForm initialData={{ full_name: profile?.full_name, bio: profile?.bio, phone: profile?.phone }} />
 
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-4">My Badges</h2>

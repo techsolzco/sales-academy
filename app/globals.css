@@ -66,5 +66,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    color: theme('colors.gray.900');
+  }
+  .dark body {
+    color: theme('colors.gray.100');
   }
 }

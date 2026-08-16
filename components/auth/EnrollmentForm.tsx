@@ -49,7 +49,7 @@ export function EnrollmentForm() {
       <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
         <CheckCircle2 className="w-16 h-16 text-brand-600 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted! 🎉</h2>
-        <p className="text-gray-500 mb-6">Our team will review your application shortly. You will receive an email once approved.</p>
+        <p className="text-gray-500 mb-6">Your application has been submitted! We'll review it and notify you by email once approved.</p>
         <button
           onClick={() => router.push('/auth/login')}
           className="bg-brand-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-brand-700 transition"
@@ -63,8 +63,8 @@ export function EnrollmentForm() {
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
       <div className="bg-brand-600 p-8 text-white">
-        <h1 className="text-2xl font-bold mb-2">{t('register.title')}</h1>
-        <p className="text-brand-100">{t('register.subtitle')}</p>
+        <h1 className="text-2xl font-bold mb-2">Apply to Join as a Sales Intern</h1>
+        <p className="text-brand-100">Submit your application below. Our team will review it and get back to you within 1-2 business days.</p>
         
         <div className="flex items-center gap-2 mt-6">
           <div className={`h-2 flex-1 rounded-full ${step >= 1 ? 'bg-white' : 'bg-brand-400/30'}`} />
@@ -124,7 +124,7 @@ export function EnrollmentForm() {
                 Back
               </button>
               <button disabled={loading} type="submit" className="flex-1 bg-brand-600 text-white py-2.5 rounded-xl font-medium hover:bg-brand-700 transition flex items-center justify-center">
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('register.submit')}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Intern Application'}
               </button>
             </div>
           </form>

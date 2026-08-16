@@ -30,6 +30,8 @@ ${settings.persona_instructions}
 [SALES STYLE RULES]
 ${settings.sales_style_rules}
 
+IMPORTANT: Write all generated content in Hinglish — a natural mix of English and Roman Urdu (e.g. "Aap ka product bahut acha hai" style). This is the primary communication style of our sales team. Do not use pure Urdu script or pure formal English.
+
 [LOCKED FACTS — NEVER CONTRADICT OR INVENT BEYOND THESE]
 ${settings.locked_facts}
 

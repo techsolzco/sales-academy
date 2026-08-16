@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles
+  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText
 } from 'lucide-react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { LanguageToggle } from '@/components/layout/LanguageToggle'
@@ -12,12 +12,14 @@ import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
 import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
+import { ToastProvider } from '@/components/ui/ToastContext'
 
 const adminNavItems = [
   { label: 'Dashboard',   href: '/admin',             icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Leaderboard', href: '/admin/leaderboard', icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Salesmen',    href: '/admin/salesmen',     icon: <Users className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Enrollments', href: '/admin/enrollments',  icon: <UserPlus className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Password Resets', href: '/admin/password-resets', icon: <Key className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Reseller Requests', href: '/admin/reseller-requests', icon: <UserCheck className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Resellers',   href: '/admin/resellers',    icon: <BadgeCheck className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Community',   href: '/admin/community',    icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
@@ -35,6 +37,9 @@ const adminNavItems = [
   { label: 'Appearance',  href: '/admin/settings/appearance', icon: <Paintbrush className="w-4 h-4 flex-shrink-0" /> },
   { label: 'AI Training', href: '/admin/settings/ai-training', icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Settings',    href: '/admin/settings',     icon: <Settings className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'My Profile',  href: '/admin/profile',      icon: <User className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Policies',    href: '/admin/policies',     icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Announcements', href: '/admin/announcements', icon: <Megaphone className="w-4 h-4 flex-shrink-0" /> },
 ]
 
 export default async function AdminLayout({
@@ -61,8 +66,9 @@ export default async function AdminLayout({
 
   return (
     <LanguageProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen bg-gray-50">
+      <ToastProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Sidebar
         navItems={adminNavItems}
         footer={
@@ -90,12 +96,13 @@ export default async function AdminLayout({
             </span>
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-gray-50 min-h-full">
+        <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-full">
           {children}
         </main>
       </div>
       </div>
-      </SidebarProvider>
+        </SidebarProvider>
+      </ToastProvider>
     </LanguageProvider>
   )
 }
