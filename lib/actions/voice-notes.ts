@@ -25,6 +25,7 @@ export interface VoiceNoteInput {
   duration_seconds?: number
   key_points?: string[]
   status?: Status
+  tool_id?: string | null
 }
 
 export async function createVoiceNote(input: VoiceNoteInput): Promise<ActionResult<VoiceNote>> {
@@ -37,6 +38,7 @@ export async function createVoiceNote(input: VoiceNoteInput): Promise<ActionResu
         language: input.language || 'English',
         key_points: input.key_points || [],
         status: input.status || 'draft',
+        tool_id: input.tool_id || null,
       })
       .select()
       .single()

@@ -23,6 +23,7 @@ export interface FAQInput {
   tags?: string[]
   priority?: number
   status?: Status
+  tool_id?: string | null
 }
 
 export async function createFAQ(input: FAQInput): Promise<ActionResult<FAQ>> {
@@ -36,6 +37,7 @@ export async function createFAQ(input: FAQInput): Promise<ActionResult<FAQ>> {
         tags: input.tags || [],
         priority: input.priority ?? 0,
         status: input.status || 'draft',
+        tool_id: input.tool_id || null,
       })
       .select()
       .single()

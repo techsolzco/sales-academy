@@ -11,6 +11,12 @@ export default async function AdminFAQsPage() {
     .order('priority', { ascending: false })
     .order('created_at', { ascending: false })
 
+  const { data: tools } = await supabase
+    .from('tools')
+    .select('id, name')
+    .eq('status', 'published')
+    .order('name')
+
   return (
     <div className="p-8 max-w-5xl animate-fade-in">
       <Breadcrumb crumbs={[
@@ -25,7 +31,7 @@ export default async function AdminFAQsPage() {
         </p>
       </div>
 
-      <FAQManager initialFaqs={faqs ?? []} />
+      <FAQManager initialFaqs={faqs ?? []} tools={tools ?? []} />
     </div>
   )
 }

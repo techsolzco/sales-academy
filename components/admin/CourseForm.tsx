@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createCourse, updateCourse } from '@/lib/actions/courses'
 import type { Course, Status, Difficulty, Visibility } from '@/types'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 
 const CATEGORIES = [
   'Sales Skills', 'Product Training', 'Onboarding', 'Compliance',
@@ -98,13 +99,12 @@ export function CourseForm({ course, onSuccess }: CourseFormProps) {
 
       {/* Thumbnail URL */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Thumbnail URL</label>
-        <input
-          type="url"
-          value={form.thumbnail_url}
-          onChange={e => update('thumbnail_url', e.target.value)}
-          placeholder="https://example.com/image.jpg"
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+        <ImageUpload
+          currentUrl={form.thumbnail_url || undefined}
+          bucket="course-thumbnails"
+          folder="thumbnails"
+          onUpload={(url) => update('thumbnail_url', url)}
+          label="Course Thumbnail"
         />
       </div>
 

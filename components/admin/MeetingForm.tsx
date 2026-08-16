@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createMeeting } from '@/lib/actions/meetings'
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import type { Profile, Course } from '@/types'
 
 interface MeetingFormProps {
@@ -15,6 +16,7 @@ export function MeetingForm({ courses, salesmen }: MeetingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [visibility, setVisibility] = useState<'invited' | 'public'>('invited')
   const [selectedSalesmen, setSelectedSalesmen] = useState<string[]>([])
+  const [scheduledAt, setScheduledAt] = useState('')
   
   const toggleSalesman = (id: string) => {
     setSelectedSalesmen(prev => 
@@ -32,7 +34,7 @@ export function MeetingForm({ courses, salesmen }: MeetingFormProps) {
       const payload = {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
-        scheduled_at: formData.get('scheduled_at') as string,
+        scheduled_at: scheduledAt,
         course_id: formData.get('course_id') as string || undefined,
         visibility,
         invitee_ids: visibility === 'invited' ? selectedSalesmen : []
@@ -80,16 +82,12 @@ export function MeetingForm({ courses, salesmen }: MeetingFormProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="scheduled_at" className="block text-sm font-medium text-gray-700">Scheduled At *</label>
-            <input
-              type="datetime-local"
-              id="scheduled_at"
-              name="scheduled_at"
-              required
-              className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm px-4 py-2 border"
-            />
-          </div>
+          <DateTimePicker
+            label="Scheduled At"
+            required
+            value={scheduledAt}
+            onChange={setScheduledAt}
+          />
 
           <div>
             <label htmlFor="course_id" className="block text-sm font-medium text-gray-700">Link to Course (Optional)</label>

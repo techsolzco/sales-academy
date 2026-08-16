@@ -24,6 +24,7 @@ export interface ObjectionInput {
   related_lesson_id?: string
   difficulty?: Difficulty
   status?: Status
+  tool_id?: string | null
 }
 
 export async function createObjection(input: ObjectionInput): Promise<ActionResult<Objection>> {
@@ -34,6 +35,7 @@ export async function createObjection(input: ObjectionInput): Promise<ActionResu
       .insert({
         ...input,
         status: input.status || 'draft',
+        tool_id: input.tool_id || null,
       })
       .select()
       .single()

@@ -64,7 +64,7 @@ export default async function AssignmentsAdminPage() {
               </tr>
             ) : (
               stats.map((assignment: any) => (
-                <tr key={assignment.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {}}>
+                <tr key={assignment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4">
                     <Link href={`/admin/assignments/${assignment.id}`} className="font-medium text-gray-900 block hover:text-brand-600">
                       {assignment.title}

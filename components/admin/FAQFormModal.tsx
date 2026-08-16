@@ -12,9 +12,10 @@ interface FAQFormModalProps {
   isOpen: boolean
   onClose: () => void
   defaultValues?: Record<string, any>
+  tools?: { id: string; name: string }[]
 }
 
-export function FAQFormModal({ faq, isOpen, onClose, defaultValues }: FAQFormModalProps) {
+export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }: FAQFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -28,6 +29,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues }: FAQFormMod
     tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? faq?.tags?.join(', ') ?? '',
     priority: defaultValues?.priority?.toString() ?? faq?.priority?.toString() ?? '0',
     status: (defaultValues?.status ?? faq?.status ?? 'published') as Status,
+    tool_id: defaultValues?.tool_id ?? faq?.tool_id ?? '',
   })
 
   if (!isOpen) return null
@@ -45,6 +47,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues }: FAQFormMod
         tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
         priority: parseInt(form.priority) || 0,
         status: form.status,
+        tool_id: form.tool_id || null,
       }
 
       const res = faq
@@ -167,6 +170,20 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues }: FAQFormMod
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Related Tool (Optional)</label>
+              <select
+                value={form.tool_id}
+                onChange={e => setForm(f => ({ ...f, tool_id: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              >
+                <option value="">General (no specific tool)</option>
+                {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
           </div>

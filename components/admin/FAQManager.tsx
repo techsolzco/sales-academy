@@ -8,10 +8,11 @@ import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteFAQ } from '@/lib/actions/faqs'
 import type { FAQ } from '@/types'
 
-export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
+export function FAQManager({ initialFaqs, tools = [] }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[] }) {
   const [faqs, setFaqs] = useState(initialFaqs)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
+  const [filterToolId, setFilterToolId] = useState('')
   const [selectedFaq, setSelectedFaq] = useState<FAQ | null>(null)
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -27,7 +28,8 @@ export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
       f.question.toLowerCase().includes(q) ||
       f.short_answer.toLowerCase().includes(q) ||
       f.category.toLowerCase().includes(q)
-    return matchesCat && matchesSearch
+    const matchesTool = !filterToolId || f.tool_id === filterToolId
+    return matchesCat && matchesSearch && matchesTool
   })
 
   function handleCreate() {
@@ -78,6 +80,14 @@ export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
               className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
           </div>
+          <select
+            value={filterToolId}
+            onChange={e => setFilterToolId(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          >
+            <option value="">All Tools</option>
+            {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
         </div>
 
         <div className="flex items-center gap-2">
@@ -183,6 +193,7 @@ export function FAQManager({ initialFaqs }: { initialFaqs: FAQ[] }) {
         isOpen={isModalOpen}
         onClose={handleClose}
         defaultValues={aiDraft || undefined}
+        tools={tools}
       />
     </div>
   )

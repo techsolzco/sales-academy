@@ -24,6 +24,7 @@ export interface ScriptInput {
   related_objection?: string
   tags?: string[]
   status?: Status
+  tool_id?: string | null
 }
 
 export async function createScript(input: ScriptInput): Promise<ActionResult<SalesScript>> {
@@ -36,6 +37,7 @@ export async function createScript(input: ScriptInput): Promise<ActionResult<Sal
         language: input.language || 'English',
         tags: input.tags || [],
         status: input.status || 'draft',
+        tool_id: input.tool_id || null,
       })
       .select()
       .single()

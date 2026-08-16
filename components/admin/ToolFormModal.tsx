@@ -6,6 +6,7 @@ import { X, Loader2 } from 'lucide-react'
 import { createTool, updateTool } from '@/lib/actions/tools'
 import type { Tool, ToolCategory, Status, AiContentType } from '@/types'
 import { AiAssistButton } from '@/components/ai/AiAssistButton'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 
 const CATEGORIES: ToolCategory[] = [
   'AI Tools', 'Design Tools', 'Video Tools', 'Marketing Tools',
@@ -211,13 +212,12 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Logo URL</label>
-              <input
-                type="url"
-                value={form.logo_url}
-                onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))}
-                placeholder="https://.../logo.png"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              <ImageUpload
+                currentUrl={form.logo_url || undefined}
+                bucket="tool-logos"
+                folder="logos"
+                onUpload={(url) => setForm(f => ({ ...f, logo_url: url }))}
+                label="Tool Logo"
               />
             </div>
 

@@ -129,7 +129,7 @@ async function logUsage(userId: string, feature: 'ai_assist' | 'quick_create' | 
 }
 
 export async function getAiTrainingSettings(): Promise<AiTrainingSettings | null> {
-  const supabase = await createClient()
+  const supabase = getServiceClient()
   const { data } = await supabase.from('ai_training_settings').select('*').single()
   return data
 }

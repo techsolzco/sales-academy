@@ -129,6 +129,7 @@ export interface FAQ {
   tags: string[]
   priority: number
   status: Status
+  tool_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -158,6 +159,7 @@ export interface SalesScript {
   related_objection: string | null
   tags: string[]
   status: Status
+  tool_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -181,6 +183,7 @@ export interface VoiceNote {
   duration_seconds: number | null
   key_points: string[]
   status: Status
+  tool_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -196,6 +199,7 @@ export interface Objection {
   related_lesson_id: string | null
   difficulty: Difficulty | null
   status: Status
+  tool_id?: string | null
   created_at: string
   updated_at: string
 }

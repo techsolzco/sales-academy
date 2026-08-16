@@ -9,6 +9,7 @@ import {
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { LanguageToggle } from '@/components/layout/LanguageToggle'
+import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
 import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
@@ -81,6 +82,7 @@ export default async function DashboardLayout({
             <GlobalSearchBar />
           </div>
           <div className="flex items-center gap-2 md:gap-4">
+            <DarkModeToggle />
             <LanguageToggle />
             <NotificationBell userId={user.id} />
             <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wider">
