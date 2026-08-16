@@ -1,14 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Copy, Check, FileText } from 'lucide-react'
+import { Search, Copy, Check, FileText, Eye } from 'lucide-react'
 import { logScriptCopy } from '@/lib/actions/scripts'
 import type { SalesScript } from '@/types'
+import { toggleKbReview } from '@/lib/actions/kb-reviews'
 
-export function SalesmanScriptViewer({ scripts }: { scripts: SalesScript[] }) {
+export function SalesmanScriptViewer({ scripts, initialReviewed = [] }: { scripts: SalesScript[], initialReviewed?: string[] }) {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState<string>('All')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
+  const [isPending, setIsPending] = useState(false)
 
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 
@@ -30,6 +33,23 @@ export function SalesmanScriptViewer({ scripts }: { scripts: SalesScript[] }) {
 
     // Log copy event to DB silently
     await logScriptCopy(script.id)
+  }
+
+  async function handleToggleReview(id: string) {
+    if (isPending) return
+    setIsPending(true)
+    const isReviewed = reviewedIds.has(id)
+    try {
+      await toggleKbReview('script', id, !isReviewed)
+      const next = new Set(reviewedIds)
+      if (isReviewed) next.delete(id)
+      else next.add(id)
+      setReviewedIds(next)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (
@@ -91,13 +111,30 @@ export function SalesmanScriptViewer({ scripts }: { scripts: SalesScript[] }) {
                   <h3 className="font-bold text-gray-900 text-base">{script.title}</h3>
                 </div>
 
-                <button
-                  onClick={() => handleCopy(script)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs transition flex-shrink-0 shadow-sm"
-                >
-                  {copiedId === script.id ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
-                  {copiedId === script.id ? 'Copied!' : 'Copy Script'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleToggleReview(script.id)}
+                    disabled={isPending}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
+                      reviewedIds.has(script.id) 
+                        ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                        : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {reviewedIds.has(script.id) ? (
+                      <><Check className="w-3.5 h-3.5" /> Reviewed</>
+                    ) : (
+                      <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleCopy(script)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 text-brand-600 hover:bg-brand-50 font-semibold text-xs transition flex-shrink-0 shadow-sm"
+                  >
+                    {copiedId === script.id ? <Check className="w-4 h-4 text-brand-600" /> : <Copy className="w-4 h-4" />}
+                    {copiedId === script.id ? 'Copied!' : 'Copy Script'}
+                  </button>
+                </div>
               </div>
 
               {script.when_to_use && (

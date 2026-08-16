@@ -1,13 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Copy, Check, HelpCircle } from 'lucide-react'
+import { Search, Copy, Check, HelpCircle, Eye } from 'lucide-react'
 import type { FAQ } from '@/types'
+import { toggleKbReview } from '@/lib/actions/kb-reviews'
 
-export function SalesmanFAQViewer({ faqs }: { faqs: FAQ[] }) {
+export function SalesmanFAQViewer({ faqs, initialReviewed = [] }: { faqs: FAQ[], initialReviewed?: string[] }) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
+  const [isPending, setIsPending] = useState(false)
 
   const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category)))]
 
@@ -28,6 +31,23 @@ export function SalesmanFAQViewer({ faqs }: { faqs: FAQ[] }) {
     navigator.clipboard.writeText(textToCopy)
     setCopiedId(faq.id)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  async function handleToggleReview(id: string) {
+    if (isPending) return
+    setIsPending(true)
+    const isReviewed = reviewedIds.has(id)
+    try {
+      await toggleKbReview('faq', id, !isReviewed)
+      const next = new Set(reviewedIds)
+      if (isReviewed) next.delete(id)
+      else next.add(id)
+      setReviewedIds(next)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (
@@ -84,14 +104,31 @@ export function SalesmanFAQViewer({ faqs }: { faqs: FAQ[] }) {
                   <h3 className="font-bold text-gray-900 text-base leading-snug">{faq.question}</h3>
                 </div>
 
-                <button
-                  onClick={() => handleCopy(faq)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 text-brand-600 hover:bg-brand-50 font-semibold text-xs transition flex-shrink-0 shadow-sm"
-                  title="Copy customer-ready answer"
-                >
-                  {copiedId === faq.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copiedId === faq.id ? 'Copied!' : 'Copy Answer'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleToggleReview(faq.id)}
+                    disabled={isPending}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
+                      reviewedIds.has(faq.id) 
+                        ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                        : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {reviewedIds.has(faq.id) ? (
+                      <><Check className="w-3.5 h-3.5" /> Reviewed</>
+                    ) : (
+                      <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleCopy(faq)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 text-brand-600 hover:bg-brand-50 font-semibold text-xs transition flex-shrink-0 shadow-sm"
+                    title="Copy customer-ready answer"
+                  >
+                    {copiedId === faq.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedId === faq.id ? 'Copied!' : 'Copy Answer'}
+                  </button>
+                </div>
               </div>
 
               {/* Answers */}

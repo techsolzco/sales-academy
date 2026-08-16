@@ -1,11 +1,31 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { Search, AlertCircle, CheckCircle, XCircle, Eye, Check } from 'lucide-react'
 import type { Objection } from '@/types'
+import { toggleKbReview } from '@/lib/actions/kb-reviews'
 
-export function SalesmanObjectionViewer({ objections }: { objections: Objection[] }) {
+export function SalesmanObjectionViewer({ objections, initialReviewed = [] }: { objections: Objection[], initialReviewed?: string[] }) {
   const [search, setSearch] = useState('')
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
+  const [isPending, setIsPending] = useState(false)
+
+  async function handleToggleReview(id: string) {
+    if (isPending) return
+    setIsPending(true)
+    const isReviewed = reviewedIds.has(id)
+    try {
+      await toggleKbReview('objection', id, !isReviewed)
+      const next = new Set(reviewedIds)
+      if (isReviewed) next.delete(id)
+      else next.add(id)
+      setReviewedIds(next)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   const filtered = objections.filter(o => {
     const q = search.toLowerCase()
@@ -47,20 +67,38 @@ export function SalesmanObjectionViewer({ objections }: { objections: Objection[
               id={`obj-${o.id}`}
               className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
             >
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  {o.difficulty && (
-                    <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 font-semibold text-gray-600 capitalize">
-                      {o.difficulty}
-                    </span>
-                  )}
-                  {o.related_product && (
-                    <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 font-semibold text-brand-700">
-                      Product: {o.related_product}
-                    </span>
-                  )}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    {o.difficulty && (
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 font-semibold text-gray-600 capitalize">
+                        {o.difficulty}
+                      </span>
+                    )}
+                    {o.related_product && (
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 font-semibold text-brand-700">
+                        Product: {o.related_product}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg">&ldquo;{o.objection_text}&rdquo;</h3>
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">&ldquo;{o.objection_text}&rdquo;</h3>
+
+                <button
+                  onClick={() => handleToggleReview(o.id)}
+                  disabled={isPending}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
+                    reviewedIds.has(o.id) 
+                      ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  {reviewedIds.has(o.id) ? (
+                    <><Check className="w-3.5 h-3.5" /> Reviewed</>
+                  ) : (
+                    <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
+                  )}
+                </button>
               </div>
 
               {o.meaning && (

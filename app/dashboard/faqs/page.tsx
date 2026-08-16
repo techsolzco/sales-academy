@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
+import { getReviewedKbItems } from '@/lib/actions/kb-reviews'
 
 export default async function SalesmanFAQsPage() {
   const supabase = await createClient()
@@ -14,6 +15,8 @@ export default async function SalesmanFAQsPage() {
     .order('priority', { ascending: false })
     .order('created_at', { ascending: false })
 
+  const reviewedItems = await getReviewedKbItems('faq')
+
   return (
     <div className="p-8 max-w-4xl animate-fade-in">
       <div className="mb-8">
@@ -23,7 +26,7 @@ export default async function SalesmanFAQsPage() {
         </p>
       </div>
 
-      <SalesmanFAQViewer faqs={faqs ?? []} />
+      <SalesmanFAQViewer faqs={faqs ?? []} initialReviewed={reviewedItems} />
     </div>
   )
 }

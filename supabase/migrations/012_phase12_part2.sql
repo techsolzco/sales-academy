@@ -6,6 +6,7 @@
 
 DO $$
 DECLARE
+  v_admin_id    uuid;
   v_course_id   uuid;
   v_mod1_id     uuid;
   v_mod2_id     uuid;
@@ -14,14 +15,21 @@ DECLARE
   v_lesson_id   uuid;
 BEGIN
 
+-- Get admin user
+SELECT id INTO v_admin_id FROM public.profiles WHERE role = 'admin' LIMIT 1;
+IF v_admin_id IS NULL THEN
+  RAISE EXCEPTION 'No admin user found to set as course creator';
+END IF;
+
 -- Create the course (idempotent)
-INSERT INTO public.courses (title, description, is_published, thumbnail_url, qualifying_for_reseller)
+INSERT INTO public.courses (title, description, status, thumbnail_url, qualifying_for_reseller, created_by)
 VALUES (
   'English for Sales — Talking to Foreign Clients',
   'Master essential English communication skills for dealing with international clients. Learn phrases, call handling, polite objection responses, and business vocabulary that will help you close deals confidently.',
-  true,
+  'published',
   null,
-  false
+  false,
+  v_admin_id
 )
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_course_id;
@@ -35,27 +43,27 @@ END IF;
 IF v_course_id IS NULL THEN RETURN; END IF;
 
 -- Module 1: Common English Sales Phrases
-INSERT INTO public.modules (course_id, title, description, position)
+INSERT INTO public.modules (course_id, title, description, order_index)
 VALUES (v_course_id, 'Common English Sales Phrases', 'Ready-to-use phrases for everyday sales conversations', 1)
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_mod1_id;
 
 IF v_mod1_id IS NULL THEN
-  SELECT id INTO v_mod1_id FROM public.modules WHERE course_id = v_course_id AND position = 1 LIMIT 1;
+  SELECT id INTO v_mod1_id FROM public.modules WHERE course_id = v_course_id AND order_index = 1 LIMIT 1;
 END IF;
 
 -- Module 1 Lesson 1
-INSERT INTO public.lessons (module_id, title, description, position, is_published)
-VALUES (v_mod1_id, 'Opening the Conversation', 'First impressions in English: greetings, introductions, and openers', 1, true)
+INSERT INTO public.lessons (module_id, title, description, order_index, status)
+VALUES (v_mod1_id, 'Opening the Conversation', 'First impressions in English: greetings, introductions, and openers', 1, 'published')
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_lesson_id;
 
 IF v_lesson_id IS NULL THEN
-  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod1_id AND position = 1 LIMIT 1;
+  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod1_id AND order_index = 1 LIMIT 1;
 END IF;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## Opening Lines That Work
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## Opening Lines That Work
 
 When you first contact a foreign client — whether on WhatsApp, email, or a call — your opening sets the tone. Here are proven openers:
 
@@ -71,11 +79,11 @@ When you first contact a foreign client — whether on WhatsApp, email, or a cal
 **Key Tips:**
 - Always use their first name if you know it
 - Keep the opener under 2 sentences
-- End with a question to get them talking', 1)
+- End with a question to get them talking'), 1)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## Practice Exercises
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## Practice Exercises
 
 **Exercise 1:** Write 3 different opening messages in English for a client interested in a graphic design tool.
 
@@ -84,21 +92,21 @@ INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
 - "Could I ask you a quick question?"
 - "Let me show you how this works."
 
-**Remember:** Confidence comes from practice. Even if your English isn''t perfect, clear and confident communication wins clients.', 2)
+**Remember:** Confidence comes from practice. Even if your English isn''t perfect, clear and confident communication wins clients.'), 2)
 ON CONFLICT DO NOTHING;
 
 -- Module 1 Lesson 2
-INSERT INTO public.lessons (module_id, title, description, position, is_published)
-VALUES (v_mod1_id, 'Closing & Follow-up Phrases', 'English phrases to close deals and follow up professionally', 2, true)
+INSERT INTO public.lessons (module_id, title, description, order_index, status)
+VALUES (v_mod1_id, 'Closing & Follow-up Phrases', 'English phrases to close deals and follow up professionally', 2, 'published')
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_lesson_id;
 
 IF v_lesson_id IS NULL THEN
-  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod1_id AND position = 2 LIMIT 1;
+  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod1_id AND order_index = 2 LIMIT 1;
 END IF;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## Closing the Sale in English
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## Closing the Sale in English
 
 The close is the most important part. Here are natural English closing phrases:
 
@@ -115,11 +123,11 @@ The close is the most important part. Here are natural English closing phrases:
 **Urgency Closes:**
 - "This offer is only available until [date]. I don''t want you to miss out."
 - "We have limited spots — I want to make sure you get one."
-- "Today''s pricing is the best you''ll see. Want to lock it in?"', 1)
+- "Today''s pricing is the best you''ll see. Want to lock it in?"'), 1)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## Professional Follow-up Messages
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## Professional Follow-up Messages
 
 When a client doesn''t respond, follow up politely:
 
@@ -132,30 +140,30 @@ When a client doesn''t respond, follow up politely:
 **Final Follow-up:**
 "Hi [Name], I''ll respect your time and won''t follow up after this. If you ever want to explore [product], I''m here. Wishing you all the best!"
 
-**Pro Tip:** Never sound desperate or pushy in follow-ups. Confident, friendly, and brief always wins.', 2)
+**Pro Tip:** Never sound desperate or pushy in follow-ups. Confident, friendly, and brief always wins.'), 2)
 ON CONFLICT DO NOTHING;
 
 -- Module 2: Handling Foreign Client Calls
-INSERT INTO public.modules (course_id, title, description, position)
+INSERT INTO public.modules (course_id, title, description, order_index)
 VALUES (v_course_id, 'Handling Foreign Client Calls & Chats', 'Communication strategies for international clients', 2)
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_mod2_id;
 
 IF v_mod2_id IS NULL THEN
-  SELECT id INTO v_mod2_id FROM public.modules WHERE course_id = v_course_id AND position = 2 LIMIT 1;
+  SELECT id INTO v_mod2_id FROM public.modules WHERE course_id = v_course_id AND order_index = 2 LIMIT 1;
 END IF;
 
-INSERT INTO public.lessons (module_id, title, description, position, is_published)
-VALUES (v_mod2_id, 'WhatsApp & Chat Communication', 'Professional WhatsApp messaging with international clients', 1, true)
+INSERT INTO public.lessons (module_id, title, description, order_index, status)
+VALUES (v_mod2_id, 'WhatsApp & Chat Communication', 'Professional WhatsApp messaging with international clients', 1, 'published')
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_lesson_id;
 
 IF v_lesson_id IS NULL THEN
-  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod2_id AND position = 1 LIMIT 1;
+  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod2_id AND order_index = 1 LIMIT 1;
 END IF;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## WhatsApp Best Practices with Foreign Clients
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## WhatsApp Best Practices with Foreign Clients
 
 WhatsApp is our main communication channel. Here''s how to use it professionally with international clients:
 
@@ -172,30 +180,30 @@ WhatsApp is our main communication channel. Here''s how to use it professionally
 **Professional Templates:**
 - Introduction: "Hi [Name], I''m [Your Name] from [Company]. I''d love to share something useful with you. Is this a good time?"
 - Sending info: "Here are the key details you asked for: [info]. Let me know if you have any questions!"
-- After no reply: "Hi [Name], just following up! Happy to answer any questions 😊"', 1)
+- After no reply: "Hi [Name], just following up! Happy to answer any questions 😊"'), 1)
 ON CONFLICT DO NOTHING;
 
 -- Module 3: Polite Objection Handling
-INSERT INTO public.modules (course_id, title, description, position)
+INSERT INTO public.modules (course_id, title, description, order_index)
 VALUES (v_course_id, 'Polite Objection Handling in English', 'Handle pushback professionally without being aggressive', 3)
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_mod3_id;
 
 IF v_mod3_id IS NULL THEN
-  SELECT id INTO v_mod3_id FROM public.modules WHERE course_id = v_course_id AND position = 3 LIMIT 1;
+  SELECT id INTO v_mod3_id FROM public.modules WHERE course_id = v_course_id AND order_index = 3 LIMIT 1;
 END IF;
 
-INSERT INTO public.lessons (module_id, title, description, position, is_published)
-VALUES (v_mod3_id, 'Responding to Common Objections', 'Polite English responses to price, timing, and trust objections', 1, true)
+INSERT INTO public.lessons (module_id, title, description, order_index, status)
+VALUES (v_mod3_id, 'Responding to Common Objections', 'Polite English responses to price, timing, and trust objections', 1, 'published')
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_lesson_id;
 
 IF v_lesson_id IS NULL THEN
-  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod3_id AND position = 1 LIMIT 1;
+  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod3_id AND order_index = 1 LIMIT 1;
 END IF;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## Handling Objections with Grace
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## Handling Objections with Grace
 
 The golden rule: **Never argue with a client.** Acknowledge, empathize, then redirect.
 
@@ -213,30 +221,30 @@ The golden rule: **Never argue with a client.** Acknowledge, empathize, then red
 
 ### "I''m not interested."
 **Wrong:** Arguing or repeating the pitch
-**Right:** "No problem at all! Would it be okay if I check back in with you in a few weeks? Sometimes timing makes all the difference."', 1)
+**Right:** "No problem at all! Would it be okay if I check back in with you in a few weeks? Sometimes timing makes all the difference."'), 1)
 ON CONFLICT DO NOTHING;
 
 -- Module 4: Business Vocabulary
-INSERT INTO public.modules (course_id, title, description, position)
+INSERT INTO public.modules (course_id, title, description, order_index)
 VALUES (v_course_id, 'Business English Vocabulary', 'Key terms and vocabulary for professional sales conversations', 4)
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_mod4_id;
 
 IF v_mod4_id IS NULL THEN
-  SELECT id INTO v_mod4_id FROM public.modules WHERE course_id = v_course_id AND position = 4 LIMIT 1;
+  SELECT id INTO v_mod4_id FROM public.modules WHERE course_id = v_course_id AND order_index = 4 LIMIT 1;
 END IF;
 
-INSERT INTO public.lessons (module_id, title, description, position, is_published)
-VALUES (v_mod4_id, 'Essential Sales Vocabulary', 'Words and phrases every salesperson needs to know', 1, true)
+INSERT INTO public.lessons (module_id, title, description, order_index, status)
+VALUES (v_mod4_id, 'Essential Sales Vocabulary', 'Words and phrases every salesperson needs to know', 1, 'published')
 ON CONFLICT DO NOTHING
 RETURNING id INTO v_lesson_id;
 
 IF v_lesson_id IS NULL THEN
-  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod4_id AND position = 1 LIMIT 1;
+  SELECT id INTO v_lesson_id FROM public.lessons WHERE module_id = v_mod4_id AND order_index = 1 LIMIT 1;
 END IF;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## Core Sales Vocabulary
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## Core Sales Vocabulary
 
 Learn these words and use them confidently:
 
@@ -253,11 +261,11 @@ Learn these words and use them confidently:
 | **Commission** | Salesperson''s earning % | "My commission is 15% per sale." |
 | **Pipeline** | All deals in progress | "I have 20 deals in my pipeline." |
 
-**Practice:** Use 5 of these words in sentences about your own work today.', 1)
+**Practice:** Use 5 of these words in sentences about your own work today.'), 1)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
-(v_lesson_id, 'text', '## Professional Email & Message Templates
+INSERT INTO public.content_blocks (lesson_id, type, content, order_index) VALUES
+(v_lesson_id, 'text', jsonb_build_object('body', '## Professional Email & Message Templates
 
 **Introducing Yourself:**
 > Subject: Quick Introduction — [Your Name] from [Company]
@@ -281,7 +289,7 @@ INSERT INTO public.content_blocks (lesson_id, type, content, position) VALUES
 - "Please find attached..." (when sending files)
 - "I look forward to hearing from you." (professional closer)
 - "Please don''t hesitate to reach out." (inviting contact)
-- "At your earliest convenience" (polite urgency)', 2)
+- "At your earliest convenience" (polite urgency)'), 2)
 ON CONFLICT DO NOTHING;
 
 END $$;
