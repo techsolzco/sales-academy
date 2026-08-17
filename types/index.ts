@@ -35,6 +35,7 @@ export interface Course {
   status: Status
   visibility: Visibility
   qualifying_for_reseller?: boolean
+  tool_id?: string | null
   created_by: string
   created_at: string
   updated_at: string
@@ -227,6 +228,7 @@ export interface Tool {
   tutorial_link: string | null
   youtube_tutorial_link: string | null
   tags: string[]
+  knowledge_summary: string | null
   status: Status
   created_at: string
   updated_at: string
@@ -566,3 +568,87 @@ export interface AiUsageLog {
 }
 
 export type AiContentType = 'tool' | 'faq' | 'script' | 'objection' | 'voice_note'
+
+// ─── Tool Onboarding Wizard Types ──────────────────────────────────────────
+
+export interface OnboardWizardData {
+  name: string
+  category?: ToolCategory
+  pricing?: string
+  features?: string[]
+  targetAudience?: string
+  sellingPoints?: string
+  warrantyNotes?: string
+  brief: string
+}
+
+export interface GeneratedFAQ {
+  question: string
+  short_answer: string
+  detailed_answer: string
+  customer_ready_answer: string
+  category: string
+  tags: string[]
+  _removed?: boolean
+}
+
+export interface GeneratedObjection {
+  objection_text: string
+  meaning: string
+  recommended_response: string
+  alternative_response: string
+  do_not_say: string
+  difficulty: Difficulty
+  _removed?: boolean
+}
+
+export interface GeneratedScript {
+  title: string
+  script_type: string
+  content: string
+  when_to_use: string
+  tags: string[]
+  _removed?: boolean
+}
+
+export interface GeneratedContentBlock {
+  type: 'heading' | 'text'
+  content: Record<string, unknown>
+  order_index: number
+}
+
+export interface GeneratedLesson {
+  title: string
+  description: string
+  content_blocks: GeneratedContentBlock[]
+  _removed?: boolean
+}
+
+export interface GeneratedModule {
+  title: string
+  description: string
+  lessons: GeneratedLesson[]
+  _removed?: boolean
+}
+
+export interface GeneratedCourse {
+  title: string
+  description: string
+  modules: GeneratedModule[]
+}
+
+export interface GeneratedToolPackage {
+  knowledge_summary: string
+  course: GeneratedCourse
+  faqs: GeneratedFAQ[]
+  objections: GeneratedObjection[]
+  scripts: GeneratedScript[]
+}
+
+export interface ToolTreeData {
+  tool: Tool
+  course: (Course & { modules: (Module & { lessons: (Lesson & { content_blocks: ContentBlock[] })[] })[] }) | null
+  faqs: FAQ[]
+  objections: Objection[]
+  scripts: SalesScript[]
+}

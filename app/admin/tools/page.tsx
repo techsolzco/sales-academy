@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { ToolManager } from '@/components/admin/ToolManager'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
+import Link from 'next/link'
 
 export default async function AdminToolsPage() {
   const supabase = await createClient()
@@ -17,14 +18,23 @@ export default async function AdminToolsPage() {
         { label: 'Tools Library' },
       ]} />
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Sales & AI Tools Library</h1>
-        <p className="text-sm text-gray-400 mt-1">
-          Curated directory of AI generation tools, video software, productivity apps, and sales enablement utilities.
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Sales & AI Tools Library</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Curated directory of AI generation tools, video software, productivity apps, and sales enablement utilities.
+          </p>
+        </div>
+        <Link
+          href="/admin/tools/onboard"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition shadow-sm flex-shrink-0"
+        >
+          🌳 Onboard New Tool
+        </Link>
       </div>
 
       <ToolManager initialTools={tools ?? []} />
     </div>
   )
 }
+

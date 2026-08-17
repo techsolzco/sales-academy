@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, Edit, Trash2, Search, Wrench, ExternalLink, Play } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Wrench, ExternalLink, Play, TreeDeciduous } from 'lucide-react'
+import Link from 'next/link'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ToolFormModal } from '@/components/admin/ToolFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
@@ -171,11 +172,19 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
               </div>
 
               <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2 text-xs">
-                {tool.pricing && (
-                  <span className="font-semibold text-gray-700 bg-gray-50 px-2.5 py-1 rounded-lg">
-                    💰 {tool.pricing}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {tool.pricing && (
+                    <span className="font-semibold text-gray-700 bg-gray-50 px-2.5 py-1 rounded-lg">
+                      💰 {tool.pricing}
+                    </span>
+                  )}
+                  <Link
+                    href={`/admin/tools/${tool.id}/tree`}
+                    className="flex items-center gap-1 text-emerald-600 font-medium hover:underline"
+                  >
+                    <TreeDeciduous className="w-3 h-3" /> View Tree
+                  </Link>
+                </div>
                 {tool.website_url && (
                   <a
                     href={tool.website_url}

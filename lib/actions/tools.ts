@@ -26,6 +26,7 @@ export interface ToolInput {
   tutorial_link?: string
   youtube_tutorial_link?: string
   tags?: string[]
+  knowledge_summary?: string
   status?: Status
 }
 

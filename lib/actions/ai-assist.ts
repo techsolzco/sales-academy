@@ -23,8 +23,8 @@ async function requireAdmin() {
   return { supabase, user }
 }
 
-function buildSystemPrompt(settings: AiTrainingSettings) {
-  return `[PERSONA]
+function buildSystemPrompt(settings: AiTrainingSettings, toolContext?: string) {
+  let prompt = `[PERSONA]
 ${settings.persona_instructions}
 
 [SALES STYLE RULES]
@@ -37,6 +37,38 @@ ${settings.locked_facts}
 
 [TONE & STYLE EXAMPLES]
 ${settings.tone_examples}`
+
+  if (toolContext) {
+    prompt += `\n\n[TOOL-SPECIFIC KNOWLEDGE — Use this information when answering about these tools]\n${toolContext}`
+  }
+
+  return prompt
+}
+
+// ── Tool knowledge retrieval ─────────────────────────────────────────────
+
+async function fetchToolKnowledge(questionText: string): Promise<string> {
+  try {
+    const sb = getServiceClient()
+    const { data: tools } = await sb
+      .from('tools')
+      .select('name, knowledge_summary')
+      .eq('status', 'published')
+      .not('knowledge_summary', 'is', null)
+
+    if (!tools || tools.length === 0) return ''
+
+    const q = questionText.toLowerCase()
+    const matches = tools.filter(t => q.includes(t.name.toLowerCase()))
+
+    if (matches.length === 0) return ''
+
+    return matches
+      .map(t => `### ${t.name}\n${t.knowledge_summary}`)
+      .join('\n\n')
+  } catch {
+    return ''
+  }
 }
 
 // Models tried in order — first success wins.
@@ -175,7 +207,8 @@ export async function aiAssistField(params: { contentType: AiContentType, fieldN
       throw new Error('AI Training Settings not configured.')
     }
     
-    const systemPrompt = buildSystemPrompt(settings)
+    const toolContext = await fetchToolKnowledge(params.existingContext + ' ' + params.instruction)
+    const systemPrompt = buildSystemPrompt(settings, toolContext)
     
     const userPrompt = `Content type: ${params.contentType}
 Field: ${params.fieldName}
@@ -293,7 +326,8 @@ export async function askAi(question: string): Promise<ActionResult<string>> {
       throw new Error('AI Training Settings not configured.')
     }
     
-    const systemPrompt = buildSystemPrompt(settings)
+    const toolContext = await fetchToolKnowledge(question)
+    const systemPrompt = buildSystemPrompt(settings, toolContext)
     
     const userPrompt = `A salesman is asking for help with this customer situation:
 ${question}
