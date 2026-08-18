@@ -83,14 +83,34 @@
     color: theme('colors.gray.300');
   }
 
-  /* Override hard-coded text-gray-900 / text-black in dark mode */
-  .dark .text-gray-900 {
-    color: theme('colors.gray.100') !important;
+  /* Override hard-coded text colors in dark mode */
+  .dark .text-gray-900 { color: theme('colors.gray.100') !important; }
+  .dark .text-gray-800 { color: theme('colors.gray.200') !important; }
+  .dark .text-gray-700 { color: theme('colors.gray.300') !important; }
+  .dark .text-black    { color: theme('colors.gray.100') !important; }
+
+  /* Override hard-coded white/light card backgrounds in dark mode */
+  .dark .bg-white {
+    background-color: theme('colors.gray.800') !important;
+    border-color: theme('colors.gray.700');
   }
-  .dark .text-gray-800 {
-    color: theme('colors.gray.200') !important;
+  .dark .bg-gray-50 {
+    background-color: theme('colors.gray.900') !important;
   }
-  .dark .text-black {
-    color: theme('colors.gray.100') !important;
+  .dark .bg-gray-100 {
+    background-color: theme('colors.gray.800') !important;
+  }
+
+  /* Override light borders in dark mode */
+  .dark .border-gray-100 { border-color: theme('colors.gray.700') !important; }
+  .dark .border-gray-200 { border-color: theme('colors.gray.700') !important; }
+
+  /* Fix header/nav bars that use bg-white/80 */
+  .dark .bg-white\/80 {
+    background-color: rgb(17 24 39 / 0.8) !important;
+  }
+  .dark .bg-white\/90 {
+    background-color: rgb(17 24 39 / 0.9) !important;
   }
 }
+

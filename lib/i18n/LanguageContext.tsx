@@ -19,19 +19,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     async function loadPref() {
       const pref = await fetchPreferences()
       if (pref?.language) {
-        setLanguageState(pref.language as Lang)
+        // Migrate old 'ur' preference to 'hi' (Hinglish)
+        const lang = pref.language === 'ur' ? 'hi' : pref.language as Lang
+        setLanguageState(lang)
       }
     }
     loadPref()
   }, [])
 
+  // Always LTR — layout never changes regardless of language
   useEffect(() => {
-    if (language === 'ur') {
-      document.documentElement.dir = 'rtl'
-    } else {
-      document.documentElement.dir = 'ltr'
-    }
-  }, [language])
+    document.documentElement.dir = 'ltr'
+  }, [])
 
   const setLanguage = async (l: Lang) => {
     setLanguageState(l)
@@ -39,16 +38,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }
 
   const t = (key: string): string => {
-    const keys = key.split('.')
-    let translation = translations[language] as any
-    let defaultTranslation = translations.en as any
-    
-    // Simplistic access for flat or nested, but translations object is flat Record<string, string>
-    if (translations[language][key]) {
-        return translations[language][key]
+    if (translations[language]?.[key]) {
+      return translations[language][key]
     }
     if (translations.en[key]) {
-        return translations.en[key]
+      return translations.en[key]
     }
     return key
   }

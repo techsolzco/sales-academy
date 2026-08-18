@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ChevronDown,
   ChevronRight,
@@ -11,9 +12,14 @@ import {
   Shield,
   MessageSquare,
   Brain,
-  Package
+  Package,
+  Check,
+  Loader2,
+  RefreshCw,
+  Globe
 } from 'lucide-react'
 import { ToolTreeData } from '@/types'
+import { publishToolTree, refreshToolKnowledge } from '@/lib/actions/tool-onboard'
 
 interface ToolTreeViewProps {
   data: ToolTreeData
@@ -27,8 +33,69 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
   const [objectionsExpanded, setObjectionsExpanded] = useState(true)
   const [scriptsExpanded, setScriptsExpanded] = useState(true)
 
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [confirmPublish, setConfirmPublish] = useState<string | null>(null)
+
+  const handlePublish = (section: 'all' | 'course' | 'faqs' | 'objections' | 'scripts') => {
+    setConfirmPublish(null)
+    startTransition(async () => {
+      const result = await publishToolTree(data.tool.id, section)
+      if (result.error) {
+        setErrorMsg(result.error)
+      } else {
+        setSuccessMsg(`${section === 'all' ? 'Everything' : section} published successfully!`)
+        router.refresh()
+      }
+    })
+  }
+
+  const handleRefreshKnowledge = async () => {
+    setIsRefreshing(true)
+    const result = await refreshToolKnowledge(data.tool.id)
+    setIsRefreshing(false)
+    if (result.error) {
+      setErrorMsg(result.error)
+    } else {
+      setSuccessMsg('AI knowledge summary updated!')
+      router.refresh()
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {successMsg && (
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800 text-sm font-medium">
+          {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm font-medium">
+          {errorMsg}
+        </div>
+      )}
+
+      {confirmPublish && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">Confirm Publish</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              {confirmPublish === 'all'
+                ? 'This will publish the tool, course, FAQs, objections, and scripts. Are you sure?'
+                : `This will publish all ${confirmPublish} for this tool. Continue?`}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirmPublish(null)} className="px-4 py-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition">Cancel</button>
+              <button onClick={() => handlePublish(confirmPublish as any)} disabled={isPending} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition disabled:opacity-50 flex items-center gap-2">
+                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Publish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Tool Header */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-start justify-between">
@@ -52,6 +119,23 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Publish toolbar */}
+      <div className="flex flex-wrap gap-2 p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
+        <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1 mr-2">
+          <Globe className="w-4 h-4" /> Publish:
+        </span>
+        <button onClick={() => setConfirmPublish('all')} className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1">
+          {isPending && confirmPublish === 'all' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Publish All
+        </button>
+        <button onClick={() => setConfirmPublish('course')} className="px-3 py-1.5 rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-medium transition">Course Only</button>
+        <button onClick={() => setConfirmPublish('faqs')} className="px-3 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium transition">FAQs Only</button>
+        <button onClick={() => setConfirmPublish('objections')} className="px-3 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-medium transition">Objections Only</button>
+        <button onClick={() => setConfirmPublish('scripts')} className="px-3 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-medium transition">Scripts Only</button>
+        <button onClick={handleRefreshKnowledge} disabled={isRefreshing} className="ml-auto px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium transition flex items-center gap-1 disabled:opacity-50">
+          {isRefreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Update AI Knowledge
+        </button>
       </div>
 
       {/* Knowledge Summary */}

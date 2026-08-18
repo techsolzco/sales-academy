@@ -22,6 +22,11 @@ export interface EnrollmentInput {
   desired_course?: string
   reason?: string
   prior_experience?: string
+  avatar_url?: string
+  whatsapp?: string
+  instagram?: string
+  facebook?: string
+  linkedin?: string
 }
 
 export async function submitEnrollmentApplication(
@@ -40,6 +45,11 @@ export async function submitEnrollmentApplication(
       desired_course: input.desired_course || null,
       reason: input.reason || null,
       prior_experience: input.prior_experience || null,
+      avatar_url: input.avatar_url || null,
+      whatsapp: input.whatsapp || null,
+      instagram: input.instagram || null,
+      facebook: input.facebook || null,
+      linkedin: input.linkedin || null,
       status: 'pending',
     })
     .select()
@@ -104,13 +114,18 @@ export async function approveApplication(id: string): Promise<ActionResult> {
 
   const newUserId = authData.user.id
 
-  // Create profile
+  // Create profile — carry over avatar + social from application
   const { error: profileErr } = await serviceClient.from('profiles').upsert({
     id: newUserId,
     full_name: app.full_name,
     email: app.email,
     role: 'salesman',
     status: 'active',
+    avatar_url: app.avatar_url || null,
+    whatsapp: app.whatsapp || null,
+    instagram: app.instagram || null,
+    facebook: app.facebook || null,
+    linkedin: app.linkedin || null,
   })
 
   if (profileErr) return { error: `Profile creation failed: ${profileErr.message}` }

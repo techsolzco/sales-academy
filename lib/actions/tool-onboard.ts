@@ -423,3 +423,103 @@ export async function fetchToolTree(toolId: string): Promise<ActionResult<ToolTr
     return { error: (error as Error).message || 'Failed to fetch tool tree' }
   }
 }
+
+// ── Publish tool tree (all or by section) ────────────────────────────
+
+export async function publishToolTree(
+  toolId: string,
+  section?: 'all' | 'course' | 'faqs' | 'objections' | 'scripts'
+): Promise<ActionResult> {
+  try {
+    await requireAdmin()
+    const sb = getServiceClient()
+    const target = section || 'all'
+
+    if (target === 'all' || target === 'course') {
+      // Find course linked to tool
+      const { data: courses } = await sb.from('courses').select('id').eq('tool_id', toolId)
+      for (const course of (courses || [])) {
+        await sb.from('courses').update({ status: 'published' }).eq('id', course.id)
+        // Modules
+        const { data: modules } = await sb.from('modules').select('id').eq('course_id', course.id)
+        for (const mod of (modules || [])) {
+          await sb.from('modules').update({ status: 'published' }).eq('id', mod.id)
+          // Lessons
+          const { data: lessons } = await sb.from('lessons').select('id').eq('module_id', mod.id)
+          for (const lesson of (lessons || [])) {
+            await sb.from('lessons').update({ status: 'published' }).eq('id', lesson.id)
+          }
+        }
+      }
+    }
+
+    if (target === 'all' || target === 'faqs') {
+      await sb.from('faqs').update({ status: 'published' }).eq('tool_id', toolId)
+    }
+
+    if (target === 'all' || target === 'objections') {
+      await sb.from('objections').update({ status: 'published' }).eq('tool_id', toolId)
+    }
+
+    if (target === 'all' || target === 'scripts') {
+      await sb.from('scripts').update({ status: 'published' }).eq('tool_id', toolId)
+    }
+
+    // Also publish the tool itself
+    if (target === 'all') {
+      await sb.from('tools').update({ status: 'published' }).eq('id', toolId)
+    }
+
+    revalidatePath(`/admin/tools/${toolId}/tree`)
+    revalidatePath('/admin/tools')
+    revalidatePath('/dashboard/tools')
+    revalidatePath('/admin/faqs')
+    revalidatePath('/admin/scripts')
+    revalidatePath('/admin/objections')
+    revalidatePath('/admin/courses')
+
+    return { data: undefined }
+  } catch (error: unknown) {
+    return { error: (error as Error).message || 'Failed to publish' }
+  }
+}
+
+export async function refreshToolKnowledge(toolId: string): Promise<ActionResult<string>> {
+  try {
+    await requireAdmin()
+    const sb = getServiceClient()
+
+    const { data: tool } = await sb.from('tools').select('*').eq('id', toolId).single()
+    if (!tool) return { error: 'Tool not found' }
+
+    const settings = await getAiTrainingSettings()
+    const systemPrompt = settings
+      ? `You are a sales training AI. Write all content in Hinglish style.`
+      : 'You are a sales training AI.'
+
+    const featuresStr = tool.features?.length ? `Features: ${tool.features.join(', ')}` : ''
+    const userPrompt = `Generate a concise 3-5 sentence knowledge summary for the sales tool "${tool.name}".
+${tool.description ? `Description: ${tool.description}` : ''}
+${tool.pricing ? `Pricing: ${tool.pricing}` : ''}
+${tool.best_for ? `Best for: ${tool.best_for}` : ''}
+${featuresStr}
+
+This summary is for internal AI context only — not customer-facing. Cover key facts about this tool that a salesman would need to know (pricing, policies, features, what it does). Write in Hinglish style. Return ONLY the summary text, no JSON.`
+
+    const text = await callGeminiLarge(systemPrompt, userPrompt)
+
+    const { error: updateErr } = await sb
+      .from('tools')
+      .update({ knowledge_summary: text, updated_at: new Date().toISOString() })
+      .eq('id', toolId)
+
+    if (updateErr) throw updateErr
+
+    revalidatePath(`/admin/tools/${toolId}/tree`)
+    revalidatePath('/admin/tools')
+
+    return { data: text }
+  } catch (error: unknown) {
+    return { error: (error as Error).message || 'Failed to refresh knowledge' }
+  }
+}

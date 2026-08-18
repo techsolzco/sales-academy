@@ -14,34 +14,6 @@ import { SidebarProvider } from '@/components/layout/SidebarContext'
 import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
 import { ToastProvider } from '@/components/ui/ToastContext'
 
-const adminNavItems = [
-  { label: 'Dashboard',   href: '/admin',             icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Leaderboard', href: '/admin/leaderboard', icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Salesmen',    href: '/admin/salesmen',     icon: <Users className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Enrollments', href: '/admin/enrollments',  icon: <UserPlus className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Password Resets', href: '/admin/password-resets', icon: <Key className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Reseller Requests', href: '/admin/reseller-requests', icon: <UserCheck className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Resellers',   href: '/admin/resellers',    icon: <BadgeCheck className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Community',   href: '/admin/community',    icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Chat',        href: '/admin/chat',         icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Support',     href: '/admin/support',      icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Courses',     href: '/admin/courses',      icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'FAQs',        href: '/admin/faqs',         icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Scripts',     href: '/admin/scripts',      icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Voice Notes', href: '/admin/voice-notes',  icon: <Mic className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Objections',  href: '/admin/objections',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Assignments', href: '/admin/assignments',  icon: <ClipboardList className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Meetings',    href: '/admin/meetings',     icon: <Video className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Quizzes',     href: '/admin/quizzes',      icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Tools',       href: '/admin/tools',        icon: <Wrench className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Appearance',  href: '/admin/settings/appearance', icon: <Paintbrush className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'AI Training', href: '/admin/settings/ai-training', icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Settings',    href: '/admin/settings',     icon: <Settings className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'My Profile',  href: '/admin/profile',      icon: <User className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Policies',    href: '/admin/policies',     icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Announcements', href: '/admin/announcements', icon: <Megaphone className="w-4 h-4 flex-shrink-0" /> },
-]
-
 export default async function AdminLayout({
   children,
 }: {
@@ -64,6 +36,39 @@ export default async function AdminLayout({
     redirect('/dashboard')
   }
 
+  const { count: pendingEnrollments } = await supabase
+    .from('enrollment_applications')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending')
+
+  const adminNavItems = [
+    { label: 'Dashboard',   href: '/admin',             icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Leaderboard', href: '/admin/leaderboard', icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Salesmen',    href: '/admin/salesmen',     icon: <Users className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Enrollments', href: '/admin/enrollments',  icon: <UserPlus className="w-4 h-4 flex-shrink-0" />, badge: pendingEnrollments || 0 },
+    { label: 'Password Resets', href: '/admin/password-resets', icon: <Key className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Reseller Requests', href: '/admin/reseller-requests', icon: <UserCheck className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Resellers',   href: '/admin/resellers',    icon: <BadgeCheck className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Community',   href: '/admin/community',    icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Chat',        href: '/admin/chat',         icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Support',     href: '/admin/support',      icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Courses',     href: '/admin/courses',      icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'FAQs',        href: '/admin/faqs',         icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Scripts',     href: '/admin/scripts',      icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Voice Notes', href: '/admin/voice-notes',  icon: <Mic className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Objections',  href: '/admin/objections',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Assignments', href: '/admin/assignments',  icon: <ClipboardList className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Meetings',    href: '/admin/meetings',     icon: <Video className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Quizzes',     href: '/admin/quizzes',      icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Tools',       href: '/admin/tools',        icon: <Wrench className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Appearance',  href: '/admin/settings/appearance', icon: <Paintbrush className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'AI Training', href: '/admin/settings/ai-training', icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Settings',    href: '/admin/settings',     icon: <Settings className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'My Profile',  href: '/admin/profile',      icon: <User className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Policies',    href: '/admin/policies',     icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Announcements', href: '/admin/announcements', icon: <Megaphone className="w-4 h-4 flex-shrink-0" /> },
+  ]
+
   return (
     <LanguageProvider>
       <ToastProvider>
@@ -82,7 +87,7 @@ export default async function AdminLayout({
         }
       />
       <div className="flex-1 flex flex-col min-w-0 w-full">
-        <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
+        <header className="h-16 border-b border-gray-200/80 bg-white/80 dark:bg-gray-900/80 dark:border-gray-800 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2">
             <SidebarMobileToggle />
             <GlobalSearchBar />
@@ -91,7 +96,7 @@ export default async function AdminLayout({
             <DarkModeToggle />
             <LanguageToggle />
             <NotificationBell userId={user.id} />
-            <span className="text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-700 font-semibold uppercase tracking-wider">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 font-semibold uppercase tracking-wider">
               Admin Portal
             </span>
           </div>
