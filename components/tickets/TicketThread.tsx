@@ -39,10 +39,10 @@ interface Props {
 }
 
 const statusColors = {
-  open: 'bg-red-100 text-red-700 border-red-200',
-  'in-progress': 'bg-amber-100 text-amber-700 border-amber-200',
-  resolved: 'bg-green-100 text-green-700 border-green-200',
-  closed: 'bg-gray-100 text-gray-700 border-gray-200'
+  open: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800',
+  'in-progress': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+  resolved: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800',
+  closed: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
 }
 
 export function TicketThread({ ticket, initialMessages, currentUserId, currentUserRole }: Props) {
@@ -115,22 +115,22 @@ export function TicketThread({ ticket, initialMessages, currentUserId, currentUs
   }
 
   return (
-    <div className="max-w-4xl mx-auto w-full flex flex-col h-[calc(100vh-120px)] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="max-w-4xl mx-auto w-full flex flex-col h-[calc(100vh-120px)] bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-start justify-between gap-4">
+      <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-xs px-2.5 py-1 rounded-md font-medium uppercase tracking-wider bg-brand-100 text-brand-700">
+            <span className="text-xs px-2.5 py-1 rounded-md font-medium uppercase tracking-wider bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300">
               {ticket.category}
             </span>
-            <span className="text-sm text-gray-500 flex items-center gap-1">
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
               <Clock className="w-4 h-4" />
               {new Date(ticket.created_at).toLocaleString()}
             </span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900">{ticket.subject}</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{ticket.subject}</h2>
           {isAdmin && ticket.profile && (
-            <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
               <User className="w-4 h-4" /> {ticket.profile.full_name}
             </p>
           )}
@@ -160,18 +160,18 @@ export function TicketThread({ ticket, initialMessages, currentUserId, currentUs
       </div>
 
       {/* Messages Thread */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30 dark:bg-gray-900/30">
         {/* Original Ticket Description */}
         <div className="flex gap-4">
-          <div className="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center font-bold flex-shrink-0">
             {ticket.profile?.full_name?.charAt(0) || '?'}
           </div>
-          <div className="flex-1 bg-white p-5 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm">
+          <div className="flex-1 bg-white dark:bg-gray-800 p-5 rounded-2xl rounded-tl-none border border-gray-100 dark:border-gray-700 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <span className="font-semibold text-gray-900">{ticket.profile?.full_name || 'User'}</span>
-              <span className="text-xs text-gray-500">{new Date(ticket.created_at).toLocaleTimeString()}</span>
+              <span className="font-semibold text-gray-900 dark:text-gray-100">{ticket.profile?.full_name || 'User'}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(ticket.created_at).toLocaleTimeString()}</span>
             </div>
-            <p className="text-gray-700 text-sm whitespace-pre-wrap">{ticket.description}</p>
+            <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{ticket.description}</p>
           </div>
         </div>
 
@@ -183,22 +183,22 @@ export function TicketThread({ ticket, initialMessages, currentUserId, currentUs
           return (
             <div key={message.id} className={`flex gap-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm ${
-                isSenderAdmin ? 'bg-brand-100 text-brand-700' : 'bg-gray-200 text-gray-600'
+                isSenderAdmin ? 'bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
               }`}>
                 {message.profile?.full_name?.charAt(0) || '?'}
               </div>
               
               <div className={`max-w-[80%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                 <div className={`flex items-center gap-2 mb-1 px-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-                  <span className="font-medium text-sm text-gray-900">
+                  <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
                     {isOwn ? 'You' : message.profile?.full_name}
                   </span>
                   {isSenderAdmin && !isOwn && (
-                    <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded-md font-bold">
+                    <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300 px-1.5 py-0.5 rounded-md font-bold">
                       <Shield className="w-3 h-3" /> Admin
                     </span>
                   )}
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
                     {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -207,8 +207,8 @@ export function TicketThread({ ticket, initialMessages, currentUserId, currentUs
                   isOwn 
                     ? 'bg-brand-600 text-white rounded-2xl rounded-tr-none' 
                     : isSenderAdmin
-                      ? 'bg-white border border-gray-200 border-l-4 border-l-brand-500 text-gray-800 rounded-2xl rounded-tl-none'
-                      : 'bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-none'
+                      ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-l-4 border-l-brand-500 dark:border-l-brand-500 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-none'
+                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-none'
                 }`}>
                   {message.content}
                 </div>
@@ -221,13 +221,13 @@ export function TicketThread({ ticket, initialMessages, currentUserId, currentUs
 
       {/* Reply Input */}
       {currentStatus !== 'closed' ? (
-        <div className="p-4 bg-white border-t border-gray-100">
+        <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
           <form onSubmit={handleReply} className="flex gap-3">
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder="Type your reply here..."
-              className="flex-1 resize-none h-12 min-h-[48px] max-h-32 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
+              className="flex-1 resize-none h-12 min-h-[48px] max-h-32 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
@@ -243,10 +243,10 @@ export function TicketThread({ ticket, initialMessages, currentUserId, currentUs
               <Send className="w-5 h-5" />
             </button>
           </form>
-          <p className="text-xs text-gray-400 mt-2 ml-1">Press Enter to send, Shift + Enter for new line</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 ml-1">Press Enter to send, Shift + Enter for new line</p>
         </div>
       ) : (
-        <div className="p-4 bg-gray-50 border-t border-gray-200 text-center text-sm text-gray-500">
+        <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
           This ticket is closed. If you have further questions, please open a new ticket.
         </div>
       )}
