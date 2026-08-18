@@ -79,12 +79,12 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: Scri
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 animate-fade-in">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {script ? 'Edit Script' : 'Create Sales Script'}
           </h2>
-          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -95,23 +95,23 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: Scri
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Title *</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Title *</label>
             <input
               required
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="e.g. First Contact WhatsApp Greeting"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Script Type *</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Script Type *</label>
               <select
                 value={form.script_type}
                 onChange={e => setForm(f => ({ ...f, script_type: e.target.value as ScriptType }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 {SCRIPT_TYPES.map(st => (
                   <option key={st.type} value={st.type}>{st.label}</option>
@@ -120,11 +120,11 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: Scri
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Language</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Language</label>
               <select
                 value={form.language}
                 onChange={e => setForm(f => ({ ...f, language: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="English">English</option>
                 <option value="Urdu">Urdu (اردو)</option>
@@ -135,7 +135,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: Scri
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700">Script Content *</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Script Content *</label>
               <AiAssistButton
                 contentType="script"
                 fieldName="content"
@@ -149,37 +149,37 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: Scri
               value={form.content}
               onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
               placeholder="The exact word-for-word message salesmen should send/say…"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none font-mono text-xs"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none font-mono text-xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">When to Use</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">When to Use</label>
             <input
               value={form.when_to_use}
               onChange={e => setForm(f => ({ ...f, when_to_use: e.target.value }))}
               placeholder="e.g. Send 24 hours after initial inquiry if no reply"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Related Product</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Related Product</label>
               <input
                 value={form.related_product}
                 onChange={e => setForm(f => ({ ...f, related_product: e.target.value }))}
                 placeholder="Google AI Pro"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value as Status }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -200,7 +200,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: Scri
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
+              className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
               Cancel
             </button>

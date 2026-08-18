@@ -48,13 +48,13 @@ export function AiHelpChat() {
   }
 
   return (
-    <div className="flex flex-col h-[600px] bg-gray-50 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="flex flex-col h-[600px] bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
       
       {/* Chat History */}
       <div className="flex-1 p-6 overflow-y-auto space-y-6">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 p-8 space-y-4">
-            <Bot className="w-12 h-12 text-brand-200" />
+          <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 dark:text-gray-400 p-8 space-y-4">
+            <Bot className="w-12 h-12 text-brand-200 dark:text-brand-800" />
             <p className="text-sm max-w-sm">
               I can help you respond to difficult customers, handle objections, or craft the perfect follow-up message.
             </p>
@@ -64,8 +64,8 @@ export function AiHelpChat() {
             <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               
               {msg.role === 'ai' && (
-                <div className="w-8 h-8 rounded-full bg-brand-100 flex flex-shrink-0 items-center justify-center border border-brand-200">
-                  <Bot className="w-4 h-4 text-brand-600" />
+                <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
+                  <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                 </div>
               )}
               
@@ -73,7 +73,7 @@ export function AiHelpChat() {
                 <div 
                   className={`px-5 py-3.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed
                     ${msg.role === 'user' 
-                      ? 'bg-gray-200 text-gray-800 rounded-tr-sm' 
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tr-sm' 
                       : 'bg-brand-600 text-white rounded-tl-sm shadow-md'
                     }`}
                 >
@@ -83,7 +83,7 @@ export function AiHelpChat() {
                 {msg.role === 'ai' && !msg.content.startsWith('Error:') && (
                   <button
                     onClick={() => handleCopy(msg.id, msg.content)}
-                    className="mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-full transition-colors border border-brand-200"
+                    className="mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-brand-50 dark:bg-brand-950/50 hover:bg-brand-100 dark:hover:bg-brand-900/50 px-3 py-1.5 rounded-full transition-colors border border-brand-200 dark:border-brand-800"
                   >
                     {copiedId === msg.id ? (
                       <><Check className="w-3.5 h-3.5" /> Copied!</>
@@ -95,8 +95,8 @@ export function AiHelpChat() {
               </div>
               
               {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex flex-shrink-0 items-center justify-center border border-gray-300">
-                  <User className="w-4 h-4 text-gray-600" />
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex flex-shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600">
+                  <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </div>
               )}
               
@@ -106,10 +106,10 @@ export function AiHelpChat() {
         
         {isLoading && (
           <div className="flex gap-4 justify-start">
-            <div className="w-8 h-8 rounded-full bg-brand-100 flex flex-shrink-0 items-center justify-center border border-brand-200">
-              <Bot className="w-4 h-4 text-brand-600" />
+            <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
+              <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
             </div>
-            <div className="bg-white border border-gray-200 px-5 py-3.5 rounded-2xl rounded-tl-sm flex items-center gap-2 text-sm text-gray-500 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-5 py-3.5 rounded-2xl rounded-tl-sm flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 shadow-sm">
               <Loader2 className="w-4 h-4 animate-spin text-brand-500" /> Thinking...
             </div>
           </div>
@@ -117,7 +117,7 @@ export function AiHelpChat() {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-200">
+      <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
         <div className="relative flex items-center">
           <input
             type="text"
@@ -127,7 +127,7 @@ export function AiHelpChat() {
               if (e.key === 'Enter') handleSend()
             }}
             placeholder="Describe the customer situation or paste their message..."
-            className="w-full pl-5 pr-14 py-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white transition-all shadow-inner"
+            className="w-full pl-5 pr-14 py-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white dark:focus:bg-gray-700 transition-all shadow-inner"
           />
           <button
             onClick={handleSend}

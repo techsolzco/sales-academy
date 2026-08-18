@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createTool, updateTool } from '@/lib/actions/tools'
@@ -40,6 +40,26 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
     status: (defaultValues?.status ?? tool?.status ?? 'published') as Status,
   })
 
+  // Reset form when tool or defaultValues changes (fixes stale useState on re-open)
+  useEffect(() => {
+    if (!isOpen) return
+    setForm({
+      name: defaultValues?.name ?? tool?.name ?? '',
+      logo_url: defaultValues?.logo_url ?? tool?.logo_url ?? '',
+      description: defaultValues?.description ?? tool?.description ?? '',
+      website_url: defaultValues?.website_url ?? tool?.website_url ?? '',
+      category: (defaultValues?.category ?? tool?.category ?? 'Sales') as ToolCategory,
+      pricing: defaultValues?.pricing ?? tool?.pricing ?? '',
+      best_for: defaultValues?.best_for ?? tool?.best_for ?? '',
+      features: (Array.isArray(defaultValues?.features) ? defaultValues?.features.join(', ') : defaultValues?.features) ?? tool?.features?.join(', ') ?? '',
+      tutorial_link: defaultValues?.tutorial_link ?? tool?.tutorial_link ?? '',
+      youtube_tutorial_link: defaultValues?.youtube_tutorial_link ?? tool?.youtube_tutorial_link ?? '',
+      tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? tool?.tags?.join(', ') ?? '',
+      status: (defaultValues?.status ?? tool?.status ?? 'published') as Status,
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tool?.id, isOpen])
+
   if (!isOpen) return null
 
   function handleSubmit(e: React.FormEvent) {
@@ -76,9 +96,9 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 animate-fade-in">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {tool ? 'Edit Sales Tool' : 'Add Sales Tool'}
           </h2>
           <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600">
@@ -98,7 +118,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder="e.g. Canva Pro, ChatGPT Enterprise, Apollo.io"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none font-semibold text-gray-900"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none font-semibold text-gray-900"
             />
           </div>
 
@@ -110,7 +130,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
                 value={form.website_url}
                 onChange={e => setForm(f => ({ ...f, website_url: e.target.value }))}
                 placeholder="https://example.com"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
 
@@ -119,7 +139,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
               <select
                 value={form.category}
                 onChange={e => setForm(f => ({ ...f, category: e.target.value as ToolCategory }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 {CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -143,7 +163,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="Overview of what this tool does and how it helps salesmen…"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
@@ -154,7 +174,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
                 value={form.pricing}
                 onChange={e => setForm(f => ({ ...f, pricing: e.target.value }))}
                 placeholder="Free / $20/mo / Enterprise"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
 
@@ -172,7 +192,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
                 value={form.best_for}
                 onChange={e => setForm(f => ({ ...f, best_for: e.target.value }))}
                 placeholder="Creating proposal pitch decks"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
           </div>
@@ -195,7 +215,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
                 value={form.tutorial_link}
                 onChange={e => setForm(f => ({ ...f, tutorial_link: e.target.value }))}
                 placeholder="https://..."
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
 
@@ -205,7 +225,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
                 value={form.youtube_tutorial_link}
                 onChange={e => setForm(f => ({ ...f, youtube_tutorial_link: e.target.value }))}
                 placeholder="https://youtube.com/watch?v=..."
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
           </div>
@@ -226,7 +246,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value as Status }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -247,7 +267,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
+              className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
             >
               Cancel
             </button>

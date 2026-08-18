@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Search, Copy, Check, HelpCircle, Eye } from 'lucide-react'
 import type { FAQ } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export function SalesmanFAQViewer({ faqs, initialReviewed = [] }: { faqs: FAQ[], initialReviewed?: string[] }) {
   const [search, setSearch] = useState('')
@@ -11,6 +12,7 @@ export function SalesmanFAQViewer({ faqs, initialReviewed = [] }: { faqs: FAQ[],
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
   const [isPending, setIsPending] = useState(false)
+  const { language } = useLanguage()
 
   const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category)))]
 
@@ -27,7 +29,7 @@ export function SalesmanFAQViewer({ faqs, initialReviewed = [] }: { faqs: FAQ[],
   })
 
   function handleCopy(faq: FAQ) {
-    const textToCopy = faq.customer_ready_answer || faq.short_answer
+    const textToCopy = (language === 'hi' && faq.customer_ready_answer_hinglish) ? faq.customer_ready_answer_hinglish : (faq.customer_ready_answer || (language === 'hi' && faq.short_answer_hinglish ? faq.short_answer_hinglish : faq.short_answer))
     navigator.clipboard.writeText(textToCopy)
     setCopiedId(faq.id)
     setTimeout(() => setCopiedId(null), 2000)
@@ -101,7 +103,10 @@ export function SalesmanFAQViewer({ faqs, initialReviewed = [] }: { faqs: FAQ[],
                   <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 font-semibold text-brand-700 mb-2 inline-block">
                     {faq.category}
                   </span>
-                  <h3 className="font-bold text-gray-900 text-base leading-snug">{faq.question}</h3>
+                  <h3 className="font-bold text-gray-900 text-base leading-snug">
+                    {language === 'hi' && faq.question_hinglish ? faq.question_hinglish : faq.question}
+                    {language === 'hi' && !faq.question_hinglish && <span className="text-xs text-gray-400 ml-1">(EN only)</span>}
+                  </h3>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -135,13 +140,17 @@ export function SalesmanFAQViewer({ faqs, initialReviewed = [] }: { faqs: FAQ[],
               <div className="space-y-3 pt-1">
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Quick Answer</p>
-                  <p className="text-sm text-gray-700 leading-relaxed bg-gray-50/80 p-3 rounded-xl border border-gray-100">{faq.short_answer}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                    {language === 'hi' && faq.short_answer_hinglish ? faq.short_answer_hinglish : faq.short_answer}
+                  </p>
                 </div>
 
                 {faq.customer_ready_answer && (
                   <div>
                     <p className="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-1">Client-Ready Response</p>
-                    <p className="text-sm text-gray-800 leading-relaxed bg-brand-50/40 p-3.5 rounded-xl border border-brand-100/60 font-sans">{faq.customer_ready_answer}</p>
+                    <p className="text-sm text-gray-800 leading-relaxed bg-brand-50/40 p-3.5 rounded-xl border border-brand-100/60 font-sans">
+                      {language === 'hi' && faq.customer_ready_answer_hinglish ? faq.customer_ready_answer_hinglish : faq.customer_ready_answer}
+                    </p>
                   </div>
                 )}
 

@@ -137,10 +137,13 @@ Return ONLY valid JSON with this exact structure:
   },
   "faqs": [
     {
-      "question": "Customer question in Hinglish",
-      "short_answer": "1-2 sentence answer",
-      "detailed_answer": "3-5 sentence detailed explanation",
-      "customer_ready_answer": "WhatsApp-ready Hinglish response",
+      "question": "Customer question in English",
+      "question_hinglish": "Same question in Hinglish (Roman Urdu)",
+      "short_answer": "Short answer in English",
+      "short_answer_hinglish": "Same short answer in Hinglish",
+      "detailed_answer": "Detailed answer in English",
+      "customer_ready_answer": "WhatsApp-ready English response",
+      "customer_ready_answer_hinglish": "Same WhatsApp-ready response in Hinglish",
       "category": "Category name",
       "tags": ["tag1", "tag2"]
     }
@@ -149,7 +152,8 @@ Return ONLY valid JSON with this exact structure:
     {
       "objection_text": "What the customer says",
       "meaning": "What they really mean",
-      "recommended_response": "Best Hinglish response",
+      "recommended_response": "Best English response",
+      "recommended_response_hinglish": "Same response in Hinglish",
       "alternative_response": "Backup response",
       "do_not_say": "What NOT to say",
       "difficulty": "beginner|intermediate|advanced"
@@ -159,7 +163,8 @@ Return ONLY valid JSON with this exact structure:
     {
       "title": "Script title",
       "script_type": "greeting|closing|follow_up|objection_response",
-      "content": "Full WhatsApp-ready script text in Hinglish",
+      "content": "Full WhatsApp-ready script text in English",
+      "content_hinglish": "Same script in Hinglish (Roman Urdu)",
       "when_to_use": "When to send this",
       "tags": ["tag1"]
     }
@@ -171,7 +176,7 @@ Requirements:
 - FAQs: Generate exactly 15-20 FAQs
 - Objections: Generate exactly 5-8 objections
 - Scripts: Generate exactly 3-4 scripts (include greeting, closing, follow_up, objection_response types)
-- All content in Hinglish (mix of English and Roman Urdu)
+- Generate BOTH English and Hinglish versions for FAQ questions/answers, objection responses, and script content
 - Make content practical, specific to this tool, and WhatsApp-friendly`
 
     const text = await callGeminiLarge(systemPrompt, userPrompt)
@@ -293,12 +298,16 @@ export async function saveToolPackage(
       .filter(f => !(f as unknown as Record<string, boolean>)._removed)
       .map(f => ({
         question: f.question,
+        question_hinglish: (f as any).question_hinglish || null,
         short_answer: f.short_answer,
+        short_answer_hinglish: (f as any).short_answer_hinglish || null,
         detailed_answer: f.detailed_answer,
         customer_ready_answer: f.customer_ready_answer,
+        customer_ready_answer_hinglish: (f as any).customer_ready_answer_hinglish || null,
         category: f.category,
         tags: f.tags || [],
         tool_id: toolId,
+        course_id: course.id,
         status,
       }))
     if (faqInserts.length > 0) {
@@ -313,10 +322,12 @@ export async function saveToolPackage(
         objection_text: o.objection_text,
         meaning: o.meaning,
         recommended_response: o.recommended_response,
+        recommended_response_hinglish: (o as any).recommended_response_hinglish || null,
         alternative_response: o.alternative_response,
         do_not_say: o.do_not_say,
         difficulty: o.difficulty,
         tool_id: toolId,
+        course_id: course.id,
         status,
       }))
     if (objInserts.length > 0) {
@@ -331,10 +342,12 @@ export async function saveToolPackage(
         title: s.title,
         script_type: s.script_type,
         content: s.content,
+        content_hinglish: (s as any).content_hinglish || null,
         when_to_use: s.when_to_use,
         tags: s.tags || [],
         language: 'Hinglish',
         tool_id: toolId,
+        course_id: course.id,
         status,
       }))
     if (scriptInserts.length > 0) {

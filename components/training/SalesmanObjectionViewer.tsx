@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { Search, AlertCircle, CheckCircle, XCircle, Eye, Check } from 'lucide-react'
 import type { Objection } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export function SalesmanObjectionViewer({ objections, initialReviewed = [] }: { objections: Objection[], initialReviewed?: string[] }) {
   const [search, setSearch] = useState('')
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
   const [isPending, setIsPending] = useState(false)
+  const { language } = useLanguage()
 
   async function handleToggleReview(id: string) {
     if (isPending) return
@@ -81,7 +83,10 @@ export function SalesmanObjectionViewer({ objections, initialReviewed = [] }: { 
                       </span>
                     )}
                   </div>
-                  <h3 className="font-bold text-gray-900 text-lg">&ldquo;{o.objection_text}&rdquo;</h3>
+                  <h3 className="font-bold text-gray-900 text-lg">
+                    &ldquo;{o.objection_text}&rdquo;
+                    {language === 'hi' && !o.recommended_response_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
+                  </h3>
                 </div>
 
                 <button
@@ -113,7 +118,9 @@ export function SalesmanObjectionViewer({ objections, initialReviewed = [] }: { 
                     <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                     Recommended Response Strategy
                   </div>
-                  <p className="text-sm text-emerald-950 leading-relaxed">{o.recommended_response}</p>
+                  <p className="text-sm text-emerald-950 leading-relaxed">
+                    {language === 'hi' && o.recommended_response_hinglish ? o.recommended_response_hinglish : o.recommended_response}
+                  </p>
                 </div>
 
                 {o.do_not_say && (

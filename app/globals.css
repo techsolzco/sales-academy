@@ -112,5 +112,27 @@
   .dark .bg-white\/90 {
     background-color: rgb(17 24 39 / 0.9) !important;
   }
+
+  /* ── Global dark mode fix for ALL form inputs, textareas, selects ── */
+  /* Covers all components that use border-gray-200/300 without dark: variants */
+  .dark input:not([type="range"]):not([type="color"]):not([type="checkbox"]):not([type="radio"]),
+  .dark textarea,
+  .dark select {
+    background-color: theme('colors.gray.700') !important;
+    color: theme('colors.gray.100') !important;
+    border-color: theme('colors.gray.600') !important;
+  }
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: theme('colors.gray.400') !important;
+  }
+  /* Focus ring stays brand color in dark mode */
+  .dark input:focus,
+  .dark textarea:focus,
+  .dark select:focus {
+    border-color: theme('colors.brand.500') !important;
+    outline: none;
+  }
 }
+
 

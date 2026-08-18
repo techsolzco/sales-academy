@@ -5,6 +5,7 @@ import { Search, Copy, Check, FileText, Eye } from 'lucide-react'
 import { logScriptCopy } from '@/lib/actions/scripts'
 import type { SalesScript } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export function SalesmanScriptViewer({ scripts, initialReviewed = [] }: { scripts: SalesScript[], initialReviewed?: string[] }) {
   const [search, setSearch] = useState('')
@@ -12,6 +13,7 @@ export function SalesmanScriptViewer({ scripts, initialReviewed = [] }: { script
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
   const [isPending, setIsPending] = useState(false)
+  const { language } = useLanguage()
 
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 
@@ -27,7 +29,7 @@ export function SalesmanScriptViewer({ scripts, initialReviewed = [] }: { script
   })
 
   async function handleCopy(script: SalesScript) {
-    navigator.clipboard.writeText(script.content)
+    navigator.clipboard.writeText(language === 'hi' && script.content_hinglish ? script.content_hinglish : script.content)
     setCopiedId(script.id)
     setTimeout(() => setCopiedId(null), 2000)
 
@@ -108,7 +110,10 @@ export function SalesmanScriptViewer({ scripts, initialReviewed = [] }: { script
                       🌐 {script.language}
                     </span>
                   </div>
-                  <h3 className="font-bold text-gray-900 text-base">{script.title}</h3>
+                  <h3 className="font-bold text-gray-900 text-base">
+                    {script.title}
+                    {language === 'hi' && !script.content_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
+                  </h3>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -144,7 +149,7 @@ export function SalesmanScriptViewer({ scripts, initialReviewed = [] }: { script
               )}
 
               <pre className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-mono whitespace-pre-wrap leading-relaxed select-all">
-                {script.content}
+                {language === 'hi' && script.content_hinglish ? script.content_hinglish : script.content}
               </pre>
             </div>
           ))}

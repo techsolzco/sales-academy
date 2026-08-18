@@ -123,14 +123,18 @@ export interface LessonProgress {
 export interface FAQ {
   id: string
   question: string
+  question_hinglish?: string | null
   short_answer: string
+  short_answer_hinglish?: string | null
   detailed_answer: string | null
   customer_ready_answer: string | null
+  customer_ready_answer_hinglish?: string | null
   category: string
   tags: string[]
   priority: number
   status: Status
   tool_id?: string | null
+  course_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -155,12 +159,14 @@ export interface SalesScript {
   script_type: ScriptType
   language: string
   content: string
+  content_hinglish?: string | null
   when_to_use: string | null
   related_product: string | null
   related_objection: string | null
   tags: string[]
   status: Status
   tool_id?: string | null
+  course_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -194,6 +200,7 @@ export interface Objection {
   objection_text: string
   meaning: string | null
   recommended_response: string
+  recommended_response_hinglish?: string | null
   alternative_response: string | null
   do_not_say: string | null
   related_product: string | null
@@ -201,6 +208,7 @@ export interface Objection {
   difficulty: Difficulty | null
   status: Status
   tool_id?: string | null
+  course_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -584,9 +592,12 @@ export interface OnboardWizardData {
 
 export interface GeneratedFAQ {
   question: string
+  question_hinglish?: string
   short_answer: string
+  short_answer_hinglish?: string
   detailed_answer: string
   customer_ready_answer: string
+  customer_ready_answer_hinglish?: string
   category: string
   tags: string[]
   _removed?: boolean
@@ -596,6 +607,7 @@ export interface GeneratedObjection {
   objection_text: string
   meaning: string
   recommended_response: string
+  recommended_response_hinglish?: string
   alternative_response: string
   do_not_say: string
   difficulty: Difficulty
@@ -606,6 +618,7 @@ export interface GeneratedScript {
   title: string
   script_type: string
   content: string
+  content_hinglish?: string
   when_to_use: string
   tags: string[]
   _removed?: boolean

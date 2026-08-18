@@ -65,12 +65,12 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 animate-fade-in">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {faq ? 'Edit FAQ' : 'Create FAQ'}
           </h2>
-          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -81,19 +81,19 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Question *</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Question *</label>
             <input
               required
               value={form.question}
               onChange={e => setForm(f => ({ ...f, question: e.target.value }))}
               placeholder="e.g. What is the pricing policy for enterprise plans?"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700">Short Answer *</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Short Answer *</label>
               <AiAssistButton
                 contentType="faq"
                 fieldName="short_answer"
@@ -107,13 +107,13 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               value={form.short_answer}
               onChange={e => setForm(f => ({ ...f, short_answer: e.target.value }))}
               placeholder="Concise quick summary answer"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700">Customer-Ready Answer (Copyable)</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Customer-Ready Answer (Copyable)</label>
               <AiAssistButton
                 contentType="faq"
                 fieldName="customer_ready_answer"
@@ -126,13 +126,13 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               value={form.customer_ready_answer}
               onChange={e => setForm(f => ({ ...f, customer_ready_answer: e.target.value }))}
               placeholder="Polished text salesmen can copy & send directly to clients"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700">Detailed Answer (Internal)</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Detailed Answer (Internal)</label>
               <AiAssistButton
                 contentType="faq"
                 fieldName="detailed_answer"
@@ -145,27 +145,27 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               value={form.detailed_answer}
               onChange={e => setForm(f => ({ ...f, detailed_answer: e.target.value }))}
               placeholder="In-depth background details for internal rep understanding"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Category</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Category</label>
               <input
                 value={form.category}
                 onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                 placeholder="e.g. Pricing, Technical, Onboarding"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value as Status }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -176,11 +176,11 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Related Tool (Optional)</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Related Tool (Optional)</label>
               <select
                 value={form.tool_id}
                 onChange={e => setForm(f => ({ ...f, tool_id: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="">General (no specific tool)</option>
                 {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -190,22 +190,22 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Priority (Higher = Top)</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Priority (Higher = Top)</label>
               <input
                 type="number"
                 value={form.priority}
                 onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Tags (comma separated)</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tags (comma separated)</label>
               <input
                 value={form.tags}
                 onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
                 placeholder="pricing, enterprise, discount"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
           </div>
@@ -222,7 +222,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
+              className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
               Cancel
             </button>
