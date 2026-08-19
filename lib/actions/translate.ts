@@ -26,11 +26,7 @@ export async function translateContent(
 
     const results: Record<string, string> = {}
     
-    const systemPrompt = `You are a professional translator for a sales application. 
-Translate the provided text.
-- If the original text is primarily in English or Roman Urdu (Hinglish), translate it to proper Urdu script.
-- If the original text is primarily in Urdu script, translate it to Roman Urdu (Hinglish).
-Provide ONLY the translated text without any quotes, explanations, or markdown formatting. Keep the tone natural and appropriate for sales conversations.`
+    const systemPrompt = `You are a professional translator for a sales application. Detect the language of the provided text. If the text is in Hinglish (Roman Urdu/English mix), translate it to clear English. If the text is in English, translate it to Hinglish (Roman Urdu style). Provide ONLY the translated text without any quotes, explanations, or markdown.`
 
     for (const [targetColumn, originalText] of Object.entries(textsToTranslate)) {
       if (!originalText || originalText.trim() === '') continue

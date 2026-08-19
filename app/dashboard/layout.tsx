@@ -14,10 +14,12 @@ import { NotificationBell } from '@/components/layout/NotificationBell'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
 import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
 import { ToastProvider } from '@/components/ui/ToastContext'
+import { TranslatorFab } from '@/components/ui/TranslatorFab'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Ask AI',      href: '/dashboard/ai-help',    icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'English Practice', href: '/dashboard/english-practice', icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
   { label: 'My Training', href: '/dashboard/training',   icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Leaderboard', href: '/dashboard/leaderboard',icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Community',   href: '/dashboard/community',  icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
@@ -111,6 +113,7 @@ export default async function DashboardLayout({
         </main>
       </div>
       <WhatsAppButton />
+      <TranslatorFab />
       </div>
         </SidebarProvider>
       </ToastProvider>

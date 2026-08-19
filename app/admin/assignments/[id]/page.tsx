@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { SubmissionReviewer } from '@/components/admin/SubmissionReviewer'
 import Link from 'next/link'
 import { ArrowLeft, Edit } from 'lucide-react'
+import AssignmentPublish from './AssignmentPublish'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +22,12 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
     .select('*, profile:profiles(id,full_name,email,avatar_url)')
     .eq('assignment_id', params.id)
     .order('submitted_at', { ascending: false })
+
+  const { data: activeUsers } = await supabase.from('profiles')
+    .select('id, full_name')
+    .eq('role', 'salesman')
+    .eq('status', 'active')
+    .order('full_name')
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -44,6 +51,8 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
           {assignment.instructions}
         </div>
       </div>
+
+      <AssignmentPublish assignmentId={params.id} users={activeUsers || []} />
 
       <h2 className="text-lg font-bold text-gray-900 mb-4">Submissions ({submissions?.length || 0})</h2>
       

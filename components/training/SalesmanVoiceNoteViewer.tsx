@@ -1,16 +1,21 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, Mic, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
+import { Search, Mic, ChevronDown, ChevronRight, LayoutList, FolderTree, Upload, Loader2 } from 'lucide-react'
 import { AudioPlayer } from '@/components/audio/AudioPlayer'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
+import { createClient } from '@/lib/supabase/client'
+import { upsertSalesmanRecording } from '@/lib/actions/voice-recordings'
 import type { VoiceNote } from '@/types'
 
-export function SalesmanVoiceNoteViewer({ notes, tools = [] }: { notes: VoiceNote[], tools?: { id: string; name: string }[] }) {
+export function SalesmanVoiceNoteViewer({ notes, tools = [], currentUserId, salesmanRecordings = {} }: { notes: VoiceNote[], tools?: { id: string; name: string }[], currentUserId?: string, salesmanRecordings?: Record<string, string> }) {
   const [search, setSearch] = useState('')
   const [filterToolId, setFilterToolId] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null)
+
+  const supabase = createClient()
 
   const filtered = notes.filter(n => {
     const q = search.toLowerCase()
@@ -42,7 +47,31 @@ export function SalesmanVoiceNoteViewer({ notes, tools = [] }: { notes: VoiceNot
     setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
+  async function handleFileUpload(voiceNoteId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !currentUserId) return
+    setUploadingFor(voiceNoteId)
+    try {
+      const ext = file.name.split('.').pop()
+      const filePath = `salesman/${currentUserId}/${voiceNoteId}_${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('voice-notes').upload(filePath, file)
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage.from('voice-notes').getPublicUrl(filePath)
+      await upsertSalesmanRecording(voiceNoteId, publicUrl)
+      // Next.js will revalidate the page
+    } catch (err) {
+      console.error('Upload failed:', err)
+      alert('Failed to upload recording.')
+    } finally {
+      setUploadingFor(null)
+    }
+  }
+
   function renderNoteCard(note: VoiceNote) {
+    const myRecordingUrl = salesmanRecordings[note.id]
+    const showOfficialAudio = note.admin_audio_visible !== false
+
     return (
       <TranslateContextWrapper
         key={note.id}
@@ -56,19 +85,51 @@ export function SalesmanVoiceNoteViewer({ notes, tools = [] }: { notes: VoiceNot
         }}
       >
         {({ displayTexts, toggleButton }) => (
-          <div id={`vn-${note.id}`} className="relative group">
+          <div id={`vn-${note.id}`} className="relative group flex flex-col gap-4 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
             <div className="absolute top-4 right-4 z-10">
               {toggleButton}
             </div>
-            <AudioPlayer
-              title={note.title}
-              audioUrl={note.audio_url}
-              transcript={displayTexts.transcript_translated}
-              durationSeconds={note.duration_seconds}
-              purpose={note.purpose}
-              whenToSend={note.when_to_send}
-              keyPoints={note.key_points}
-            />
+            
+            {showOfficialAudio && (
+              <AudioPlayer
+                title={note.title}
+                audioUrl={note.audio_url}
+                transcript={displayTexts.transcript_translated}
+                durationSeconds={note.duration_seconds}
+                purpose={note.purpose}
+                whenToSend={note.when_to_send}
+                keyPoints={note.key_points}
+              />
+            )}
+            {!showOfficialAudio && (
+              <div className="flex flex-col gap-2">
+                <h3 className="font-semibold text-gray-900">{note.title}</h3>
+                <p className="text-sm text-gray-500 italic">Official audio is hidden. Read the transcript to practice your own recording.</p>
+                {note.transcript && <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">{displayTexts.transcript_translated || note.transcript}</p>}
+              </div>
+            )}
+
+            <div className="border-t border-gray-100 pt-4 mt-2">
+              <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3">
+                🎙️ My Recording
+              </h4>
+              {myRecordingUrl ? (
+                <div className="space-y-3">
+                  <audio controls src={myRecordingUrl} className="w-full h-10" />
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 mb-3">You haven't uploaded a recording for this pitch yet.</p>
+              )}
+              
+              <div className="mt-3">
+                <label className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-sm font-medium transition w-full sm:w-auto">
+                  {uploadingFor === note.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploadingFor === note.id ? 'Uploading...' : 'Upload My Recording'}
+                  <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleFileUpload(note.id, e)} disabled={uploadingFor === note.id} />
+                </label>
+              </div>
+            </div>
+
           </div>
         )}
       </TranslateContextWrapper>

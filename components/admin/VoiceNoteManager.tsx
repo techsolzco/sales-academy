@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
-import { Plus, Edit, Trash2, Search, Mic, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Mic, ChevronDown, ChevronRight, LayoutList, FolderTree, Eye, EyeOff } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { VoiceNoteFormModal } from '@/components/admin/VoiceNoteFormModal'
 import { AudioPlayer } from '@/components/audio/AudioPlayer'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteVoiceNote } from '@/lib/actions/voice-notes'
+import { toggleAdminAudioVisibility } from '@/lib/actions/voice-recordings'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { VoiceNote } from '@/types'
 
@@ -84,6 +85,15 @@ export function VoiceNoteManager({ initialNotes, tools = [] }: { initialNotes: V
     })
   }
 
+  function handleToggleVisibility(id: string, currentVisible: boolean) {
+    startTransition(async () => {
+      const res = await toggleAdminAudioVisibility(id, !currentVisible)
+      if (!res.error) {
+        setNotes(prev => prev.map(n => n.id === id ? { ...n, admin_audio_visible: !currentVisible } : n))
+      }
+    })
+  }
+
   function renderNoteCard(note: VoiceNote) {
     return (
       <TranslateContextWrapper
@@ -102,6 +112,14 @@ export function VoiceNoteManager({ initialNotes, tools = [] }: { initialNotes: V
             <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
               {toggleButton}
               <StatusBadge status={note.status} />
+              <button
+                onClick={() => handleToggleVisibility(note.id, note.admin_audio_visible !== false)}
+                disabled={isPending}
+                className={`p-1.5 rounded-lg bg-white/90 border border-gray-200 transition disabled:opacity-40 ${note.admin_audio_visible !== false ? 'text-gray-600 hover:text-brand-600' : 'text-amber-500 hover:text-amber-600'}`}
+                title={note.admin_audio_visible !== false ? "Hide Official Audio" : "Show Official Audio"}
+              >
+                {note.admin_audio_visible !== false ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              </button>
               <button
                 onClick={() => handleEdit(note)}
                 className="p-1.5 rounded-lg bg-white/90 border border-gray-200 text-gray-600 hover:text-brand-600 transition"

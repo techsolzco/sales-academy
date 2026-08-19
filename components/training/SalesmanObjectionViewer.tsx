@@ -70,10 +70,14 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
               table="objections"
               recordId={o.id}
               fieldsToTranslate={{
-                recommended_response_translated: (language === 'hi' && o.recommended_response_hinglish ? o.recommended_response_hinglish : o.recommended_response)
+                recommended_response_translated: (language === 'hi' && o.recommended_response_hinglish ? o.recommended_response_hinglish : o.recommended_response),
+                meaning_translated: o.meaning || '',
+                do_not_say_translated: o.do_not_say || ''
               }}
               initialTranslations={{
-                recommended_response_translated: o.recommended_response_translated
+                recommended_response_translated: o.recommended_response_translated,
+                meaning_translated: o.meaning_translated,
+                do_not_say_translated: o.do_not_say_translated
               }}
             >
               {({ displayTexts, toggleButton }) => (
@@ -119,7 +123,7 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                   </div>
                   {o.meaning && (
                     <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs text-blue-900">
-                      💡 <span className="font-bold">Behind the objection:</span> {o.meaning}
+                      💡 <span className="font-bold">Behind the objection:</span> {displayTexts.meaning_translated}
                     </div>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,7 +142,7 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                           <XCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
                           DO NOT SAY
                         </div>
-                        <p className="text-sm text-red-950 leading-relaxed">{o.do_not_say}</p>
+                        <p className="text-sm text-red-950 leading-relaxed">{displayTexts.do_not_say_translated}</p>
                       </div>
                     )}
                   </div>

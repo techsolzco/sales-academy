@@ -7,7 +7,7 @@ export default async function SalesmanVoiceNotesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const [notesRes, toolsRes] = await Promise.all([
+  const [notesRes, toolsRes, recordingsRes] = await Promise.all([
     supabase
       .from('voice_notes')
       .select('*')
@@ -17,10 +17,19 @@ export default async function SalesmanVoiceNotesPage() {
       .from('tools')
       .select('id, name')
       .eq('status', 'published')
-      .order('name')
+      .order('name'),
+    supabase
+      .from('salesman_voice_recordings')
+      .select('voice_note_id, audio_url')
+      .eq('user_id', user.id)
   ])
   const notes = notesRes.data ?? []
   const tools = toolsRes.data ?? []
+  
+  const salesmanRecordings = (recordingsRes.data ?? []).reduce((acc: Record<string, string>, curr) => {
+    acc[curr.voice_note_id] = curr.audio_url
+    return acc
+  }, {})
 
   return (
     <div className="p-8 max-w-6xl animate-fade-in">
@@ -31,7 +40,7 @@ export default async function SalesmanVoiceNotesPage() {
         </p>
       </div>
 
-      <SalesmanVoiceNoteViewer notes={notes} tools={tools} />
+      <SalesmanVoiceNoteViewer notes={notes} tools={tools} currentUserId={user.id} salesmanRecordings={salesmanRecordings} />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
 import { BadgeGrid } from '@/components/profile/BadgeGrid'
 import { fetchUserBadges } from '@/lib/actions/badges'
 import { User, Mail, Briefcase, ExternalLink } from 'lucide-react'
-import { RequestResellerButton } from '@/components/reseller/RequestResellerButton'
+import { ResellerApplicationForm } from '@/components/reseller/ResellerApplicationForm'
 import { fetchMyResellerApplication } from '@/lib/actions/reseller'
 import Link from 'next/link'
 
@@ -83,11 +83,7 @@ export default async function ProfilePage() {
                   )}
                 </div>
               ) : (
-                <RequestResellerButton 
-                  userId={user.id} 
-                  qualifiesForReseller={qualifiesForReseller} 
-                  currentApplication={resellerApp} 
-                />
+                <ResellerApplicationForm />
               )}
             </div>
           </div>

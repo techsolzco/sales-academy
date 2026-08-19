@@ -85,10 +85,12 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
         table="scripts"
         recordId={script.id}
         fieldsToTranslate={{
-          content_translated: (language === 'hi' && script.content_hinglish ? script.content_hinglish : script.content)
+          content_translated: (language === 'hi' && script.content_hinglish ? script.content_hinglish : script.content),
+          when_to_use_translated: script.when_to_use || ''
         }}
         initialTranslations={{
-          content_translated: script.content_translated
+          content_translated: script.content_translated,
+          when_to_use_translated: script.when_to_use_translated
         }}
       >
         {({ displayTexts, toggleButton }) => (
@@ -139,7 +141,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
             </div>
             {script.when_to_use && (
               <p className="text-xs text-brand-700 font-medium bg-brand-50/80 px-3 py-1.5 rounded-lg border border-brand-100/50">
-                💡 When to send: {script.when_to_use}
+                💡 When to send: {displayTexts.when_to_use_translated}
               </p>
             )}
             <pre className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-mono whitespace-pre-wrap leading-relaxed select-all">

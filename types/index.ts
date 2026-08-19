@@ -166,6 +166,7 @@ export interface SalesScript {
   content_hinglish?: string | null
   content_translated?: string | null
   when_to_use: string | null
+  when_to_use_translated?: string | null
   related_product: string | null
   related_objection: string | null
   tags: string[]
@@ -199,17 +200,20 @@ export interface VoiceNote {
   tool_id?: string | null
   created_at: string
   updated_at: string
+  admin_audio_visible?: boolean | null
 }
 
 export interface Objection {
   id: string
   objection_text: string
   meaning: string | null
+  meaning_translated?: string | null
   recommended_response: string
   recommended_response_hinglish?: string | null
   recommended_response_translated?: string | null
   alternative_response: string | null
   do_not_say: string | null
+  do_not_say_translated?: string | null
   related_product: string | null
   related_lesson_id: string | null
   difficulty: Difficulty | null
@@ -368,6 +372,9 @@ export interface ResellerApplication {
   rejection_reason: string | null
   requested_at: string
   reviewed_at: string | null
+  learned_summary?: string | null
+  agreed_to_terms?: boolean | null
+  pledge_submitted_at?: string | null
   profile?: Pick<Profile, 'id' | 'full_name' | 'email' | 'avatar_url'>
 }
 

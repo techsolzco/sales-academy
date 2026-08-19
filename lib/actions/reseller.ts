@@ -22,17 +22,24 @@ export type Commission = {
   paid_at?: string
 }
 
-export async function requestResellerUpgrade() {
+export async function requestResellerUpgrade(learned_summary?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
   const { error } = await supabase
     .from('reseller_applications')
-    .insert([{ user_id: user.id, status: 'pending' }])
+    .insert([{ 
+      user_id: user.id, 
+      status: 'pending',
+      learned_summary: learned_summary || null,
+      agreed_to_terms: true,
+      pledge_submitted_at: new Date().toISOString()
+    }])
 
   if (error) throw error
   revalidatePath('/dashboard/profile')
+  revalidatePath('/dashboard/reseller')
 }
 
 export async function fetchMyResellerApplication() {

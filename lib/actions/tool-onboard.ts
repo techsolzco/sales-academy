@@ -10,6 +10,7 @@ import type {
   ToolTreeData,
 } from '@/types'
 import { getAiTrainingSettings } from './ai-assist'
+import { generateAndSaveToolQuiz } from './tool-quiz'
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -162,7 +163,7 @@ Return ONLY valid JSON with this exact structure:
   "scripts": [
     {
       "title": "Script title",
-      "script_type": "greeting|closing|follow_up|objection_response",
+      "script_type": "greeting|whatsapp|voice_note_script|follow_up|closing|payment|objection_response|upsell|cross_sell|after_sales|review_request",
       "content": "Full WhatsApp-ready script text in English",
       "content_hinglish": "Same script in Hinglish (Roman Urdu)",
       "when_to_use": "When to send this",
@@ -173,9 +174,10 @@ Return ONLY valid JSON with this exact structure:
 
 Requirements:
 - Course: 2-3 modules, each with 1-2 lessons, each lesson with 3-5 content blocks (mix of heading + text)
-- FAQs: Generate exactly 15-20 FAQs
-- Objections: Generate exactly 5-8 objections
-- Scripts: Generate exactly 3-4 scripts (include greeting, closing, follow_up, objection_response types)
+- Scripts: Generate exactly 11 scripts, ONE for EACH of these types (every type MUST be covered): greeting, whatsapp, voice_note_script, follow_up, closing, payment, objection_response, upsell, cross_sell, after_sales, review_request
+- Objections: Generate exactly 10 objections — mix of beginner (3), intermediate (4), and advanced (3) difficulty
+- FAQs: Generate exactly 18 FAQs covering these categories (at least 2 per category): Product, Pricing, Privacy, Warranty, Payment, Comparison, Technical, General
+- Voice notes in scripts array: also add 4 entries with script_type "voice_note_script" covering: intro/greeting, objection handling, upsell pitch, warranty/trust
 - Generate BOTH English and Hinglish versions for FAQ questions/answers, objection responses, and script content
 - Make content practical, specific to this tool, and WhatsApp-friendly`
 
@@ -360,6 +362,48 @@ export async function saveToolPackage(
     revalidatePath('/admin/faqs')
     revalidatePath('/admin/scripts')
     revalidatePath('/admin/objections')
+
+    // 7. Auto-create/update assignment for this tool
+    try {
+      const assignmentTitle = `Learn ${wizardData.name} — Full Training Assignment`
+      const assignmentInstructions = `Complete the following for ${wizardData.name}:\n\n1. Review all FAQs (${faqInserts.length} questions)\n2. Study all Objection Handlers (${objInserts.length} objections)\n3. Read all Sales Scripts (${scriptInserts.length} scripts)\n4. Take the auto-generated quiz and pass it\n\nThis assignment covers everything you need to confidently sell ${wizardData.name}.`
+      
+      const { data: existingAssignment } = await sb.from('assignments').select('id').eq('tool_id', toolId).maybeSingle()
+      if (existingAssignment) {
+        await sb.from('assignments').update({
+          title: assignmentTitle,
+          description: assignmentInstructions,
+          instructions: assignmentInstructions,
+        }).eq('id', existingAssignment.id)
+      } else {
+        await sb.from('assignments').insert({
+          title: assignmentTitle,
+          description: assignmentInstructions,
+          instructions: assignmentInstructions,
+          tool_id: toolId,
+          status: status,
+          created_by: user.id,
+        })
+      }
+    } catch (e) {
+      console.error('Auto-assignment creation failed (non-fatal):', e)
+    }
+
+    revalidatePath('/admin/assignments')
+
+    try {
+      await generateAndSaveToolQuiz(
+        toolId,
+        wizardData.name,
+        user.id,
+        faqInserts.map(f => ({ question: f.question, short_answer: f.short_answer })),
+        objInserts.map(o => ({ objection_text: o.objection_text, recommended_response: o.recommended_response })),
+        scriptInserts.map(s => ({ title: s.title, script_type: s.script_type }))
+      )
+      revalidatePath('/admin/quizzes')
+    } catch(e) {
+      console.error('Non-fatal quiz gen error:', e)
+    }
 
     return { data: { toolId } }
   } catch (error: unknown) {

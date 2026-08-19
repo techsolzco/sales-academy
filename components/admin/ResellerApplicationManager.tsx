@@ -57,7 +57,7 @@ export function ResellerApplicationManager({
                   {app.profile?.full_name?.charAt(0) || 'U'}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">{app.profile?.full_name || 'Unknown User'}</h4>
+                <h4 className="font-semibold text-gray-900">{app.profile?.full_name || 'Unknown User'}</h4>
                   <p className="text-xs text-gray-500">{app.profile?.email}</p>
                 </div>
               </div>
@@ -65,9 +65,21 @@ export function ResellerApplicationManager({
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${app.status === 'approved' ? 'bg-green-100 text-green-700' : app.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                   {app.status.toUpperCase()}
                 </span>
+                {app.agreed_to_terms ? (
+                  <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">✅ Pledge Signed</span>
+                ) : (
+                  <span className="text-xs bg-gray-50 text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full font-medium">⚠️ No Pledge</span>
+                )}
                 <span className="text-xs text-gray-400">{new Date(app.requested_at).toLocaleDateString()}</span>
               </div>
             </div>
+
+            {app.learned_summary && (
+              <div className="px-4 pb-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">What they learned:</p>
+                <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3 border border-gray-100 leading-relaxed">{app.learned_summary}</p>
+              </div>
+            )}
 
             {app.status === 'pending' && (
               <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col gap-3">
