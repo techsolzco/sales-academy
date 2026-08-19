@@ -8,11 +8,20 @@ export default async function SalesmanScriptsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: scripts } = await supabase
-    .from('scripts')
-    .select('*')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
+  const [scriptsRes, toolsRes] = await Promise.all([
+    supabase
+      .from('scripts')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('tools')
+      .select('id, name')
+      .eq('status', 'published')
+      .order('name')
+  ])
+  const scripts = scriptsRes.data ?? []
+  const tools = toolsRes.data ?? []
 
   const reviewedItems = await getReviewedKbItems('script')
 
@@ -25,7 +34,7 @@ export default async function SalesmanScriptsPage() {
         </p>
       </div>
 
-      <SalesmanScriptViewer scripts={scripts ?? []} initialReviewed={reviewedItems} />
+      <SalesmanScriptViewer scripts={scripts} tools={tools} initialReviewed={reviewedItems} />
     </div>
   )
 }

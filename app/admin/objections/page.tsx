@@ -5,10 +5,17 @@ import { Breadcrumb } from '@/components/admin/Breadcrumb'
 export default async function AdminObjectionsPage() {
   const supabase = await createClient()
 
-  const { data: objections } = await supabase
-    .from('objections')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [objectionsRes, toolsRes] = await Promise.all([
+    supabase
+      .from('objections')
+      .select('*')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('tools')
+      .select('id, name')
+      .eq('status', 'published')
+      .order('name')
+  ])
 
   return (
     <div className="p-8 max-w-5xl animate-fade-in">
@@ -24,7 +31,7 @@ export default async function AdminObjectionsPage() {
         </p>
       </div>
 
-      <ObjectionManager initialObjections={objections ?? []} />
+      <ObjectionManager initialObjections={objectionsRes.data ?? []} tools={toolsRes.data ?? []} />
     </div>
   )
 }

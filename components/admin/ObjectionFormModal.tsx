@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createObjection, updateObjection } from '@/lib/actions/objections'
@@ -29,6 +29,20 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }
     difficulty: (defaultValues?.difficulty ?? objection?.difficulty ?? 'beginner') as Difficulty,
     status: (defaultValues?.status ?? objection?.status ?? 'published') as Status,
   })
+
+  useEffect(() => {
+    if (!isOpen) return
+    setForm({
+      objection_text: defaultValues?.objection_text ?? objection?.objection_text ?? '',
+      meaning: defaultValues?.meaning ?? objection?.meaning ?? '',
+      recommended_response: defaultValues?.recommended_response ?? objection?.recommended_response ?? '',
+      alternative_response: defaultValues?.alternative_response ?? objection?.alternative_response ?? '',
+      do_not_say: defaultValues?.do_not_say ?? objection?.do_not_say ?? '',
+      related_product: defaultValues?.related_product ?? objection?.related_product ?? '',
+      difficulty: (defaultValues?.difficulty ?? objection?.difficulty ?? 'beginner') as Difficulty,
+      status: (defaultValues?.status ?? objection?.status ?? 'published') as Status,
+    })
+  }, [objection?.id, isOpen, defaultValues])
 
   if (!isOpen) return null
 

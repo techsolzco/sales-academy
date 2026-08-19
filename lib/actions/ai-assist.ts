@@ -83,7 +83,7 @@ const GEMINI_MODELS = [
 const MAX_RETRIES = 2
 const RETRY_DELAY_MS = 2500
 
-async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {
+export async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('GEMINI_API_KEY is not configured on the server.')
 

@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteFAQ } from '@/lib/actions/faqs'
+import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { FAQ } from '@/types'
 
 export function FAQManager({ initialFaqs, tools = [] }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[] }) {
@@ -46,7 +47,9 @@ export function FAQManager({ initialFaqs, tools = [] }: { initialFaqs: FAQ[], to
       map.get(key)!.faqs.push(f)
     })
     
-    return Array.from(map.entries()).filter(([_, v]) => v.faqs.length > 0)
+    return Array.from(map.entries())
+      .filter(([_, v]) => v.faqs.length > 0)
+      .sort((a, b) => b[1].faqs.length - a[1].faqs.length || a[1].name.localeCompare(b[1].name))
   }, [filtered, tools])
 
   function toggleGroup(key: string) {
@@ -88,60 +91,72 @@ export function FAQManager({ initialFaqs, tools = [] }: { initialFaqs: FAQ[], to
 
   function renderFaqCard(faq: FAQ) {
     return (
-      <div
+      <TranslateContextWrapper
         key={faq.id}
-        className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3"
+        table="faqs"
+        recordId={faq.id}
+        fieldsToTranslate={{
+          question_translated: faq.question,
+          short_answer_translated: faq.short_answer,
+          customer_ready_answer_translated: faq.customer_ready_answer || ''
+        }}
+        initialTranslations={{
+          question_translated: faq.question_translated,
+          short_answer_translated: faq.short_answer_translated,
+          customer_ready_answer_translated: faq.customer_ready_answer_translated
+        }}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
-              <StatusBadge status={faq.status} />
-              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600">
-                {faq.category}
-              </span>
-              {faq.priority > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded bg-amber-50 font-medium text-amber-700">
-                  Priority: {faq.priority}
-                </span>
+        {({ displayTexts, toggleButton }) => (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <StatusBadge status={faq.status} />
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600">
+                    {faq.category}
+                  </span>
+                  {faq.priority > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-amber-50 font-medium text-amber-700">
+                      Priority: {faq.priority}
+                    </span>
+                  )}
+                  {toggleButton}
+                </div>
+                <h3 className="font-semibold text-gray-900 text-base">{displayTexts.question_translated}</h3>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => handleEdit(faq)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                  title="Edit FAQ"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(faq.id)}
+                  disabled={isPending}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+                  title="Delete FAQ"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">Short Answer</span>
+                <p className="text-gray-800 bg-gray-50/80 p-3 rounded-xl border border-gray-100">{displayTexts.short_answer_translated}</p>
+              </div>
+              {faq.customer_ready_answer && (
+                <div>
+                  <span className="text-xs font-semibold text-brand-600 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
+                  <p className="text-gray-800 bg-brand-50/50 p-3 rounded-xl border border-brand-100/50 font-sans">{displayTexts.customer_ready_answer_translated}</p>
+                </div>
               )}
             </div>
-
-            <h3 className="font-semibold text-gray-900 text-base">{faq.question}</h3>
           </div>
-
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={() => handleEdit(faq)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
-              title="Edit FAQ"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => handleDelete(faq.id)}
-              disabled={isPending}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
-              title="Delete FAQ"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-2 text-sm">
-          <div>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">Short Answer</span>
-            <p className="text-gray-800 bg-gray-50/80 p-3 rounded-xl border border-gray-100">{faq.short_answer}</p>
-          </div>
-
-          {faq.customer_ready_answer && (
-            <div>
-              <span className="text-xs font-semibold text-brand-600 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
-              <p className="text-gray-800 bg-brand-50/50 p-3 rounded-xl border border-brand-100/50 font-sans">{faq.customer_ready_answer}</p>
-            </div>
-          )}
-        </div>
-      </div>
+        )}
+      </TranslateContextWrapper>
     )
   }
 

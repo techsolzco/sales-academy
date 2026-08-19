@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteScript } from '@/lib/actions/scripts'
+import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { SalesScript } from '@/types'
 
 export function ScriptManager({
@@ -29,6 +30,8 @@ export function ScriptManager({
   // For expanding/collapsing groups
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
 
+  const [filterToolId, setFilterToolId] = useState('')
+
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 
   const filtered = scripts.filter(s => {
@@ -38,8 +41,9 @@ export function ScriptManager({
       !q ||
       s.title.toLowerCase().includes(q) ||
       s.content.toLowerCase().includes(q) ||
-      s.script_type.toLowerCase().includes(q)
-    return matchesType && matchesSearch
+      (s.when_to_use && s.when_to_use.toLowerCase().includes(q))
+    const matchesTool = !filterToolId || s.tool_id === filterToolId
+    return matchesType && matchesSearch && matchesTool
   })
 
   const grouped = useMemo(() => {
@@ -52,7 +56,9 @@ export function ScriptManager({
       map.get(key)!.scripts.push(s)
     })
     
-    return Array.from(map.entries()).filter(([_, v]) => v.scripts.length > 0)
+    return Array.from(map.entries())
+      .filter(([_, v]) => v.scripts.length > 0)
+      .sort((a, b) => b[1].scripts.length - a[1].scripts.length || a[1].name.localeCompare(b[1].name))
   }, [filtered, tools])
 
   function toggleGroup(key: string) {
@@ -94,56 +100,65 @@ export function ScriptManager({
 
   function renderScriptCard(script: SalesScript) {
     return (
-      <div
+      <TranslateContextWrapper
         key={script.id}
-        className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3"
+        table="scripts"
+        recordId={script.id}
+        fieldsToTranslate={{
+          content_translated: script.content
+        }}
+        initialTranslations={{
+          content_translated: script.content_translated
+        }}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <StatusBadge status={script.status} />
-              <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold uppercase">
-                {script.script_type.replace(/_/g, ' ')}
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                🗣️ {script.language}
-              </span>
-              {copyCounts[script.id] > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded bg-green-50 text-green-700 font-semibold">
-                  📋 Copied {copyCounts[script.id]} times
-                </span>
-              )}
+        {({ displayTexts, toggleButton }) => (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <StatusBadge status={script.status} />
+                  <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold uppercase">
+                    {script.script_type.replace(/_/g, ' ')}
+                  </span>
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
+                    🗣️ {script.language}
+                  </span>
+                  {copyCounts[script.id] > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-green-50 text-green-700 font-semibold">
+                      📋 Copied {copyCounts[script.id]} times
+                    </span>
+                  )}
+                  {toggleButton}
+                </div>
+                <h3 className="font-bold text-gray-900 text-base">{script.title}</h3>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => handleEdit(script)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(script.id)}
+                  disabled={isPending}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <h3 className="font-bold text-gray-900 text-base">{script.title}</h3>
+            {script.when_to_use && (
+              <p className="text-xs text-brand-600 font-medium bg-brand-50/60 px-3 py-1.5 rounded-lg inline-block">
+                💡 When to use: {script.when_to_use}
+              </p>
+            )}
+            <pre className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-mono whitespace-pre-wrap leading-relaxed">
+              {displayTexts.content_translated}
+            </pre>
           </div>
-
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={() => handleEdit(script)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => handleDelete(script.id)}
-              disabled={isPending}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {script.when_to_use && (
-          <p className="text-xs text-brand-600 font-medium bg-brand-50/60 px-3 py-1.5 rounded-lg inline-block">
-            💡 When to use: {script.when_to_use}
-          </p>
         )}
-
-        <pre className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-mono whitespace-pre-wrap leading-relaxed">
-          {script.content}
-        </pre>
-      </div>
+      </TranslateContextWrapper>
     )
   }
 
@@ -151,15 +166,25 @@ export function ScriptManager({
     <div>
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search scripts..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-          />
+        <div className="flex items-center gap-3 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search scripts..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            />
+          </div>
+          <select
+            value={filterToolId}
+            onChange={e => setFilterToolId(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          >
+            <option value="">All Tools</option>
+            {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
         </div>
 
         <div className="flex items-center gap-2">

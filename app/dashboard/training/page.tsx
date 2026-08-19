@@ -105,6 +105,38 @@ export default async function TrainingPage() {
 
   const completedSet = new Set((progress ?? []).map(p => p.lesson_id))
 
+  // Fetch required KB items for courses linked to a tool
+  const toolIds = Array.from(new Set(courses.map(c => c.tool_id).filter(Boolean))) as string[]
+  const [{ data: allFaqs }, { data: allScripts }, { data: allObjections }, { data: allVoiceNotes }] = toolIds.length > 0
+    ? await Promise.all([
+        supabase.from('faqs').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published'),
+        supabase.from('scripts').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published'),
+        supabase.from('objections').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published'),
+        supabase.from('voice_notes').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published')
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }]
+
+  const kbItems = [
+    ...(allFaqs ?? []),
+    ...(allScripts ?? []),
+    ...(allObjections ?? []),
+    ...(allVoiceNotes ?? [])
+  ]
+
+  const kbItemsByTool = kbItems.reduce((acc, item) => {
+    if (!item.tool_id) return acc
+    if (!acc[item.tool_id]) acc[item.tool_id] = []
+    acc[item.tool_id].push(item.id)
+    return acc
+  }, {} as Record<string, string[]>)
+
+  const allKbItemIds = kbItems.map(k => k.id)
+  const { data: kbReviews } = allKbItemIds.length > 0
+    ? await supabase.from('kb_reviews').select('content_id').eq('user_id', user.id).in('content_id', allKbItemIds)
+    : { data: [] }
+    
+  const reviewedKbIds = new Set((kbReviews ?? []).map(r => r.content_id))
+
   const assignmentByCourse = Object.fromEntries(assignments.map(a => [a.course_id, a]))
 
   return (
@@ -121,10 +153,15 @@ export default async function TrainingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {courses.map(course => {
           const allLessons = lessonsByCourse[course.id] ?? []
-          const completed = allLessons.filter(id => completedSet.has(id)).length
-          const total = allLessons.length
-          const pct = total > 0 ? Math.round((completed / total) * 100) : 0
-          const isComplete = pct === 100 && total > 0
+          const requiredKbIds = course.tool_id ? (kbItemsByTool[course.tool_id] ?? []) : []
+          
+          const completedLessonsCount = allLessons.filter(id => completedSet.has(id)).length
+          const completedReviewsCount = requiredKbIds.filter(id => reviewedKbIds.has(id)).length
+          
+          const totalItems = allLessons.length + requiredKbIds.length
+          const completedTotal = completedLessonsCount + completedReviewsCount
+          const pct = totalItems > 0 ? Math.round((completedTotal / totalItems) * 100) : 0
+          const isComplete = pct === 100 && totalItems > 0
           const assignment = assignmentByCourse[course.id]
 
           return (
@@ -142,7 +179,10 @@ export default async function TrainingPage() {
                 </div>
                 {course.category && <p className="text-xs text-gray-400">{course.category}</p>}
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-300">
-                  <span>{completed}/{total} lessons</span>
+                  <span>{completedLessonsCount}/{allLessons.length} lessons</span>
+                  {requiredKbIds.length > 0 && (
+                    <span>• {completedReviewsCount}/{requiredKbIds.length} reviews</span>
+                  )}
                   {course.estimated_duration_minutes && (
                     <span className="flex items-center gap-0.5">
                       <Clock className="w-3 h-3" /> {course.estimated_duration_minutes} min

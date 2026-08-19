@@ -102,6 +102,8 @@ export async function approveApplication(id: string): Promise<ActionResult> {
   // Generate a secure temp password for the new user
   const tempPassword = `SA_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 6).toUpperCase()}!`
 
+  let newUserId = ''
+
   // Create Supabase Auth user
   const { data: authData, error: authErr } = await serviceClient.auth.admin.createUser({
     email: app.email,
@@ -110,9 +112,23 @@ export async function approveApplication(id: string): Promise<ActionResult> {
     user_metadata: { full_name: app.full_name, role: 'salesman' },
   })
 
-  if (authErr) return { error: `Auth user creation failed: ${authErr.message}` }
-
-  const newUserId = authData.user.id
+  if (authErr) {
+    if (authErr.message.toLowerCase().includes('already') || authErr.message.toLowerCase().includes('registered')) {
+      const { data: existingUsers } = await serviceClient.auth.admin.listUsers()
+      const existingUser = existingUsers?.users.find(u => u.email === app.email)
+      if (existingUser) {
+        newUserId = existingUser.id
+        // Reset their password so they can log in
+        await serviceClient.auth.admin.updateUserById(newUserId, { password: tempPassword })
+      } else {
+        return { error: `Auth user creation failed: ${authErr.message}` }
+      }
+    } else {
+      return { error: `Auth user creation failed: ${authErr.message}` }
+    }
+  } else {
+    newUserId = authData.user.id
+  }
 
   // Create profile — carry over avatar + social from application
   const { error: profileErr } = await serviceClient.from('profiles').upsert({

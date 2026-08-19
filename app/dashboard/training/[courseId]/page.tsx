@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { CheckCircle, Circle, Lock, ChevronLeft, Clock, BookOpen } from 'lucide-react'
+import { CheckCircle, Circle, Lock, ChevronLeft, Clock, BookOpen, AlertCircle } from 'lucide-react'
+import { ReviewButton } from './ReviewButton'
 
 export default async function TrainingCoursePage({ params }: { params: { courseId: string } }) {
   const supabase = await createClient()
@@ -49,7 +50,42 @@ export default async function TrainingCoursePage({ params }: { params: { courseI
 
   const totalLessons = allLessonIds.length
   const completedCount = allLessonIds.filter(id => completedIds.has(id)).length
-  const pct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
+
+  // Fetch required reading (KB items)
+  let requiredReads: Array<{ id: string, title: string, type: string }> = []
+  if (course.tool_id) {
+    const [
+      { data: faqs },
+      { data: scripts },
+      { data: objections },
+      { data: voiceNotes }
+    ] = await Promise.all([
+      supabase.from('faqs').select('id, question').eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('scripts').select('id, title').eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('objections').select('id, objection_text').eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('voice_notes').select('id, title').eq('tool_id', course.tool_id).eq('status', 'published')
+    ])
+
+    if (faqs) requiredReads.push(...faqs.map(f => ({ id: f.id, title: f.question, type: 'faq' })))
+    if (scripts) requiredReads.push(...scripts.map(s => ({ id: s.id, title: s.title, type: 'script' })))
+    if (objections) requiredReads.push(...objections.map(o => ({ id: o.id, title: o.objection_text, type: 'objection' })))
+    if (voiceNotes) requiredReads.push(...voiceNotes.map(v => ({ id: v.id, title: v.title, type: 'voice_note' })))
+  }
+
+  const { data: reviews } = requiredReads.length > 0 
+    ? await supabase
+        .from('kb_reviews')
+        .select('content_id')
+        .eq('user_id', user.id)
+        .in('content_id', requiredReads.map(r => r.id))
+    : { data: [] }
+    
+  const reviewedIds = new Set((reviews ?? []).map(r => r.content_id))
+  const completedReviewsCount = requiredReads.filter(r => reviewedIds.has(r.id)).length
+
+  const totalItems = totalLessons + requiredReads.length
+  const completedCountTotal = completedCount + completedReviewsCount
+  const pct = totalItems > 0 ? Math.round((completedCountTotal / totalItems) * 100) : 0
 
   return (
     <div className="p-8 max-w-3xl animate-fade-in">
@@ -76,9 +112,12 @@ export default async function TrainingCoursePage({ params }: { params: { courseI
           </div>
           <span className="text-sm font-medium text-gray-600">{pct}%</span>
         </div>
-        <p className="text-xs text-gray-400 mt-1">
-          {completedCount} of {totalLessons} lessons completed
-        </p>
+        <div className="text-xs text-gray-400 mt-2 flex flex-wrap gap-3">
+          <span>{completedCount} of {totalLessons} lessons done</span>
+          {requiredReads.length > 0 && (
+            <span>• {completedReviewsCount} of {requiredReads.length} required reviews done</span>
+          )}
+        </div>
       </div>
 
       {/* Modules and lessons */}
@@ -140,6 +179,36 @@ export default async function TrainingCoursePage({ params }: { params: { courseI
             </div>
           )
         })}
+
+        {/* Required Reading */}
+        {requiredReads.length > 0 && (
+          <div className="bg-white rounded-xl border border-brand-100 overflow-hidden mt-6">
+            <div className="px-5 py-4 border-b border-brand-50 bg-brand-50/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-brand-500" />
+                  <h3 className="font-semibold text-brand-900 text-sm">Required Reading</h3>
+                </div>
+                <span className="text-xs text-brand-600 font-medium">
+                  {completedReviewsCount}/{requiredReads.length}
+                </span>
+              </div>
+              <p className="text-xs text-brand-600/70 mt-1">
+                You must review these tool materials to complete the course.
+              </p>
+            </div>
+            <div>
+              {requiredReads.map(item => (
+                <ReviewButton 
+                  key={item.id} 
+                  item={item} 
+                  isReviewed={reviewedIds.has(item.id)}
+                  courseId={course.id}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createFAQ, updateFAQ } from '@/lib/actions/faqs'
@@ -31,6 +31,21 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
     status: (defaultValues?.status ?? faq?.status ?? 'published') as Status,
     tool_id: defaultValues?.tool_id ?? faq?.tool_id ?? '',
   })
+
+  useEffect(() => {
+    if (!isOpen) return
+    setForm({
+      question: defaultValues?.question ?? faq?.question ?? '',
+      short_answer: defaultValues?.short_answer ?? faq?.short_answer ?? '',
+      detailed_answer: defaultValues?.detailed_answer ?? faq?.detailed_answer ?? '',
+      customer_ready_answer: defaultValues?.customer_ready_answer ?? faq?.customer_ready_answer ?? '',
+      category: defaultValues?.category ?? faq?.category ?? 'General',
+      tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? faq?.tags?.join(', ') ?? '',
+      priority: defaultValues?.priority?.toString() ?? faq?.priority?.toString() ?? '0',
+      status: (defaultValues?.status ?? faq?.status ?? 'published') as Status,
+      tool_id: defaultValues?.tool_id ?? faq?.tool_id ?? '',
+    })
+  }, [faq?.id, isOpen, defaultValues])
 
   if (!isOpen) return null
 

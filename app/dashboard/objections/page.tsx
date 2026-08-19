@@ -8,11 +8,20 @@ export default async function SalesmanObjectionsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: objections } = await supabase
-    .from('objections')
-    .select('*')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
+  const [objectionsRes, toolsRes] = await Promise.all([
+    supabase
+      .from('objections')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('tools')
+      .select('id, name')
+      .eq('status', 'published')
+      .order('name')
+  ])
+  const objections = objectionsRes.data ?? []
+  const tools = toolsRes.data ?? []
 
   const reviewedItems = await getReviewedKbItems('objection')
 
@@ -25,7 +34,7 @@ export default async function SalesmanObjectionsPage() {
         </p>
       </div>
 
-      <SalesmanObjectionViewer objections={objections ?? []} initialReviewed={reviewedItems} />
+      <SalesmanObjectionViewer objections={objections} tools={tools} initialReviewed={reviewedItems} />
     </div>
   )
 }

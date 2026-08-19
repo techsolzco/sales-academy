@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { createScript, updateScript } from '@/lib/actions/scripts'
@@ -45,6 +45,21 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues }: Scri
     tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? script?.tags?.join(', ') ?? '',
     status: (defaultValues?.status ?? script?.status ?? 'published') as Status,
   })
+
+  useEffect(() => {
+    if (!isOpen) return
+    setForm({
+      title: defaultValues?.title ?? script?.title ?? '',
+      script_type: (defaultValues?.script_type ?? script?.script_type ?? 'whatsapp') as ScriptType,
+      language: defaultValues?.language ?? script?.language ?? 'English',
+      content: defaultValues?.content ?? script?.content ?? '',
+      when_to_use: defaultValues?.when_to_use ?? script?.when_to_use ?? '',
+      related_product: defaultValues?.related_product ?? script?.related_product ?? '',
+      related_objection: defaultValues?.related_objection ?? script?.related_objection ?? '',
+      tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? script?.tags?.join(', ') ?? '',
+      status: (defaultValues?.status ?? script?.status ?? 'published') as Status,
+    })
+  }, [script?.id, isOpen, defaultValues])
 
   if (!isOpen) return null
 

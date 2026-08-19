@@ -5,10 +5,17 @@ import { Breadcrumb } from '@/components/admin/Breadcrumb'
 export default async function AdminVoiceNotesPage() {
   const supabase = await createClient()
 
-  const { data: notes } = await supabase
-    .from('voice_notes')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [notesRes, toolsRes] = await Promise.all([
+    supabase
+      .from('voice_notes')
+      .select('*')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('tools')
+      .select('id, name')
+      .eq('status', 'published')
+      .order('name')
+  ])
 
   return (
     <div className="p-8 max-w-6xl animate-fade-in">
@@ -24,7 +31,7 @@ export default async function AdminVoiceNotesPage() {
         </p>
       </div>
 
-      <VoiceNoteManager initialNotes={notes ?? []} />
+      <VoiceNoteManager initialNotes={notesRes.data ?? []} tools={toolsRes.data ?? []} />
     </div>
   )
 }

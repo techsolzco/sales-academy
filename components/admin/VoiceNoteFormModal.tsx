@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -32,6 +32,21 @@ export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues }
     key_points: (Array.isArray(defaultValues?.key_points) ? defaultValues?.key_points.join(', ') : defaultValues?.key_points) ?? voiceNote?.key_points?.join(', ') ?? '',
     status: (defaultValues?.status ?? voiceNote?.status ?? 'published') as Status,
   })
+
+  useEffect(() => {
+    if (!isOpen) return
+    setForm({
+      title: defaultValues?.title ?? voiceNote?.title ?? '',
+      audio_url: defaultValues?.audio_url ?? voiceNote?.audio_url ?? '',
+      transcript: defaultValues?.transcript ?? voiceNote?.transcript ?? '',
+      purpose: defaultValues?.purpose ?? voiceNote?.purpose ?? '',
+      when_to_send: defaultValues?.when_to_send ?? voiceNote?.when_to_send ?? '',
+      language: defaultValues?.language ?? voiceNote?.language ?? 'English',
+      duration_seconds: defaultValues?.duration_seconds?.toString() ?? voiceNote?.duration_seconds?.toString() ?? '',
+      key_points: (Array.isArray(defaultValues?.key_points) ? defaultValues?.key_points.join(', ') : defaultValues?.key_points) ?? voiceNote?.key_points?.join(', ') ?? '',
+      status: (defaultValues?.status ?? voiceNote?.status ?? 'published') as Status,
+    })
+  }, [voiceNote?.id, isOpen, defaultValues])
 
   if (!isOpen) return null
 

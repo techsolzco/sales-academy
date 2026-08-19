@@ -123,11 +123,14 @@ export interface LessonProgress {
 export interface FAQ {
   id: string
   question: string
-  question_hinglish?: string | null
+  question_translated?: string | null
   short_answer: string
-  short_answer_hinglish?: string | null
+  short_answer_translated?: string | null
   detailed_answer: string | null
   customer_ready_answer: string | null
+  customer_ready_answer_translated?: string | null
+  question_hinglish?: string | null
+  short_answer_hinglish?: string | null
   customer_ready_answer_hinglish?: string | null
   category: string
   tags: string[]
@@ -135,6 +138,7 @@ export interface FAQ {
   status: Status
   tool_id?: string | null
   course_id?: string | null
+  created_by: string
   created_at: string
   updated_at: string
 }
@@ -160,6 +164,7 @@ export interface SalesScript {
   language: string
   content: string
   content_hinglish?: string | null
+  content_translated?: string | null
   when_to_use: string | null
   related_product: string | null
   related_objection: string | null
@@ -183,6 +188,7 @@ export interface VoiceNote {
   title: string
   audio_url: string
   transcript: string | null
+  transcript_translated?: string | null
   purpose: string | null
   when_to_send: string | null
   related_lesson_id: string | null
@@ -201,6 +207,7 @@ export interface Objection {
   meaning: string | null
   recommended_response: string
   recommended_response_hinglish?: string | null
+  recommended_response_translated?: string | null
   alternative_response: string | null
   do_not_say: string | null
   related_product: string | null
@@ -664,4 +671,12 @@ export interface ToolTreeData {
   faqs: FAQ[]
   objections: Objection[]
   scripts: SalesScript[]
+}
+
+export interface KbReview {
+  id: string
+  user_id: string
+  content_type: 'faq' | 'objection' | 'voice_note' | 'script'
+  content_id: string
+  reviewed_at: string
 }

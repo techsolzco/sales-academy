@@ -7,11 +7,20 @@ export default async function SalesmanVoiceNotesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: notes } = await supabase
-    .from('voice_notes')
-    .select('*')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
+  const [notesRes, toolsRes] = await Promise.all([
+    supabase
+      .from('voice_notes')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('tools')
+      .select('id, name')
+      .eq('status', 'published')
+      .order('name')
+  ])
+  const notes = notesRes.data ?? []
+  const tools = toolsRes.data ?? []
 
   return (
     <div className="p-8 max-w-6xl animate-fade-in">
@@ -22,7 +31,7 @@ export default async function SalesmanVoiceNotesPage() {
         </p>
       </div>
 
-      <SalesmanVoiceNoteViewer notes={notes ?? []} />
+      <SalesmanVoiceNoteViewer notes={notes} tools={tools} />
     </div>
   )
 }

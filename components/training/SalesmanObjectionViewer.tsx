@@ -5,8 +5,9 @@ import { Search, AlertCircle, CheckCircle, XCircle, Eye, Check } from 'lucide-re
 import type { Objection } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 
-export function SalesmanObjectionViewer({ objections, initialReviewed = [] }: { objections: Objection[], initialReviewed?: string[] }) {
+export function SalesmanObjectionViewer({ objections, tools = [], initialReviewed = [] }: { objections: Objection[], tools?: { id: string; name: string }[], initialReviewed?: string[] }) {
   const [search, setSearch] = useState('')
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
   const [isPending, setIsPending] = useState(false)
@@ -64,83 +65,92 @@ export function SalesmanObjectionViewer({ objections, initialReviewed = [] }: { 
       ) : (
         <div className="space-y-4">
           {filtered.map(o => (
-            <div
+            <TranslateContextWrapper
               key={o.id}
-              id={`obj-${o.id}`}
-              className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
+              table="objections"
+              recordId={o.id}
+              fieldsToTranslate={{
+                recommended_response_translated: (language === 'hi' && o.recommended_response_hinglish ? o.recommended_response_hinglish : o.recommended_response)
+              }}
+              initialTranslations={{
+                recommended_response_translated: o.recommended_response_translated
+              }}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    {o.difficulty && (
-                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 font-semibold text-gray-600 capitalize">
-                        {o.difficulty}
-                      </span>
-                    )}
-                    {o.related_product && (
-                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 font-semibold text-brand-700">
-                        Product: {o.related_product}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg">
-                    &ldquo;{o.objection_text}&rdquo;
-                    {language === 'hi' && !o.recommended_response_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
-                  </h3>
-                </div>
-
-                <button
-                  onClick={() => handleToggleReview(o.id)}
-                  disabled={isPending}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
-                    reviewedIds.has(o.id) 
-                      ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                  }`}
+              {({ displayTexts, toggleButton }) => (
+                <div
+                  id={`obj-${o.id}`}
+                  className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
                 >
-                  {reviewedIds.has(o.id) ? (
-                    <><Check className="w-3.5 h-3.5" /> Reviewed</>
-                  ) : (
-                    <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
-                  )}
-                </button>
-              </div>
-
-              {o.meaning && (
-                <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs text-blue-900">
-                  💡 <span className="font-bold">Behind the objection:</span> {o.meaning}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                    <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    Recommended Response Strategy
-                  </div>
-                  <p className="text-sm text-emerald-950 leading-relaxed">
-                    {language === 'hi' && o.recommended_response_hinglish ? o.recommended_response_hinglish : o.recommended_response}
-                  </p>
-                </div>
-
-                {o.do_not_say && (
-                  <div className="p-4 rounded-xl bg-red-50/70 border border-red-100 space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-red-800 uppercase tracking-wider">
-                      <XCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                      DO NOT SAY
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        {o.difficulty && (
+                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 font-semibold text-gray-600 capitalize">
+                            {o.difficulty}
+                          </span>
+                        )}
+                        {o.related_product && (
+                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 font-semibold text-brand-700">
+                            Product: {o.related_product}
+                          </span>
+                        )}
+                        {toggleButton}
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-lg">
+                        &ldquo;{o.objection_text}&rdquo;
+                        {language === 'hi' && !o.recommended_response_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
+                      </h3>
                     </div>
-                    <p className="text-sm text-red-950 leading-relaxed">{o.do_not_say}</p>
+                    <button
+                      onClick={() => handleToggleReview(o.id)}
+                      disabled={isPending}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
+                        reviewedIds.has(o.id) 
+                          ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                          : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {reviewedIds.has(o.id) ? (
+                        <><Check className="w-3.5 h-3.5" /> Reviewed</>
+                      ) : (
+                        <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
+                      )}
+                    </button>
                   </div>
-                )}
-              </div>
-
-              {o.alternative_response && (
-                <div className="pt-2 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Alternative Response Option</p>
-                  <p className="text-xs text-gray-700 leading-relaxed italic bg-gray-50 p-3 rounded-xl">{o.alternative_response}</p>
+                  {o.meaning && (
+                    <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs text-blue-900">
+                      💡 <span className="font-bold">Behind the objection:</span> {o.meaning}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                        <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        Recommended Response Strategy
+                      </div>
+                      <p className="text-sm text-emerald-950 leading-relaxed">
+                        {displayTexts.recommended_response_translated}
+                      </p>
+                    </div>
+                    {o.do_not_say && (
+                      <div className="p-4 rounded-xl bg-red-50/70 border border-red-100 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-red-800 uppercase tracking-wider">
+                          <XCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                          DO NOT SAY
+                        </div>
+                        <p className="text-sm text-red-950 leading-relaxed">{o.do_not_say}</p>
+                      </div>
+                    )}
+                  </div>
+                  {o.alternative_response && (
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Alternative Response Option</p>
+                      <p className="text-xs text-gray-700 leading-relaxed italic bg-gray-50 p-3 rounded-xl">{o.alternative_response}</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </TranslateContextWrapper>
           ))}
         </div>
       )}
