@@ -71,10 +71,10 @@ export function SalesmenList({ salesmen }: { salesmen: Salesman[] }) {
                 <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
                   <p className="font-semibold text-gray-900 truncate w-full" title={s.full_name || 'Unknown'}>{s.full_name ?? 'Unknown'}</p>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className={\	ext-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium \\}>
+                    <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium ${s.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                       {s.status ?? 'unknown'}
                     </span>
-                    <span className={\	ext-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1 \\}>
+                    <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                       {isAdmin && <Shield className="w-3 h-3" />}
                       {s.role || 'salesman'}
                     </span>
