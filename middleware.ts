@@ -81,8 +81,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // /dashboard/* → salesman only (admins use /admin)
+  // /dashboard/* → salesman only — EXCEPT when admin has view_as_user_id cookie (impersonation)
   if (pathname.startsWith('/dashboard') && role !== 'salesman') {
+    const viewAsCookie = request.cookies.get('view_as_user_id')?.value
+    if (role === 'admin' && viewAsCookie) {
+      // Admin is impersonating a student — allow through
+      return supabaseResponse
+    }
     const url = request.nextUrl.clone()
     url.pathname = role === 'admin' ? '/admin' : '/auth/login'
     return NextResponse.redirect(url)

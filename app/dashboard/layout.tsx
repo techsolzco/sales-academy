@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
@@ -15,6 +17,7 @@ import { SidebarProvider } from '@/components/layout/SidebarContext'
 import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
 import { ToastProvider } from '@/components/ui/ToastContext'
 import { TranslatorFab } from '@/components/ui/TranslatorFab'
+import { ViewAsStudentBanner } from '@/components/admin/ViewAsStudentBanner'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
@@ -49,21 +52,53 @@ export default async function DashboardLayout({
     redirect('/auth/login')
   }
 
-  const { data: profile } = await supabase
+  const { data: realProfile } = await supabase
     .from('profiles')
     .select('role, full_name, email, is_reseller')
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'salesman') {
+  // Check for admin "view as student" impersonation cookie
+  const cookieStore = await cookies()
+  const viewAsUserId = cookieStore.get('view_as_user_id')?.value
+  const isImpersonating = realProfile?.role === 'admin' && !!viewAsUserId
+
+  // If admin and NOT impersonating → redirect to admin panel
+  if (realProfile?.role === 'admin' && !isImpersonating) {
     redirect('/admin')
+  }
+  // If neither admin nor salesman → go to login
+  if (realProfile?.role !== 'admin' && realProfile?.role !== 'salesman') {
+    redirect('/auth/login')
+  }
+
+  // Determine which profile to display (target student or self)
+  let profile = realProfile
+  let displayUserId = user.id
+
+  if (isImpersonating && viewAsUserId) {
+    const sb = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    const { data: studentProfile } = await sb
+      .from('profiles')
+      .select('role, full_name, email, is_reseller')
+      .eq('id', viewAsUserId)
+      .single()
+    if (studentProfile) {
+      profile = studentProfile
+      displayUserId = viewAsUserId
+    }
   }
 
   const { data: notifCounts } = await supabase
     .from('notifications')
     .select('type')
-    .eq('user_id', user.id)
+    .eq('user_id', displayUserId)
     .eq('read', false)
+
 
   const countByType = (type: string) => notifCounts?.filter(n => n.type === type).length ?? 0
 
@@ -80,7 +115,8 @@ export default async function DashboardLayout({
     <LanguageProvider>
       <ToastProvider>
         <SidebarProvider>
-          <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+          {isImpersonating && <ViewAsStudentBanner />}
+          <div className={`flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 ${isImpersonating ? 'pt-10' : ''}`}>
       <Sidebar
         navItems={navItems}
         footer={
@@ -102,10 +138,16 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-2 md:gap-4">
             <DarkModeToggle />
             <LanguageToggle />
-            <NotificationBell userId={user.id} />
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wider">
-              Sales Portal
-            </span>
+            <NotificationBell userId={displayUserId} />
+            {isImpersonating ? (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold uppercase tracking-wider">
+                Preview Mode
+              </span>
+            ) : (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wider">
+                Sales Portal
+              </span>
+            )}
           </div>
         </header>
         <main className="flex-1 overflow-auto">

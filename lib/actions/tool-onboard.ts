@@ -81,6 +81,27 @@ async function callGeminiLarge(systemPrompt: string, userPrompt: string): Promis
   throw new Error('AI is currently experiencing high demand. Please wait and try again.')
 }
 
+// ── Helper: strip markdown code fences from Gemini output ─────────────
+function stripMarkdownFences(text: string): string {
+  // Remove ```json ... ``` or ``` ... ``` wrappers Gemini sometimes adds
+  return text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/, '')
+    .trim()
+}
+
+// ── Safe JSON parse with logging ──────────────────────────────────────
+function safeJsonParse<T>(text: string, label: string): T | null {
+  const cleaned = stripMarkdownFences(text)
+  try {
+    return JSON.parse(cleaned) as T
+  } catch (e) {
+    console.error(`[ToolOnboard] JSON parse failed for "${label}":`, e)
+    console.error(`[ToolOnboard] Raw text (first 800 chars):`, cleaned.slice(0, 800))
+    return null
+  }
+}
+
 // ── Generate full tool package ──────────────────────────────────────────
 
 export async function generateToolPackage(
@@ -101,23 +122,24 @@ export async function generateToolPackage(
     const warrantyStr = wizardData.warrantyNotes ? `Warranty/policy notes: ${wizardData.warrantyNotes}` : ''
     const categoryStr = wizardData.category ? `Category: ${wizardData.category}` : ''
 
-    const userPrompt = `Generate a COMPLETE training package for the sales tool "${wizardData.name}".
-
-Tool info:
+    const toolContext = `Tool: "${wizardData.name}"
 ${categoryStr}
 ${pricingStr}
 ${featuresStr}
 ${audienceStr}
 ${sellingStr}
 ${warrantyStr}
+Admin's brief: ${wizardData.brief}`
 
-Admin's brief: ${wizardData.brief}
+    // ── CALL 1: Course structure + knowledge summary ──────────────────────
+    const call1Prompt = `${toolContext}
 
-Return ONLY valid JSON with this exact structure:
+Generate ONLY the course training structure and knowledge summary for this sales tool.
+Return ONLY valid JSON (no markdown, no explanation):
 {
-  "knowledge_summary": "A concise 3-5 sentence internal knowledge paragraph covering key facts about this tool (pricing, policies, features, warranty). This is for AI context, NOT customer-facing.",
+  "knowledge_summary": "3-5 sentence internal knowledge paragraph covering pricing, features, warranty. For AI context, NOT customer-facing.",
   "course": {
-    "title": "How to Sell [Tool Name] — Complete Training",
+    "title": "How to Sell ${wizardData.name} — Complete Training",
     "description": "Course overview (2-3 sentences)",
     "modules": [
       {
@@ -129,24 +151,33 @@ Return ONLY valid JSON with this exact structure:
             "description": "Lesson description",
             "content_blocks": [
               { "type": "heading", "content": { "text": "Section Heading", "level": 2 }, "order_index": 1 },
-              { "type": "text", "content": { "body": "Detailed lesson content paragraph..." }, "order_index": 2 }
+              { "type": "text", "content": { "body": "Detailed lesson content paragraph (3-4 sentences)." }, "order_index": 2 }
             ]
           }
         ]
       }
     ]
-  },
+  }
+}
+Requirements: 2 modules, each with 1-2 lessons, each lesson with 3-4 content blocks (mix of heading + text).`
+
+    // ── CALL 2: FAQs + Objections + Scripts (KB content) ─────────────────
+    const call2Prompt = `${toolContext}
+
+Generate ONLY the knowledge base content (FAQs, objections, scripts) for this sales tool.
+Return ONLY valid JSON (no markdown, no explanation):
+{
   "faqs": [
     {
       "question": "Customer question in English",
-      "question_hinglish": "Same question in Hinglish (Roman Urdu)",
-      "short_answer": "Short answer in English",
-      "short_answer_hinglish": "Same short answer in Hinglish",
-      "detailed_answer": "Detailed answer in English",
+      "question_hinglish": "Same question in Hinglish",
+      "short_answer": "Short answer in English (1-2 sentences)",
+      "short_answer_hinglish": "Same in Hinglish",
+      "detailed_answer": "Detailed answer (3-4 sentences)",
       "customer_ready_answer": "WhatsApp-ready English response",
-      "customer_ready_answer_hinglish": "Same WhatsApp-ready response in Hinglish",
-      "category": "Category name",
-      "tags": ["tag1", "tag2"]
+      "customer_ready_answer_hinglish": "WhatsApp-ready Hinglish response",
+      "category": "Product|Pricing|Privacy|Warranty|Payment|Comparison|Technical|General",
+      "tags": ["tag1"]
     }
   ],
   "objections": [
@@ -154,7 +185,7 @@ Return ONLY valid JSON with this exact structure:
       "objection_text": "What the customer says",
       "meaning": "What they really mean",
       "recommended_response": "Best English response",
-      "recommended_response_hinglish": "Same response in Hinglish",
+      "recommended_response_hinglish": "Same in Hinglish",
       "alternative_response": "Backup response",
       "do_not_say": "What NOT to say",
       "difficulty": "beginner|intermediate|advanced"
@@ -164,39 +195,79 @@ Return ONLY valid JSON with this exact structure:
     {
       "title": "Script title",
       "script_type": "greeting|whatsapp|voice_note_script|follow_up|closing|payment|objection_response|upsell|cross_sell|after_sales|review_request",
-      "content": "Full WhatsApp-ready script text in English",
-      "content_hinglish": "Same script in Hinglish (Roman Urdu)",
+      "content": "Full script text in English",
+      "content_hinglish": "Same script in Hinglish",
       "when_to_use": "When to send this",
       "tags": ["tag1"]
     }
   ]
 }
-
 Requirements:
-- Course: 2-3 modules, each with 1-2 lessons, each lesson with 3-5 content blocks (mix of heading + text)
-- Scripts: Generate exactly 11 scripts, ONE for EACH of these types (every type MUST be covered): greeting, whatsapp, voice_note_script, follow_up, closing, payment, objection_response, upsell, cross_sell, after_sales, review_request
-- Objections: Generate exactly 10 objections — mix of beginner (3), intermediate (4), and advanced (3) difficulty
-- FAQs: Generate exactly 18 FAQs covering these categories (at least 2 per category): Product, Pricing, Privacy, Warranty, Payment, Comparison, Technical, General
-- Voice notes in scripts array: also add 4 entries with script_type "voice_note_script" covering: intro/greeting, objection handling, upsell pitch, warranty/trust
-- Generate BOTH English and Hinglish versions for FAQ questions/answers, objection responses, and script content
-- Make content practical, specific to this tool, and WhatsApp-friendly`
+- FAQs: exactly 12 FAQs, at least 1-2 per category: Product, Pricing, Privacy, Warranty, Payment, Comparison, Technical, General
+- Objections: exactly 8 objections — 3 beginner, 3 intermediate, 2 advanced
+- Scripts: exactly 8 scripts covering these types (one each): greeting, whatsapp, follow_up, closing, payment, objection_response, upsell, after_sales
+- All Hinglish content must be Roman script (no Urdu script)
+- Make content specific to "${wizardData.name}" and WhatsApp-ready`
 
-    const text = await callGeminiLarge(systemPrompt, userPrompt)
+    console.log('[ToolOnboard] Starting 2-call generation for:', wizardData.name)
 
-    let parsed: GeneratedToolPackage
-    try {
-      parsed = JSON.parse(text)
-    } catch {
-      return { error: 'AI returned an invalid response. Please try again.' }
+    // Run both calls in parallel
+    const [call1Text, call2Text] = await Promise.all([
+      callGeminiLarge(systemPrompt, call1Prompt),
+      callGeminiLarge(systemPrompt, call2Prompt),
+    ])
+
+    console.log('[ToolOnboard] Call 1 raw (first 200):', call1Text.slice(0, 200))
+    console.log('[ToolOnboard] Call 2 raw (first 200):', call2Text.slice(0, 200))
+
+    type Call1Result = { knowledge_summary: string; course: GeneratedToolPackage['course'] }
+    type Call2Result = { faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }
+
+    const part1 = safeJsonParse<Call1Result>(call1Text, 'course+summary')
+    const part2 = safeJsonParse<Call2Result>(call2Text, 'kb-content')
+
+    // Retry failed parts with simpler prompts
+    let finalPart1 = part1
+    let finalPart2 = part2
+
+    if (!finalPart1) {
+      console.log('[ToolOnboard] Call 1 failed, retrying with stricter prompt...')
+      const retryText = await callGeminiLarge(
+        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
+        call1Prompt
+      )
+      finalPart1 = safeJsonParse<Call1Result>(retryText, 'course+summary retry')
     }
 
-    // Basic validation
-    if (!parsed.knowledge_summary || !parsed.course || !parsed.faqs || !parsed.objections || !parsed.scripts) {
-      return { error: 'AI response is missing required sections. Please try again.' }
+    if (!finalPart2) {
+      console.log('[ToolOnboard] Call 2 failed, retrying with stricter prompt...')
+      const retryText = await callGeminiLarge(
+        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
+        call2Prompt
+      )
+      finalPart2 = safeJsonParse<Call2Result>(retryText, 'kb-content retry')
     }
+
+    if (!finalPart1 || !finalPart1.knowledge_summary || !finalPart1.course) {
+      return { error: 'AI could not generate the course structure. Please try again in a moment.' }
+    }
+    if (!finalPart2 || !finalPart2.faqs || !finalPart2.objections || !finalPart2.scripts) {
+      return { error: 'AI could not generate the knowledge base content. Please try again in a moment.' }
+    }
+
+    const parsed: GeneratedToolPackage = {
+      knowledge_summary: finalPart1.knowledge_summary,
+      course: finalPart1.course,
+      faqs: finalPart2.faqs,
+      objections: finalPart2.objections,
+      scripts: finalPart2.scripts,
+    }
+
+    console.log('[ToolOnboard] Success — FAQs:', parsed.faqs.length, '| Objections:', parsed.objections.length, '| Scripts:', parsed.scripts.length)
 
     return { data: parsed }
   } catch (error: unknown) {
+    console.error('[ToolOnboard] generateToolPackage error:', error)
     return { error: (error as Error).message || 'Failed to generate tool package' }
   }
 }
