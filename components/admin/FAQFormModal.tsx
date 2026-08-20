@@ -6,6 +6,7 @@ import { X, Loader2 } from 'lucide-react'
 import { createFAQ, updateFAQ } from '@/lib/actions/faqs'
 import type { FAQ, Status, AiContentType } from '@/types'
 import { AiAssistButton } from '@/components/ai/AiAssistButton'
+import { FAQ_CATEGORIES } from '@/lib/constants/faq-categories'
 
 interface FAQFormModalProps {
   faq?: FAQ | null
@@ -167,12 +168,15 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Category</label>
-              <input
+              <select
                 value={form.category}
                 onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                placeholder="e.g. Pricing, Technical, Onboarding"
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
-              />
+              >
+                {FAQ_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
 
             <div>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import Link from 'next/link'
 import { ClipboardList, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -8,11 +9,10 @@ export const dynamic = 'force-dynamic'
 
 export default async function AssignmentsStudentPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  const { userId } = await getEffectiveUser()
 
   const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title)')
-  const { data: submissions } = await supabase.from('assignment_submissions').select('*').eq('user_id', user.id)
+  const { data: submissions } = await supabase.from('assignment_submissions').select('*').eq('user_id', userId)
 
   const items = assignments?.map(a => {
     const sub = submissions?.find(s => s.assignment_id === a.id)

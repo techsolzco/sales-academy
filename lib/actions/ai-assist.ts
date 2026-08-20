@@ -259,7 +259,7 @@ Return ONLY valid JSON:
   "short_answer": string (1-2 sentences, Hinglish),
   "detailed_answer": string (3-5 sentences, full explanation),
   "customer_ready_answer": string (polished WhatsApp-ready Hinglish response),
-  "category": string,
+  "category": string (Category must be EXACTLY one of: Pricing, Product, Warranty, General, Technical, Comparison, Payment, Privacy, Delivery, Features, Policy, Usage, Support, Audience, Guideline),
   "tags": [string]
 }`
     } else if (params.contentType === 'script') {

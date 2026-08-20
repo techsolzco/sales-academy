@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ActionResult, SalesScript, ScriptType, Status } from '@/types'
+import { syncToolKnowledge } from './sync-tool-knowledge'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -42,6 +43,9 @@ export async function createScript(input: ScriptInput): Promise<ActionResult<Sal
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/scripts')
     revalidatePath('/dashboard/scripts')
     return { data }
@@ -60,6 +64,9 @@ export async function updateScript(id: string, input: Partial<ScriptInput>): Pro
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/scripts')
     revalidatePath('/dashboard/scripts')
     return { data }
@@ -71,8 +78,20 @@ export async function updateScript(id: string, input: Partial<ScriptInput>): Pro
 export async function deleteScript(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
+    
+    const { data: existing } = await supabase
+      .from('scripts')
+      .select('tool_id')
+      .eq('id', id)
+      .single()
+      
     const { error } = await supabase.from('scripts').delete().eq('id', id)
     if (error) return { error: error.message }
+    
+    if (existing?.tool_id) {
+      syncToolKnowledge(existing.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    }
+    
     revalidatePath('/admin/scripts')
     revalidatePath('/dashboard/scripts')
     return { data: undefined }

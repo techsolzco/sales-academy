@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 
 export type KBContentType = 'faq' | 'objection' | 'script' | 'voice_note'
 
@@ -44,13 +45,12 @@ export async function toggleKbReview(contentType: KBContentType, contentId: stri
 
 export async function getReviewedKbItems(contentType: KBContentType) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
+  const { userId } = await getEffectiveUser()
 
   const { data } = await supabase
     .from('kb_reviews')
     .select('content_id')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .eq('content_type', contentType)
 
   return (data ?? []).map(r => r.content_id)

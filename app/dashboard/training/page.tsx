@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { BookOpen, Clock, CheckCircle, ChevronRight } from 'lucide-react'
 import { getGreeting } from '@/lib/utils'
 
@@ -22,17 +23,13 @@ function ProgressRing({ pct }: { pct: number }) {
 
 export default async function TrainingPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
-
-  const { data: profile } = await supabase
-    .from('profiles').select('full_name').eq('id', user.id).single()
+  const { userId, profile } = await getEffectiveUser()
 
   // Get all assigned courses with their status
   const { data: assignments } = await supabase
     .from('course_assignments')
     .select('course_id, assigned_at, due_date')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
 
   if (!assignments || assignments.length === 0) {
     return (
@@ -98,7 +95,7 @@ export default async function TrainingPage() {
     ? await supabase
         .from('lesson_progress')
         .select('lesson_id')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('completed', true)
         .in('lesson_id', lessonIds)
     : { data: [] }
@@ -132,7 +129,7 @@ export default async function TrainingPage() {
 
   const allKbItemIds = kbItems.map(k => k.id)
   const { data: kbReviews } = allKbItemIds.length > 0
-    ? await supabase.from('kb_reviews').select('content_id').eq('user_id', user.id).in('content_id', allKbItemIds)
+    ? await supabase.from('kb_reviews').select('content_id').eq('user_id', userId).in('content_id', allKbItemIds)
     : { data: [] }
     
   const reviewedKbIds = new Set((kbReviews ?? []).map(r => r.content_id))

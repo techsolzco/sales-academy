@@ -1,17 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { StatCard } from '@/components/ui/StatCard'
 import { BookOpen, CheckCircle, Clock, Star } from 'lucide-react'
 import { getGreeting } from '@/lib/utils'
 
 export default async function SalesmanDashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user!.id)
-    .single()
+  const { userId, profile } = await getEffectiveUser()
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
   const greeting = getGreeting()

@@ -6,6 +6,7 @@ import type { Objection } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
+import { RichText } from '@/components/ui/RichText'
 
 export function SalesmanObjectionViewer({ objections, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { objections: Objection[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
@@ -140,7 +141,7 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                   </div>
                   {o.meaning && (
                     <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs text-blue-900">
-                      💡 <span className="font-bold">Behind the objection:</span> {displayTexts.meaning_translated}
+                      💡 <span className="font-bold">Behind the objection:</span> <RichText text={displayTexts.meaning_translated || ''} />
                     </div>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -150,7 +151,7 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                         Recommended Response Strategy
                       </div>
                       <p className="text-sm text-emerald-950 leading-relaxed">
-                        {displayTexts.recommended_response_translated}
+                        <RichText text={displayTexts.recommended_response_translated || ''} />
                       </p>
                     </div>
                     {o.do_not_say && (
@@ -159,14 +160,14 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                           <XCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
                           DO NOT SAY
                         </div>
-                        <p className="text-sm text-red-950 leading-relaxed">{displayTexts.do_not_say_translated}</p>
+                        <p className="text-sm text-red-950 leading-relaxed"><RichText text={displayTexts.do_not_say_translated || ''} /></p>
                       </div>
                     )}
                   </div>
                   {o.alternative_response && (
                     <div className="pt-2 border-t border-gray-100">
                       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Alternative Response Option</p>
-                      <p className="text-xs text-gray-700 leading-relaxed italic bg-gray-50 p-3 rounded-xl">{o.alternative_response}</p>
+                      <p className="text-xs text-gray-700 leading-relaxed italic bg-gray-50 p-3 rounded-xl"><RichText text={o.alternative_response || ''} /></p>
                     </div>
                   )}
                 </div>

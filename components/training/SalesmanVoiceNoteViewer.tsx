@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Search, Mic, ChevronDown, ChevronRight, LayoutList, FolderTree, Upload, Loader2 } from 'lucide-react'
 import { AudioPlayer } from '@/components/audio/AudioPlayer'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
+import { RichText } from '@/components/ui/RichText'
 import { createClient } from '@/lib/supabase/client'
 import { upsertSalesmanRecording } from '@/lib/actions/voice-recordings'
 import type { VoiceNote } from '@/types'
@@ -85,51 +86,96 @@ export function SalesmanVoiceNoteViewer({ notes, tools = [], currentUserId, sale
         }}
       >
         {({ displayTexts, toggleButton }) => (
-          <div id={`vn-${note.id}`} className="relative group flex flex-col gap-4 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <div className="absolute top-4 right-4 z-10">
+          <div id={`vn-${note.id}`} className="relative group flex flex-col gap-6 bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            <div className="absolute top-5 right-5 z-10">
               {toggleButton}
             </div>
-            
-            {showOfficialAudio && (
-              <AudioPlayer
-                title={note.title}
-                audioUrl={note.audio_url}
-                transcript={displayTexts.transcript_translated}
-                durationSeconds={note.duration_seconds}
-                purpose={note.purpose}
-                whenToSend={note.when_to_send}
-                keyPoints={note.key_points}
-              />
-            )}
-            {!showOfficialAudio && (
-              <div className="flex flex-col gap-2">
-                <h3 className="font-semibold text-gray-900">{note.title}</h3>
-                <p className="text-sm text-gray-500 italic">Official audio is hidden. Read the transcript to practice your own recording.</p>
-                {note.transcript && <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">{displayTexts.transcript_translated || note.transcript}</p>}
-              </div>
-            )}
 
-            <div className="border-t border-gray-100 pt-4 mt-2">
-              <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3">
-                🎙️ My Recording
-              </h4>
-              {myRecordingUrl ? (
-                <div className="space-y-3">
-                  <audio controls src={myRecordingUrl} className="w-full h-10" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 mb-1">
+              <span className="bg-gray-100 px-3 py-1 rounded-full">1. Study Script</span>
+              <span>→</span>
+              <span className="bg-gray-100 px-3 py-1 rounded-full">2. Record Yourself</span>
+              <span>→</span>
+              <span className="bg-gray-100 px-3 py-1 rounded-full">3. Send to Client</span>
+            </div>
+            
+            <div className="flex flex-col gap-4 bg-gray-50 p-5 rounded-xl border border-gray-100">
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                  📚 Script to Practice
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Study this script, then record yourself saying it. Your goal: send this to a client via WhatsApp.
+                </p>
+              </div>
+
+              {showOfficialAudio && (
+                <div className="mt-2">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reference Audio</p>
+                  <AudioPlayer
+                    title={note.title}
+                    audioUrl={note.audio_url}
+                    durationSeconds={note.duration_seconds}
+                    purpose={note.purpose}
+                    whenToSend={note.when_to_send}
+                    keyPoints={note.key_points}
+                  />
                 </div>
-              ) : (
-                <p className="text-xs text-gray-500 mb-3">You haven't uploaded a recording for this pitch yet.</p>
               )}
-              
-              <div className="mt-3">
-                <label className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-sm font-medium transition w-full sm:w-auto">
-                  {uploadingFor === note.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {uploadingFor === note.id ? 'Uploading...' : 'Upload My Recording'}
-                  <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleFileUpload(note.id, e)} disabled={uploadingFor === note.id} />
-                </label>
+
+              <div className="mt-2">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">What to say</p>
+                {note.transcript ? (
+                  <div className="text-sm text-gray-800 whitespace-pre-wrap bg-white p-5 rounded-xl shadow-sm border border-gray-100 font-medium">
+                    <RichText text={displayTexts.transcript_translated || note.transcript} />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No script provided.</p>
+                )}
               </div>
             </div>
 
+            <div className="bg-brand-600 text-white rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+              <div>
+                <p className="font-bold text-lg">Record Your Version</p>
+                <p className="text-brand-100 text-sm mt-1">Record yourself delivering this script, then send to a client</p>
+              </div>
+              <label className="cursor-pointer whitespace-nowrap inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-brand-700 hover:bg-gray-50 rounded-xl font-bold transition shadow-sm">
+                {uploadingFor === note.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic className="w-5 h-5" />}
+                {uploadingFor === note.id ? 'Uploading...' : 'Upload Recording'}
+                <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleFileUpload(note.id, e)} disabled={uploadingFor === note.id} />
+              </label>
+            </div>
+
+            {myRecordingUrl && (
+              <div className="border-t border-gray-100 pt-5">
+                <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-4">
+                  🎙️ My Recording
+                </h4>
+                <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <audio controls src={myRecordingUrl} className="w-full h-10" />
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <a 
+                      href={myRecordingUrl} 
+                      download 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-sm font-semibold transition shadow-sm"
+                    >
+                      Download
+                    </a>
+                    <a 
+                      href={`https://wa.me/?text=${encodeURIComponent(`Check out my sales pitch recording: ${myRecordingUrl}`)}`} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-2.5 bg-[#25D366] text-white hover:bg-[#20bd5a] rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-2"
+                    >
+                      Share via WhatsApp
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </TranslateContextWrapper>

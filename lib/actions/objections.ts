@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ActionResult, Objection, Difficulty, Status } from '@/types'
+import { syncToolKnowledge } from './sync-tool-knowledge'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -40,6 +41,9 @@ export async function createObjection(input: ObjectionInput): Promise<ActionResu
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/objections')
     revalidatePath('/dashboard/objections')
     return { data }
@@ -58,6 +62,9 @@ export async function updateObjection(id: string, input: Partial<ObjectionInput>
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/objections')
     revalidatePath('/dashboard/objections')
     return { data }
@@ -69,8 +76,20 @@ export async function updateObjection(id: string, input: Partial<ObjectionInput>
 export async function deleteObjection(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
+    
+    const { data: existing } = await supabase
+      .from('objections')
+      .select('tool_id')
+      .eq('id', id)
+      .single()
+      
     const { error } = await supabase.from('objections').delete().eq('id', id)
     if (error) return { error: error.message }
+    
+    if (existing?.tool_id) {
+      syncToolKnowledge(existing.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    }
+    
     revalidatePath('/admin/objections')
     revalidatePath('/dashboard/objections')
     return { data: undefined }

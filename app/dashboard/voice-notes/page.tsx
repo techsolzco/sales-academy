@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { SalesmanVoiceNoteViewer } from '@/components/training/SalesmanVoiceNoteViewer'
 
 export default async function SalesmanVoiceNotesPage({
@@ -8,8 +9,7 @@ export default async function SalesmanVoiceNotesPage({
   searchParams: { tool?: string }
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  const { userId } = await getEffectiveUser()
 
   const [notesRes, toolsRes, recordingsRes] = await Promise.all([
     supabase
@@ -25,7 +25,7 @@ export default async function SalesmanVoiceNotesPage({
     supabase
       .from('salesman_voice_recordings')
       .select('voice_note_id, audio_url')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
   ])
   const notes = notesRes.data ?? []
   const tools = toolsRes.data ?? []
@@ -44,7 +44,7 @@ export default async function SalesmanVoiceNotesPage({
         </p>
       </div>
 
-      <SalesmanVoiceNoteViewer notes={notes} tools={tools} currentUserId={user.id} salesmanRecordings={salesmanRecordings} initialToolId={searchParams.tool} />
+      <SalesmanVoiceNoteViewer notes={notes} tools={tools} currentUserId={userId} salesmanRecordings={salesmanRecordings} initialToolId={searchParams.tool} />
     </div>
   )
 }

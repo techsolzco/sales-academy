@@ -176,7 +176,7 @@ Return ONLY valid JSON (no markdown, no explanation):
       "detailed_answer": "Detailed answer (3-4 sentences)",
       "customer_ready_answer": "WhatsApp-ready English response",
       "customer_ready_answer_hinglish": "WhatsApp-ready Hinglish response",
-      "category": "Product|Pricing|Privacy|Warranty|Payment|Comparison|Technical|General",
+      "category": "Pricing|Product|Warranty|General|Technical|Comparison|Payment|Privacy|Delivery|Features|Policy|Usage|Support|Audience|Guideline",
       "tags": ["tag1"]
     }
   ],
@@ -203,7 +203,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   ]
 }
 Requirements:
-- FAQs: exactly 12 FAQs, at least 1-2 per category: Product, Pricing, Privacy, Warranty, Payment, Comparison, Technical, General
+- FAQs: exactly 12 FAQs, try to cover a mix of these categories: Pricing, Product, Warranty, General, Technical, Comparison, Payment, Privacy, Delivery, Features, Policy, Usage, Support, Audience, Guideline
 - Objections: exactly 8 objections — 3 beginner, 3 intermediate, 2 advanced
 - Scripts: exactly 8 scripts covering these types (one each): greeting, whatsapp, follow_up, closing, payment, objection_response, upsell, after_sales
 - IMPORTANT LANGUAGE RULE: Ensure strict language consistency within an item. For any Hinglish field (e.g. question_hinglish, short_answer_hinglish, recommended_response_hinglish), it MUST be in Hinglish, and it MUST correspond directly to its English counterpart. Do not provide a Hinglish answer to an English question or vice versa. Both must be provided and must match in language style.
@@ -500,8 +500,25 @@ export async function saveToolPackage(
 
     // 7. Auto-create/update assignment for this tool
     try {
-      const assignmentTitle = `Learn ${wizardData.name} — Full Training Assignment`
-      const assignmentInstructions = `Complete the following for ${wizardData.name}:\n\n1. Review all FAQs (${faqInserts.length} questions)\n2. Study all Objection Handlers (${objInserts.length} objections)\n3. Read all Sales Scripts (${scriptInserts.length} scripts)\n4. Take the auto-generated quiz and pass it\n\nThis assignment covers everything you need to confidently sell ${wizardData.name}.`
+      const assignmentTitle = `${wizardData.name} — Product Training Assignment`
+      const assignmentInstructions = `You have been assigned the ${wizardData.name} product training. To complete this assignment:
+
+📚 STEP 1 — Review the Knowledge Base
+• Study all ${faqInserts.length} FAQs about ${wizardData.name}
+• Learn to handle ${objInserts.length} common customer objections
+• Practice the ${scriptInserts.length} sales scripts (WhatsApp, greeting, follow-up, closing, etc.)
+• Listen to the training voice notes
+
+🎯 STEP 2 — Understand the Product
+${wizardData.brief || `Learn everything about ${wizardData.name} so you can pitch it confidently.`}
+${wizardData.pricing ? `💰 Pricing: ${wizardData.pricing}` : ''}
+${wizardData.targetAudience ? `👥 Target customer: ${wizardData.targetAudience}` : ''}
+
+✅ STEP 3 — Take the Quiz
+Complete the auto-generated quiz to demonstrate your knowledge. You need to pass to complete this assignment.
+
+📤 STEP 4 — Submit
+Once you complete all steps and pass the quiz, mark this assignment as done.`
       
       const { data: existingAssignment } = await sb.from('assignments').select('id').eq('tool_id', toolId).maybeSingle()
       if (existingAssignment) {

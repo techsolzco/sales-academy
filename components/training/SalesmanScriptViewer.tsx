@@ -7,6 +7,7 @@ import type { SalesScript } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
+import { RichText } from '@/components/ui/RichText'
 
 export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { scripts: SalesScript[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
@@ -143,12 +144,12 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
             </div>
             {script.when_to_use && (
               <p className="text-xs text-brand-700 font-medium bg-brand-50/80 px-3 py-1.5 rounded-lg border border-brand-100/50">
-                💡 When to send: {displayTexts.when_to_use_translated}
+                💡 When to send: {language === 'hi' ? '(EN) ' : ''}{displayTexts.when_to_use_translated}
               </p>
             )}
-            <pre className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-mono whitespace-pre-wrap leading-relaxed select-all">
-              {displayTexts.content_translated}
-            </pre>
+            <p className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed select-all">
+              <RichText text={displayTexts.content_translated || ''} />
+            </p>
           </div>
         )}
       </TranslateContextWrapper>

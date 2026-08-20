@@ -6,6 +6,7 @@ import type { FAQ } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
+import { RichText } from '@/components/ui/RichText'
 
 export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { faqs: FAQ[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
@@ -24,16 +25,16 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
     if (initialLang) setLanguage(initialLang)
   }, [initialLang])
 
-  const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category)))]
+  const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category).filter(Boolean)))]
 
   const filtered = faqs.filter(f => {
     const matchesCat = activeCategory === 'All' || f.category === activeCategory
     const q = search.toLowerCase()
     const matchesSearch =
       !q ||
-      f.question.toLowerCase().includes(q) ||
-      f.short_answer.toLowerCase().includes(q) ||
-      f.category.toLowerCase().includes(q) ||
+      f.question?.toLowerCase().includes(q) ||
+      f.short_answer?.toLowerCase().includes(q) ||
+      f.category?.toLowerCase().includes(q) ||
       (f.customer_ready_answer && f.customer_ready_answer.toLowerCase().includes(q))
     const matchesTool = !filterToolId || f.tool_id === filterToolId
     return matchesCat && matchesSearch && matchesTool
@@ -148,21 +149,21 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Quick Answer</p>
                 <p className="text-sm text-gray-700 leading-relaxed bg-gray-50/80 p-3 rounded-xl border border-gray-100">
-                  {displayTexts.short_answer_translated}
+                  <RichText text={displayTexts.short_answer_translated || ''} />
                 </p>
               </div>
               {faq.customer_ready_answer && (
                 <div>
                   <p className="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-1">Client-Ready Response</p>
                   <p className="text-sm text-gray-800 leading-relaxed bg-brand-50/40 p-3.5 rounded-xl border border-brand-100/60 font-sans">
-                    {displayTexts.customer_ready_answer_translated}
+                    <RichText text={displayTexts.customer_ready_answer_translated || ''} />
                   </p>
                 </div>
               )}
               {faq.detailed_answer && (
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Internal Details</p>
-                  <p className="text-xs text-gray-600 leading-relaxed italic">{faq.detailed_answer}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed italic"><RichText text={faq.detailed_answer || ''} /></p>
                 </div>
               )}
             </div>

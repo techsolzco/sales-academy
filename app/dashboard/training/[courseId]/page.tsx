@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { CheckCircle, Circle, Lock, ChevronLeft, Clock, BookOpen, AlertCircle } from 'lucide-react'
 import { ReviewButton } from './ReviewButton'
 import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
@@ -18,15 +19,14 @@ export default async function TrainingCoursePage({
   searchParams: { tab?: string, lang?: string } 
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  const { userId } = await getEffectiveUser()
 
   // Verify assignment
   const { data: assignment } = await supabase
     .from('course_assignments')
     .select('id')
     .eq('course_id', params.courseId)
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single()
   if (!assignment) redirect('/dashboard/training')
 
@@ -55,7 +55,7 @@ export default async function TrainingCoursePage({
     ? await supabase
         .from('lesson_progress')
         .select('lesson_id, completed')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .in('lesson_id', allLessonIds)
     : { data: [] }
 
@@ -101,7 +101,7 @@ export default async function TrainingCoursePage({
     ? await supabase
         .from('kb_reviews')
         .select('content_id')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .in('content_id', requiredReads.map(r => r.id))
     : { data: [] }
     
@@ -119,7 +119,7 @@ export default async function TrainingCoursePage({
   if (course.tool_id && tab === 'assignments') {
     const [aRes, sRes] = await Promise.all([
       supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').eq('tool_id', course.tool_id).order('created_at', { ascending: false }),
-      supabase.from('assignment_submissions').select('assignment_id, status').eq('user_id', user.id)
+      supabase.from('assignment_submissions').select('assignment_id, status').eq('user_id', userId)
     ])
     assignments = aRes.data
     submissions = sRes.data
@@ -240,7 +240,7 @@ export default async function TrainingCoursePage({
   } else if (tab === 'voice-notes' && showContentTabs) {
     tabContent = (
       <div className="mt-6">
-        <SalesmanVoiceNoteViewer notes={voiceNotes ?? []} currentUserId={user.id} initialToolId={course.tool_id!} />
+        <SalesmanVoiceNoteViewer notes={voiceNotes ?? []} currentUserId={userId} initialToolId={course.tool_id!} />
       </div>
     )
   } else if (tab === 'assignments' && showContentTabs) {

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ActionResult, FAQ, Status } from '@/types'
+import { syncToolKnowledge } from './sync-tool-knowledge'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -42,6 +43,9 @@ export async function createFAQ(input: FAQInput): Promise<ActionResult<FAQ>> {
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/faqs')
     revalidatePath('/dashboard/faqs')
     return { data }
@@ -60,6 +64,9 @@ export async function updateFAQ(id: string, input: Partial<FAQInput>): Promise<A
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/faqs')
     revalidatePath('/dashboard/faqs')
     return { data }
@@ -71,8 +78,21 @@ export async function updateFAQ(id: string, input: Partial<FAQInput>): Promise<A
 export async function deleteFAQ(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
+    
+    // Fetch tool_id before deleting
+    const { data: existing } = await supabase
+      .from('faqs')
+      .select('tool_id')
+      .eq('id', id)
+      .single()
+      
     const { error } = await supabase.from('faqs').delete().eq('id', id)
     if (error) return { error: error.message }
+    
+    if (existing?.tool_id) {
+      syncToolKnowledge(existing.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    }
+    
     revalidatePath('/admin/faqs')
     revalidatePath('/dashboard/faqs')
     return { data: undefined }

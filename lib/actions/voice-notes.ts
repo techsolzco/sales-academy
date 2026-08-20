@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ActionResult, VoiceNote, Status } from '@/types'
+import { syncToolKnowledge } from './sync-tool-knowledge'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -43,6 +44,9 @@ export async function createVoiceNote(input: VoiceNoteInput): Promise<ActionResu
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/voice-notes')
     revalidatePath('/dashboard/voice-notes')
     return { data }
@@ -61,6 +65,9 @@ export async function updateVoiceNote(id: string, input: Partial<VoiceNoteInput>
       .select()
       .single()
     if (error) return { error: error.message }
+    
+    syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    
     revalidatePath('/admin/voice-notes')
     revalidatePath('/dashboard/voice-notes')
     return { data }
@@ -72,8 +79,20 @@ export async function updateVoiceNote(id: string, input: Partial<VoiceNoteInput>
 export async function deleteVoiceNote(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
+    
+    const { data: existing } = await supabase
+      .from('voice_notes')
+      .select('tool_id')
+      .eq('id', id)
+      .single()
+      
     const { error } = await supabase.from('voice_notes').delete().eq('id', id)
     if (error) return { error: error.message }
+    
+    if (existing?.tool_id) {
+      syncToolKnowledge(existing.tool_id).catch(e => console.warn('Knowledge sync error:', e))
+    }
+    
     revalidatePath('/admin/voice-notes')
     revalidatePath('/dashboard/voice-notes')
     return { data: undefined }

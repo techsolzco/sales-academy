@@ -23,16 +23,16 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
   // For expanding/collapsing groups
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
 
-  const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category)))]
+  const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category).filter(Boolean)))]
 
   const filtered = faqs.filter(f => {
     const matchesCat = activeCategory === 'All' || f.category === activeCategory
     const q = search.toLowerCase()
     const matchesSearch =
       !q ||
-      f.question.toLowerCase().includes(q) ||
-      f.short_answer.toLowerCase().includes(q) ||
-      f.category.toLowerCase().includes(q)
+      f.question?.toLowerCase().includes(q) ||
+      f.short_answer?.toLowerCase().includes(q) ||
+      f.category?.toLowerCase().includes(q)
     const matchesTool = !filterToolId || f.tool_id === filterToolId
     return matchesCat && matchesSearch && matchesTool
   })

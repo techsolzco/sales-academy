@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { SalesmanObjectionViewer } from '@/components/training/SalesmanObjectionViewer'
 import { getReviewedKbItems } from '@/lib/actions/kb-reviews'
 
@@ -9,8 +10,7 @@ export default async function SalesmanObjectionsPage({
   searchParams: { tool?: string }
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  const { userId } = await getEffectiveUser()
 
   const [objectionsRes, toolsRes] = await Promise.all([
     supabase
