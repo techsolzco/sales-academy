@@ -60,7 +60,7 @@ export default async function QuizzesAdminPage({
               </tr>
             ) : (
               quizzes.map((quiz: any) => (
-                <tr key={quiz.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => {}}>
+                <tr key={quiz.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
                   <td className="px-6 py-4">
                     <Link href={`/admin/quizzes/${quiz.id}`} className="font-medium text-gray-900 block hover:text-brand-600">
                       {quiz.title}
