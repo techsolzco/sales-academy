@@ -3,8 +3,20 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { CheckCircle, Circle, Lock, ChevronLeft, Clock, BookOpen, AlertCircle } from 'lucide-react'
 import { ReviewButton } from './ReviewButton'
+import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
+import { SalesmanScriptViewer } from '@/components/training/SalesmanScriptViewer'
+import { SalesmanObjectionViewer } from '@/components/training/SalesmanObjectionViewer'
+import { SalesmanVoiceNoteViewer } from '@/components/training/SalesmanVoiceNoteViewer'
+import { TabLangToggle } from '@/components/ui/TabLangToggle'
+import { EmptyState } from '@/components/ui/EmptyState'
 
-export default async function TrainingCoursePage({ params }: { params: { courseId: string } }) {
+export default async function TrainingCoursePage({ 
+  params,
+  searchParams
+}: { 
+  params: { courseId: string },
+  searchParams: { tab?: string, lang?: string } 
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -25,6 +37,9 @@ export default async function TrainingCoursePage({ params }: { params: { courseI
     .eq('status', 'published')
     .single()
   if (!course) notFound()
+
+  const tab = searchParams.tab || 'lessons'
+  const lang = (searchParams.lang as 'en' | 'hi') || 'en'
 
   const { data: modules } = await supabase
     .from('modules')
@@ -53,18 +68,28 @@ export default async function TrainingCoursePage({ params }: { params: { courseI
 
   // Fetch required reading (KB items)
   let requiredReads: Array<{ id: string, title: string, type: string }> = []
+  let faqs = null
+  let scripts = null
+  let objections = null
+  let voiceNotes = null
+  
   if (course.tool_id) {
     const [
-      { data: faqs },
-      { data: scripts },
-      { data: objections },
-      { data: voiceNotes }
+      faqsRes,
+      scriptsRes,
+      objectionsRes,
+      voiceNotesRes
     ] = await Promise.all([
-      supabase.from('faqs').select('id, question').eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('scripts').select('id, title').eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('objections').select('id, objection_text').eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('voice_notes').select('id, title').eq('tool_id', course.tool_id).eq('status', 'published')
+      supabase.from('faqs').select('*').eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('scripts').select('*').eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('objections').select('*').eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('voice_notes').select('*').eq('tool_id', course.tool_id).eq('status', 'published')
     ])
+    
+    faqs = faqsRes.data
+    scripts = scriptsRes.data
+    objections = objectionsRes.data
+    voiceNotes = voiceNotesRes.data
 
     if (faqs) requiredReads.push(...faqs.map(f => ({ id: f.id, title: f.question, type: 'faq' })))
     if (scripts) requiredReads.push(...scripts.map(s => ({ id: s.id, title: s.title, type: 'script' })))
@@ -80,48 +105,31 @@ export default async function TrainingCoursePage({ params }: { params: { courseI
         .in('content_id', requiredReads.map(r => r.id))
     : { data: [] }
     
-  const reviewedIds = new Set((reviews ?? []).map(r => r.content_id))
+  const reviewedIdsArray = (reviews ?? []).map(r => r.content_id)
+  const reviewedIds = new Set(reviewedIdsArray)
   const completedReviewsCount = requiredReads.filter(r => reviewedIds.has(r.id)).length
 
   const totalItems = totalLessons + requiredReads.length
   const completedCountTotal = completedCount + completedReviewsCount
   const pct = totalItems > 0 ? Math.round((completedCountTotal / totalItems) * 100) : 0
+  const showContentTabs = course.tool_id !== null
 
-  return (
-    <div className="p-8 max-w-3xl animate-fade-in">
-      <Link
-        href="/dashboard/training"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition"
-      >
-        <ChevronLeft className="w-4 h-4" /> Back to Training
-      </Link>
+  let assignments = null
+  let submissions = null
+  if (course.tool_id && tab === 'assignments') {
+    const [aRes, sRes] = await Promise.all([
+      supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').eq('tool_id', course.tool_id).order('created_at', { ascending: false }),
+      supabase.from('assignment_submissions').select('assignment_id, status').eq('user_id', user.id)
+    ])
+    assignments = aRes.data
+    submissions = sRes.data
+  }
 
-      {/* Course header */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        {course.category && <p className="text-xs text-brand-500 font-medium mb-1">{course.category}</p>}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{course.title}</h1>
-        {course.description && <p className="text-gray-400 text-sm mb-4">{course.description}</p>}
-
-        {/* Progress bar */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-brand-500 transition-all"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <span className="text-sm font-medium text-gray-600">{pct}%</span>
-        </div>
-        <div className="text-xs text-gray-400 mt-2 flex flex-wrap gap-3">
-          <span>{completedCount} of {totalLessons} lessons done</span>
-          {requiredReads.length > 0 && (
-            <span>• {completedReviewsCount} of {requiredReads.length} required reviews done</span>
-          )}
-        </div>
-      </div>
-
-      {/* Modules and lessons */}
-      <div className="space-y-4">
+  let tabContent = null
+  
+  if (tab === 'lessons') {
+    tabContent = (
+      <div className="space-y-4 mt-6">
         {(modules ?? []).map((mod, modIndex) => {
           const lessons = (mod.lessons as { id: string; title: string; subtitle: string | null; duration_minutes: number | null; is_required: boolean; status: string }[])
             .filter(l => l.status === 'published')
@@ -210,6 +218,184 @@ export default async function TrainingCoursePage({ params }: { params: { courseI
           </div>
         )}
       </div>
+    )
+  } else if (tab === 'faqs' && showContentTabs) {
+    tabContent = (
+      <div className="mt-6">
+        <SalesmanFAQViewer faqs={faqs ?? []} initialReviewed={reviewedIdsArray} initialToolId={course.tool_id!} />
+      </div>
+    )
+  } else if (tab === 'scripts' && showContentTabs) {
+    tabContent = (
+      <div className="mt-6">
+        <SalesmanScriptViewer scripts={scripts ?? []} initialReviewed={reviewedIdsArray} initialToolId={course.tool_id!} />
+      </div>
+    )
+  } else if (tab === 'objections' && showContentTabs) {
+    tabContent = (
+      <div className="mt-6">
+        <SalesmanObjectionViewer objections={objections ?? []} initialReviewed={reviewedIdsArray} initialToolId={course.tool_id!} />
+      </div>
+    )
+  } else if (tab === 'voice-notes' && showContentTabs) {
+    tabContent = (
+      <div className="mt-6">
+        <SalesmanVoiceNoteViewer notes={voiceNotes ?? []} currentUserId={user.id} initialToolId={course.tool_id!} />
+      </div>
+    )
+  } else if (tab === 'assignments' && showContentTabs) {
+    const stats = assignments?.map(a => {
+      const sub = submissions?.find(s => s.assignment_id === a.id)
+      return {
+        ...a,
+        submissionStatus: sub?.status || 'unsubmitted'
+      }
+    }) || []
+
+    tabContent = (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50/50">
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Assignment</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {stats.length === 0 ? (
+              <tr>
+                <td colSpan={2} className="p-8">
+                  <EmptyState 
+                    icon={BookOpen} 
+                    title="No assignments" 
+                    description="No assignments are linked to this tool." 
+                  />
+                </td>
+              </tr>
+            ) : (
+              stats.map((assignment: any) => (
+                <tr key={assignment.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <Link href={`/dashboard/assignments/${assignment.id}`} className="font-medium text-gray-900 block hover:text-brand-600">
+                      {assignment.title}
+                    </Link>
+                    {assignment.due_date && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Due: {new Date(assignment.due_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {assignment.submissionStatus === 'graded' && <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-semibold">Graded</span>}
+                    {assignment.submissionStatus === 'pending' && <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold">Submitted</span>}
+                    {assignment.submissionStatus === 'unsubmitted' && <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-semibold">Not Started</span>}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-8 max-w-3xl animate-fade-in">
+      <Link
+        href="/dashboard/training"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition"
+      >
+        <ChevronLeft className="w-4 h-4" /> Back to Training
+      </Link>
+
+      {/* Course header */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        {course.category && <p className="text-xs text-brand-500 font-medium mb-1">{course.category}</p>}
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{course.title}</h1>
+        {course.description && <p className="text-gray-400 text-sm mb-4">{course.description}</p>}
+
+        {/* Progress bar */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-brand-500 transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <span className="text-sm font-medium text-gray-600">{pct}%</span>
+        </div>
+        <div className="text-xs text-gray-400 mt-2 flex flex-wrap gap-3">
+          <span>{completedCount} of {totalLessons} lessons done</span>
+          {requiredReads.length > 0 && (
+            <span>• {completedReviewsCount} of {requiredReads.length} required reviews done</span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-2 border-b border-gray-200 pb-2">
+        <div className="flex gap-6 overflow-x-auto">
+          <Link
+            href={`/dashboard/training/${course.id}?tab=lessons&lang=${lang}`}
+            className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+              tab === 'lessons' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Lessons
+          </Link>
+          {showContentTabs && (
+            <>
+              <Link
+                href={`/dashboard/training/${course.id}?tab=faqs&lang=${lang}`}
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                  tab === 'faqs' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                FAQs
+              </Link>
+              <Link
+                href={`/dashboard/training/${course.id}?tab=scripts&lang=${lang}`}
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                  tab === 'scripts' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Scripts
+              </Link>
+              <Link
+                href={`/dashboard/training/${course.id}?tab=objections&lang=${lang}`}
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                  tab === 'objections' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Objections
+              </Link>
+              <Link
+                href={`/dashboard/training/${course.id}?tab=voice-notes&lang=${lang}`}
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                  tab === 'voice-notes' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Voice Notes
+              </Link>
+              <Link
+                href={`/dashboard/training/${course.id}?tab=assignments&lang=${lang}`}
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                  tab === 'assignments' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Assignments
+              </Link>
+            </>
+          )}
+        </div>
+        {showContentTabs && (
+          <div className="ml-4">
+            <TabLangToggle currentLang={lang} />
+          </div>
+        )}
+      </div>
+
+      {/* Tab Content */}
+      {tabContent}
     </div>
   )
 }

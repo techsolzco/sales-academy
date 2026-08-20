@@ -3,7 +3,11 @@ import { redirect } from 'next/navigation'
 import { SalesmanScriptViewer } from '@/components/training/SalesmanScriptViewer'
 import { getReviewedKbItems } from '@/lib/actions/kb-reviews'
 
-export default async function SalesmanScriptsPage() {
+export default async function SalesmanScriptsPage({
+  searchParams,
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -34,7 +38,7 @@ export default async function SalesmanScriptsPage() {
         </p>
       </div>
 
-      <SalesmanScriptViewer scripts={scripts} tools={tools} initialReviewed={reviewedItems} />
+      <SalesmanScriptViewer scripts={scripts} tools={tools} initialReviewed={reviewedItems} initialToolId={searchParams.tool} />
     </div>
   )
 }

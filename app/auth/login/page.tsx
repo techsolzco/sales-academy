@@ -134,6 +134,16 @@ export default function LoginPage() {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
+      
+      {/* Register Link */}
+      <div className="mt-8 text-center border-t border-white/10 pt-6">
+        <p className="text-sm text-brand-200">
+          New here?{' '}
+          <Link href="/register" className="text-white hover:underline font-semibold">
+            Apply to join as a Sales Intern
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

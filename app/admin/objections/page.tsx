@@ -2,7 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { ObjectionManager } from '@/components/admin/ObjectionManager'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
 
-export default async function AdminObjectionsPage() {
+export default async function AdminObjectionsPage({
+  searchParams,
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
 
   const [objectionsRes, toolsRes] = await Promise.all([
@@ -31,7 +35,11 @@ export default async function AdminObjectionsPage() {
         </p>
       </div>
 
-      <ObjectionManager initialObjections={objectionsRes.data ?? []} tools={toolsRes.data ?? []} />
+      <ObjectionManager 
+        initialObjections={objectionsRes.data ?? []} 
+        tools={toolsRes.data ?? []} 
+        initialToolId={searchParams.tool}
+      />
     </div>
   )
 }

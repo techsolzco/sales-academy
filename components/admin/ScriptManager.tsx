@@ -6,17 +6,18 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { deleteScript } from '@/lib/actions/scripts'
-import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { SalesScript } from '@/types'
 
 export function ScriptManager({
   initialScripts,
   copyCounts,
-  tools = []
+  tools = [],
+  initialToolId = ''
 }: {
   initialScripts: SalesScript[]
   copyCounts: Record<string, number>
   tools?: { id: string; name: string }[]
+  initialToolId?: string
 }) {
   const [scripts, setScripts] = useState(initialScripts)
   const [search, setSearch] = useState('')
@@ -26,11 +27,9 @@ export function ScriptManager({
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
-  
-  // For expanding/collapsing groups
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
-
-  const [filterToolId, setFilterToolId] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId)
+  const [tabLang, setTabLang] = useState<'en' | 'hi'>('hi')
 
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 
@@ -99,66 +98,73 @@ export function ScriptManager({
   }
 
   function renderScriptCard(script: SalesScript) {
+    const displayContent = tabLang === 'hi' && script.content_hinglish ? script.content_hinglish : script.content
+    const hasHinglish = !!script.content_hinglish
+
     return (
-      <TranslateContextWrapper
-        key={script.id}
-        table="scripts"
-        recordId={script.id}
-        fieldsToTranslate={{
-          content_translated: script.content
-        }}
-        initialTranslations={{
-          content_translated: script.content_translated
-        }}
-      >
-        {({ displayTexts, toggleButton }) => (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <StatusBadge status={script.status} />
-                  <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold uppercase">
-                    {script.script_type.replace(/_/g, ' ')}
-                  </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                    🗣️ {script.language}
-                  </span>
-                  {copyCounts[script.id] > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-green-50 text-green-700 font-semibold">
-                      📋 Copied {copyCounts[script.id]} times
-                    </span>
-                  )}
-                  {toggleButton}
-                </div>
-                <h3 className="font-bold text-gray-900 text-base">{script.title}</h3>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
+      <div key={script.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <StatusBadge status={script.status} />
+              <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold uppercase">
+                {script.script_type.replace(/_/g, ' ')}
+              </span>
+              {/* Clean language toggle pill */}
+              <div className="flex items-center rounded-lg bg-gray-100 p-0.5 gap-0.5">
                 <button
-                  onClick={() => handleEdit(script)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                  onClick={() => setTabLang('hi')}
+                  className={`px-2.5 py-0.5 text-xs font-semibold rounded-md transition-all ${
+                    tabLang === 'hi' ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  <Edit className="w-4 h-4" />
+                  Hinglish
                 </button>
                 <button
-                  onClick={() => handleDelete(script.id)}
-                  disabled={isPending}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+                  onClick={() => setTabLang('en')}
+                  className={`px-2.5 py-0.5 text-xs font-semibold rounded-md transition-all ${
+                    tabLang === 'en' ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  EN
                 </button>
               </div>
+              {tabLang === 'hi' && !hasHinglish && (
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">EN only</span>
+              )}
+              {copyCounts[script.id] > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded bg-green-50 text-green-700 font-semibold">
+                  📋 Copied {copyCounts[script.id]} times
+                </span>
+              )}
             </div>
-            {script.when_to_use && (
-              <p className="text-xs text-brand-600 font-medium bg-brand-50/60 px-3 py-1.5 rounded-lg inline-block">
-                💡 When to use: {script.when_to_use}
-              </p>
-            )}
-            <pre className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-mono whitespace-pre-wrap leading-relaxed">
-              {displayTexts.content_translated}
-            </pre>
+            <h3 className="font-bold text-gray-900 text-base">{script.title}</h3>
           </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={() => handleEdit(script)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => handleDelete(script.id)}
+              disabled={isPending}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        {script.when_to_use && (
+          <p className="text-xs text-brand-600 font-medium bg-brand-50/60 px-3 py-1.5 rounded-lg inline-block">
+            💡 When to use: {script.when_to_use}
+          </p>
         )}
-      </TranslateContextWrapper>
+        <pre className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-mono whitespace-pre-wrap leading-relaxed">
+          {displayContent}
+        </pre>
+      </div>
     )
   }
 

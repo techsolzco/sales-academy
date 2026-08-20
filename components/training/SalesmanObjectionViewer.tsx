@@ -1,17 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, AlertCircle, CheckCircle, XCircle, Eye, Check } from 'lucide-react'
 import type { Objection } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 
-export function SalesmanObjectionViewer({ objections, tools = [], initialReviewed = [] }: { objections: Objection[], tools?: { id: string; name: string }[], initialReviewed?: string[] }) {
+export function SalesmanObjectionViewer({ objections, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { objections: Objection[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
   const [isPending, setIsPending] = useState(false)
-  const { language } = useLanguage()
+  const { language: contextLang } = useLanguage()
+  const [language, setLanguage] = useState(initialLang || contextLang || 'en')
+  useEffect(() => { if (initialLang) setLanguage(initialLang) }, [initialLang])
 
   async function handleToggleReview(id: string) {
     if (isPending) return
@@ -32,19 +35,20 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
 
   const filtered = objections.filter(o => {
     const q = search.toLowerCase()
-    return (
+    const matchesSearch =
       !q ||
       o.objection_text.toLowerCase().includes(q) ||
       o.recommended_response.toLowerCase().includes(q) ||
       (o.meaning && o.meaning.toLowerCase().includes(q))
-    )
+    const matchesTool = !filterToolId || o.tool_id === filterToolId
+    return matchesSearch && matchesTool
   })
 
   return (
     <div>
-      {/* Search */}
-      <div className="mb-6 max-w-md">
-        <div className="relative">
+      {/* Search & Filter */}
+      <div className="mb-6 flex flex-col md:flex-row gap-4 max-w-2xl">
+        <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -54,6 +58,19 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
             className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
           />
         </div>
+        
+        {tools.length > 0 && (
+          <select
+            value={filterToolId}
+            onChange={e => setFilterToolId(e.target.value)}
+            className="px-4 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 min-w-[200px]"
+          >
+            <option value="">All Tools</option>
+            {tools.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Cards */}

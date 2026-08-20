@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, Copy, Check, FileText, Eye, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
 import { logScriptCopy } from '@/lib/actions/scripts'
 import type { SalesScript } from '@/types'
@@ -8,16 +8,18 @@ import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 
-export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = [] }: { scripts: SalesScript[], tools?: { id: string; name: string }[], initialReviewed?: string[] }) {
+export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { scripts: SalesScript[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState<string>('All')
-  const [filterToolId, setFilterToolId] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId)
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
   const [isPending, setIsPending] = useState(false)
-  const { language } = useLanguage()
+  const { language: contextLang } = useLanguage()
+  const [language, setLanguage] = useState(initialLang || contextLang || 'en')
+  useEffect(() => { if (initialLang) setLanguage(initialLang) }, [initialLang])
 
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 

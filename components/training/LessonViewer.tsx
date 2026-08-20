@@ -9,9 +9,22 @@ import type { ContentBlock } from '@/types'
 
 function TextBlock({ content }: { content: Record<string, unknown> }) {
   const body = String(content.body ?? '')
+  
+  // Parse **text** into <mark> highlighting
+  const parts = body.split(/(\*\*.*?\*\*)/g)
+
   return (
     <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
-      {body}
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return (
+            <mark key={i} className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-semibold">
+              {part.slice(2, -2)}
+            </mark>
+          )
+        }
+        return <span key={i}>{part}</span>
+      })}
     </div>
   )
 }

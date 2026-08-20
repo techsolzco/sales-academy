@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, Mic, ChevronDown, ChevronRight, LayoutList, FolderTree, Upload, Loader2 } from 'lucide-react'
 import { AudioPlayer } from '@/components/audio/AudioPlayer'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
@@ -8,9 +8,9 @@ import { createClient } from '@/lib/supabase/client'
 import { upsertSalesmanRecording } from '@/lib/actions/voice-recordings'
 import type { VoiceNote } from '@/types'
 
-export function SalesmanVoiceNoteViewer({ notes, tools = [], currentUserId, salesmanRecordings = {} }: { notes: VoiceNote[], tools?: { id: string; name: string }[], currentUserId?: string, salesmanRecordings?: Record<string, string> }) {
+export function SalesmanVoiceNoteViewer({ notes, tools = [], currentUserId, salesmanRecordings = {}, initialToolId = '', initialLang }: { notes: VoiceNote[], tools?: { id: string; name: string }[], currentUserId?: string, salesmanRecordings?: Record<string, string>, initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
-  const [filterToolId, setFilterToolId] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId)
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [uploadingFor, setUploadingFor] = useState<string | null>(null)

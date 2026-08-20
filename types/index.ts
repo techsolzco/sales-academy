@@ -638,6 +638,15 @@ export interface GeneratedScript {
   _removed?: boolean
 }
 
+export interface GeneratedVoiceNote {
+  title: string
+  transcript: string
+  purpose: string
+  when_to_send: string
+  language: string
+  _removed?: boolean
+}
+
 export interface GeneratedContentBlock {
   type: 'heading' | 'text'
   content: Record<string, unknown>
@@ -670,6 +679,7 @@ export interface GeneratedToolPackage {
   faqs: GeneratedFAQ[]
   objections: GeneratedObjection[]
   scripts: GeneratedScript[]
+  voice_notes: GeneratedVoiceNote[]
 }
 
 export interface ToolTreeData {

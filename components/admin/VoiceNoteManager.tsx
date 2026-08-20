@@ -11,10 +11,10 @@ import { toggleAdminAudioVisibility } from '@/lib/actions/voice-recordings'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { VoiceNote } from '@/types'
 
-export function VoiceNoteManager({ initialNotes, tools = [] }: { initialNotes: VoiceNote[], tools?: { id: string; name: string }[] }) {
+export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' }: { initialNotes: VoiceNote[], tools?: { id: string; name: string }[], initialToolId?: string }) {
   const [notes, setNotes] = useState(initialNotes)
   const [search, setSearch] = useState('')
-  const [filterToolId, setFilterToolId] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId)
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [selectedNote, setSelectedNote] = useState<VoiceNote | null>(null)

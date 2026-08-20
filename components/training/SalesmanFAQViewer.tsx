@@ -1,22 +1,28 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, Copy, Check, HelpCircle, Eye, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
 import type { FAQ } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 
-export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [] }: { faqs: FAQ[], tools?: { id: string; name: string }[], initialReviewed?: string[] }) {
+export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { faqs: FAQ[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
-  const [filterToolId, setFilterToolId] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId)
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
   const [isPending, setIsPending] = useState(false)
-  const { language } = useLanguage()
+  
+  const { language: contextLang } = useLanguage()
+  const [language, setLanguage] = useState(initialLang || contextLang || 'en')
+  
+  useEffect(() => {
+    if (initialLang) setLanguage(initialLang)
+  }, [initialLang])
 
   const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category)))]
 

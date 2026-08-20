@@ -9,10 +9,10 @@ import { deleteObjection } from '@/lib/actions/objections'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { Objection } from '@/types'
 
-export function ObjectionManager({ initialObjections, tools = [] }: { initialObjections: Objection[], tools?: { id: string; name: string }[] }) {
+export function ObjectionManager({ initialObjections, tools = [], initialToolId }: { initialObjections: Objection[], tools?: { id: string; name: string }[], initialToolId?: string }) {
   const [objections, setObjections] = useState(initialObjections)
   const [search, setSearch] = useState('')
-  const [filterToolId, setFilterToolId] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId || '')
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [selectedObjection, setSelectedObjection] = useState<Objection | null>(null)

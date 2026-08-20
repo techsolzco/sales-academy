@@ -2,7 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { FAQManager } from '@/components/admin/FAQManager'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
 
-export default async function AdminFAQsPage() {
+export default async function AdminFAQsPage({
+  searchParams,
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
 
   const { data: faqs } = await supabase
@@ -31,7 +35,7 @@ export default async function AdminFAQsPage() {
         </p>
       </div>
 
-      <FAQManager initialFaqs={faqs ?? []} tools={tools ?? []} />
+      <FAQManager initialFaqs={faqs ?? []} tools={tools ?? []} initialToolId={searchParams.tool} />
     </div>
   )
 }

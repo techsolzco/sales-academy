@@ -133,7 +133,7 @@ export function ToolOnboardWizard() {
   }, [step])
 
   // Tree Handlers
-  const toggleItemRemoval = (type: string, path: number[]) => {
+  const toggleRemoval = (type: string, path: number[]) => {
     if (!packageData) return
     const newData = { ...packageData }
     let target: any
@@ -141,6 +141,7 @@ export function ToolOnboardWizard() {
     if (type === 'faq') target = newData.faqs[path[0]]
     if (type === 'objection') target = newData.objections[path[0]]
     if (type === 'script') target = newData.scripts[path[0]]
+    if (type === 'voice_note') target = newData.voice_notes[path[0]]
     if (type === 'module') target = newData.course.modules[path[0]]
     if (type === 'lesson') target = newData.course.modules[path[0]].lessons[path[1]]
 
@@ -158,6 +159,7 @@ export function ToolOnboardWizard() {
     if (type === 'faq') target = newData.faqs[path[0]]
     if (type === 'objection') target = newData.objections[path[0]]
     if (type === 'script') target = newData.scripts[path[0]]
+    if (type === 'voice_note') target = newData.voice_notes[path[0]]
     if (type === 'module') target = newData.course.modules[path[0]]
     if (type === 'lesson') target = newData.course.modules[path[0]].lessons[path[1]]
     if (type === 'block') target = newData.course.modules[path[0]].lessons[path[1]].content_blocks[path[2]]
@@ -346,7 +348,7 @@ export function ToolOnboardWizard() {
             </div>
 
             {/* Tree View Component */}
-            <TreeView packageData={packageData} toggleRemoval={toggleItemRemoval} updateItem={updateItem} />
+            <TreeView packageData={packageData} toggleRemoval={toggleRemoval} updateItem={updateItem} />
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 flex justify-between">
@@ -365,7 +367,8 @@ export function ToolOnboardWizard() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 md:p-8 animate-fade-in border border-gray-100 dark:border-gray-800 max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold dark:text-gray-100 mb-2">Ready to Save</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            You are about to save {packageData.faqs.filter(f => !f._removed).length} FAQs, {packageData.objections.filter(o => !o._removed).length} Objections, {packageData.scripts.filter(s => !s._removed).length} Scripts, and a full course for <strong className="text-gray-900 dark:text-white">{wizardData.name}</strong>.
+            You are about to save {packageData.faqs.filter(f => !f._removed).length} FAQs, {packageData.objections.filter(o => !o._removed).length} Objections, {packageData.scripts.filter(s => !s._removed).length} Scripts, {packageData.voice_notes?.filter(v => !v._removed).length || 0} Voice Notes, and a full course for <strong className="text-gray-900 dark:text-white">{wizardData.name}</strong>.
+            <br/><span className="text-sm mt-2 block text-brand-600 dark:text-brand-400">✓ A quiz will be auto-generated from this content</span>
           </p>
 
           <div className="space-y-4 mb-8">
@@ -446,7 +449,8 @@ function TreeView({ packageData, toggleRemoval, updateItem }: {
     'course': true,
     'faqs': true,
     'objections': true,
-    'scripts': true
+    'scripts': true,
+    'voice_notes': true
   })
 
   const toggle = (key: string) => setExpanded(p => ({ ...p, [key]: !p[key] }))
@@ -582,7 +586,7 @@ function TreeView({ packageData, toggleRemoval, updateItem }: {
       </div>
 
       {/* Scripts */}
-      <div>
+      <div className="mb-4">
         <div className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-200 font-bold" onClick={() => toggle('scripts')}>
           {expanded['scripts'] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           Scripts ({packageData.scripts.length})
@@ -591,11 +595,34 @@ function TreeView({ packageData, toggleRemoval, updateItem }: {
           <div className="ml-6 mt-2 space-y-4">
             {packageData.scripts.map((script, i) => (
               <div key={i} className="relative group">
-                <div className="absolute -left-6 top-1 text-gray-300 dark:text-gray-600">{i === packageData.scripts.length - 1 ? '└──' : '├──'}</div>
+                <div className="absolute -left-6 top-1 text-gray-300 dark:text-gray-600">├──</div>
                 <button onClick={() => toggleRemoval('script', [i])} className="absolute -left-10 top-1 text-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded transition"><X className="w-4 h-4"/></button>
                 <div className="space-y-1">
                   <NodeItem label="Type" value={script.script_type} type="script" path={[i]} field="script_type" removed={script._removed} />
                   <NodeItem label="Content" value={script.content} type="script" path={[i]} field="content" removed={script._removed} isTextArea isLast />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Voice Notes */}
+      <div>
+        <div className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-200 font-bold" onClick={() => toggle('voice_notes')}>
+          {expanded['voice_notes'] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          Voice Notes ({packageData.voice_notes?.length || 0})
+        </div>
+        {expanded['voice_notes'] && (
+          <div className="ml-6 mt-2 space-y-4">
+            {packageData.voice_notes?.map((vn, i) => (
+              <div key={i} className="relative group">
+                <div className="absolute -left-6 top-1 text-gray-300 dark:text-gray-600">{i === (packageData.voice_notes?.length || 0) - 1 ? '└──' : '├──'}</div>
+                <button onClick={() => toggleRemoval('voice_note', [i])} className="absolute -left-10 top-1 text-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded transition"><X className="w-4 h-4"/></button>
+                <div className="space-y-1">
+                  <NodeItem label="Title" value={vn.title} type="voice_note" path={[i]} field="title" removed={vn._removed} />
+                  <NodeItem label="Purpose" value={vn.purpose} type="voice_note" path={[i]} field="purpose" removed={vn._removed} />
+                  <NodeItem label="Transcript" value={vn.transcript} type="voice_note" path={[i]} field="transcript" removed={vn._removed} isTextArea isLast />
                 </div>
               </div>
             ))}

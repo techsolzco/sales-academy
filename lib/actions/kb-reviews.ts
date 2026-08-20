@@ -18,7 +18,10 @@ export async function toggleKbReview(contentType: KBContentType, contentId: stri
         content_type: contentType,
         content_id: contentId
       })
-    if (error && error.code !== '23505') throw error // ignore unique violation
+    if (error && error.code !== '23505') {
+      console.error('toggleKbReview insert error:', error)
+      throw new Error(`Failed to mark as reviewed: ${error.message}`)
+    }
   } else {
     const { error } = await supabase
       .from('kb_reviews')
@@ -28,7 +31,10 @@ export async function toggleKbReview(contentType: KBContentType, contentId: stri
         content_type: contentType,
         content_id: contentId
       })
-    if (error) throw error
+    if (error) {
+      console.error('toggleKbReview delete error:', error)
+      throw new Error(`Failed to unmark as reviewed: ${error.message}`)
+    }
   }
 
   revalidatePath('/dashboard/faqs')

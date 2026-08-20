@@ -2,7 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SalesmanVoiceNoteViewer } from '@/components/training/SalesmanVoiceNoteViewer'
 
-export default async function SalesmanVoiceNotesPage() {
+export default async function SalesmanVoiceNotesPage({
+  searchParams,
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -40,7 +44,7 @@ export default async function SalesmanVoiceNotesPage() {
         </p>
       </div>
 
-      <SalesmanVoiceNoteViewer notes={notes} tools={tools} currentUserId={user.id} salesmanRecordings={salesmanRecordings} />
+      <SalesmanVoiceNoteViewer notes={notes} tools={tools} currentUserId={user.id} salesmanRecordings={salesmanRecordings} initialToolId={searchParams.tool} />
     </div>
   )
 }

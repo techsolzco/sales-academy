@@ -9,11 +9,11 @@ import { deleteFAQ } from '@/lib/actions/faqs'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { FAQ } from '@/types'
 
-export function FAQManager({ initialFaqs, tools = [] }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[] }) {
+export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[], initialToolId?: string }) {
   const [faqs, setFaqs] = useState(initialFaqs)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
-  const [filterToolId, setFilterToolId] = useState('')
+  const [filterToolId, setFilterToolId] = useState(initialToolId || '')
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [selectedFaq, setSelectedFaq] = useState<FAQ | null>(null)
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchConversations, fetchMessages } from '@/lib/actions/chat'
 import { ConversationList, ConversationWithMeta } from '@/components/chat/ConversationList'
 import { ChatWindow } from '@/components/chat/ChatWindow'
+import { NewChatPicker } from '@/components/chat/NewChatPicker'
 import type { DirectMessage } from '@/types'
 import { Loader2 } from 'lucide-react'
 
@@ -71,18 +72,17 @@ export default function AdminChatPage() {
       
       <div className={`${!selectedId && !showNewChatPicker ? 'hidden md:block' : 'block'} w-full md:w-2/3 lg:w-3/4 h-full`}>
         {showNewChatPicker ? (
-          <div className="h-full bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center justify-center text-center">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">New Conversation</h2>
-            <p className="text-gray-500 mb-6 max-w-md">
-              Start a new chat with a user. (User picker UI goes here)
-            </p>
-            <button 
-              onClick={() => setShowNewChatPicker(false)}
-              className="text-gray-500 hover:text-gray-700 font-medium"
-            >
-              Cancel
-            </button>
-          </div>
+          <NewChatPicker 
+            onCancel={() => setShowNewChatPicker(false)} 
+            onConversationStart={async (id, user) => {
+              // Add conversation to list if it doesn't exist
+              setConversations(prev => {
+                if (prev.some(c => c.id === id)) return prev
+                return [{ id, participant_a: currentUserId, participant_b: user.id, otherUser: user, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }, ...prev]
+              })
+              await handleSelectConversation(id, user)
+            }} 
+          />
         ) : (
           <ChatWindow
             conversationId={selectedId}

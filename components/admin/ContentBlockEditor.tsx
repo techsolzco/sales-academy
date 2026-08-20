@@ -203,6 +203,7 @@ export function ContentBlockEditor({ lessonId, moduleId, courseId, initialBlocks
   // Drag-and-drop state
   const dragIndexRef = useRef<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [isDraggingIndex, setIsDraggingIndex] = useState<number | null>(null)
 
   // ── Add block ────────────────────────────────────────────────────────────
   function handleAddBlock(type: ContentBlockType) {
@@ -238,6 +239,7 @@ export function ContentBlockEditor({ lessonId, moduleId, courseId, initialBlocks
   // ── Drag and drop ────────────────────────────────────────────────────────
   function handleDragStart(e: React.DragEvent, index: number) {
     dragIndexRef.current = index
+    setIsDraggingIndex(index)
     e.dataTransfer.effectAllowed = 'move'
   }
 
@@ -261,11 +263,13 @@ export function ContentBlockEditor({ lessonId, moduleId, courseId, initialBlocks
     startTransition(async () => {
       await reorderContentBlocks(lessonId, courseId, moduleId, withOrder.map(b => b.id))
     })
+    setIsDraggingIndex(null)
   }
 
   function handleDragEnd() {
     dragIndexRef.current = null
     setDragOverIndex(null)
+    setIsDraggingIndex(null)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -285,7 +289,8 @@ export function ContentBlockEditor({ lessonId, moduleId, courseId, initialBlocks
           const config = typeConfig[block.type]
           const isEditing = editingId === block.id
           const isDeleting = deletingId === block.id
-          const isDragOver = dragOverIndex === index
+          const isDragging = isDraggingIndex === index
+          const isDragOver = dragOverIndex === index && !isDragging
 
           return (
             <div
@@ -295,8 +300,10 @@ export function ContentBlockEditor({ lessonId, moduleId, courseId, initialBlocks
               onDragOver={e => handleDragOver(e, index)}
               onDrop={e => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
-              className={`rounded-xl border bg-white transition-all ${
-                isDragOver ? 'border-brand-400 shadow-md' : 'border-gray-100'
+              className={`rounded-xl border bg-white transition-all duration-150 ${
+                isDragging ? 'opacity-50 scale-[1.02] shadow-2xl ring-2 ring-brand-400 rotate-1 z-10' : ''
+              } ${
+                isDragOver ? 'border-t-4 border-brand-400' : 'border-gray-100'
               } ${isEditing ? 'ring-2 ring-brand-300' : ''}`}
             >
               <div className="flex items-start gap-3 p-4">

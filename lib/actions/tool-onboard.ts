@@ -206,29 +206,62 @@ Requirements:
 - FAQs: exactly 12 FAQs, at least 1-2 per category: Product, Pricing, Privacy, Warranty, Payment, Comparison, Technical, General
 - Objections: exactly 8 objections — 3 beginner, 3 intermediate, 2 advanced
 - Scripts: exactly 8 scripts covering these types (one each): greeting, whatsapp, follow_up, closing, payment, objection_response, upsell, after_sales
+- IMPORTANT LANGUAGE RULE: Ensure strict language consistency within an item. For any Hinglish field (e.g. question_hinglish, short_answer_hinglish, recommended_response_hinglish), it MUST be in Hinglish, and it MUST correspond directly to its English counterpart. Do not provide a Hinglish answer to an English question or vice versa. Both must be provided and must match in language style.
 - All Hinglish content must be Roman script (no Urdu script)
 - Make content specific to "${wizardData.name}" and WhatsApp-ready`
 
-    console.log('[ToolOnboard] Starting 2-call generation for:', wizardData.name)
+    const call3Prompt = `You are a sales training content creator. Generate exactly 3 voice-note-style audio scripts for the sales tool: "${wizardData.name}".
 
-    // Run both calls in parallel
-    const [call1Text, call2Text] = await Promise.all([
+Tool context:
+- Pricing: ${wizardData.pricing || 'not specified'}
+- Key Features: ${(wizardData.features || []).join(', ')}
+- Brief: ${wizardData.brief}
+
+For each voice note, provide:
+- title: Short descriptive title (e.g. "Introduction to [Tool]", "How to Handle Price Objection")
+- transcript: A natural, conversational voice note script in Hinglish (Roman Urdu + English mix), 3-5 sentences, as if speaking to a salesman. Should feel like a voice message from a trainer.
+- purpose: One-line description of when to use this voice note
+- when_to_send: Specific trigger scenario (e.g. "Before first client call", "After quiz completion")
+- language: always "Hinglish"
+
+Return ONLY valid JSON (no markdown fences, no explanation) in exactly this format:
+{
+  "voice_notes": [
+    {
+      "title": "string",
+      "transcript": "string",
+      "purpose": "string",
+      "when_to_send": "string",
+      "language": "Hinglish"
+    }
+  ]
+}`
+
+    console.log('[ToolOnboard] Starting 3-call generation for:', wizardData.name)
+
+    // Run calls in parallel
+    const [call1Text, call2Text, call3Text] = await Promise.all([
       callGeminiLarge(systemPrompt, call1Prompt),
       callGeminiLarge(systemPrompt, call2Prompt),
+      callGeminiLarge(systemPrompt, call3Prompt),
     ])
 
     console.log('[ToolOnboard] Call 1 raw (first 200):', call1Text.slice(0, 200))
     console.log('[ToolOnboard] Call 2 raw (first 200):', call2Text.slice(0, 200))
+    console.log('[ToolOnboard] Call 3 raw (first 200):', call3Text.slice(0, 200))
 
     type Call1Result = { knowledge_summary: string; course: GeneratedToolPackage['course'] }
     type Call2Result = { faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }
+    type Call3Result = { voice_notes: GeneratedToolPackage['voice_notes'] }
 
     const part1 = safeJsonParse<Call1Result>(call1Text, 'course+summary')
     const part2 = safeJsonParse<Call2Result>(call2Text, 'kb-content')
+    const part3 = safeJsonParse<Call3Result>(call3Text, 'voice-notes')
 
     // Retry failed parts with simpler prompts
     let finalPart1 = part1
     let finalPart2 = part2
+    let finalPart3 = part3
 
     if (!finalPart1) {
       console.log('[ToolOnboard] Call 1 failed, retrying with stricter prompt...')
@@ -248,11 +281,23 @@ Requirements:
       finalPart2 = safeJsonParse<Call2Result>(retryText, 'kb-content retry')
     }
 
+    if (!finalPart3) {
+      console.log('[ToolOnboard] Call 3 failed, retrying with stricter prompt...')
+      const retryText = await callGeminiLarge(
+        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
+        call3Prompt
+      )
+      finalPart3 = safeJsonParse<Call3Result>(retryText, 'voice-notes retry')
+    }
+
     if (!finalPart1 || !finalPart1.knowledge_summary || !finalPart1.course) {
       return { error: 'AI could not generate the course structure. Please try again in a moment.' }
     }
     if (!finalPart2 || !finalPart2.faqs || !finalPart2.objections || !finalPart2.scripts) {
       return { error: 'AI could not generate the knowledge base content. Please try again in a moment.' }
+    }
+    if (!finalPart3 || !finalPart3.voice_notes) {
+      return { error: 'AI could not generate the voice notes. Please try again in a moment.' }
     }
 
     const parsed: GeneratedToolPackage = {
@@ -261,9 +306,10 @@ Requirements:
       faqs: finalPart2.faqs,
       objections: finalPart2.objections,
       scripts: finalPart2.scripts,
+      voice_notes: finalPart3.voice_notes,
     }
 
-    console.log('[ToolOnboard] Success — FAQs:', parsed.faqs.length, '| Objections:', parsed.objections.length, '| Scripts:', parsed.scripts.length)
+    console.log('[ToolOnboard] Success — FAQs:', parsed.faqs.length, '| Objections:', parsed.objections.length, '| Scripts:', parsed.scripts.length, '| Voice Notes:', parsed.voice_notes.length)
 
     return { data: parsed }
   } catch (error: unknown) {
@@ -426,6 +472,25 @@ export async function saveToolPackage(
     if (scriptInserts.length > 0) {
       const { error: scriptErr } = await sb.from('scripts').insert(scriptInserts)
       if (scriptErr) throw scriptErr
+    }
+
+    // 7. Create Voice Notes
+    const voiceNoteInserts = packageData.voice_notes
+      .filter(v => !(v as unknown as Record<string, boolean>)._removed)
+      .map(v => ({
+        title: v.title,
+        transcript: v.transcript,
+        purpose: v.purpose,
+        when_to_send: v.when_to_send,
+        language: v.language || 'Hinglish',
+        tool_id: toolId,
+        course_id: course.id,
+        status,
+        audio_url: '', // required by schema but not generated by AI yet
+      }))
+    if (voiceNoteInserts.length > 0) {
+      const { error: vnErr } = await sb.from('voice_notes').insert(voiceNoteInserts)
+      if (vnErr) throw vnErr
     }
 
     revalidatePath('/admin/tools')

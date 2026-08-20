@@ -3,7 +3,11 @@ import { redirect } from 'next/navigation'
 import { SalesmanObjectionViewer } from '@/components/training/SalesmanObjectionViewer'
 import { getReviewedKbItems } from '@/lib/actions/kb-reviews'
 
-export default async function SalesmanObjectionsPage() {
+export default async function SalesmanObjectionsPage({
+  searchParams,
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -34,7 +38,7 @@ export default async function SalesmanObjectionsPage() {
         </p>
       </div>
 
-      <SalesmanObjectionViewer objections={objections} tools={tools} initialReviewed={reviewedItems} />
+      <SalesmanObjectionViewer objections={objections} tools={tools} initialReviewed={reviewedItems} initialToolId={searchParams.tool} />
     </div>
   )
 }

@@ -4,10 +4,9 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText
+  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText, BarChart2
 } from 'lucide-react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
-import { LanguageToggle } from '@/components/layout/LanguageToggle'
 import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
@@ -67,6 +66,7 @@ export default async function AdminLayout({
     { label: 'My Profile',  href: '/admin/profile',      icon: <User className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Policies',    href: '/admin/policies',     icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Announcements', href: '/admin/announcements', icon: <Megaphone className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Reports', href: '/admin/reports/daily', icon: <BarChart2 className="w-4 h-4 flex-shrink-0" /> }
   ]
 
   return (
@@ -94,7 +94,6 @@ export default async function AdminLayout({
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <DarkModeToggle />
-            <LanguageToggle />
             <NotificationBell userId={user.id} />
             <span className="text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 font-semibold uppercase tracking-wider">
               Admin Portal

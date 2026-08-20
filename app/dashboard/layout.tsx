@@ -10,7 +10,6 @@ import {
 } from 'lucide-react'
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
-import { LanguageToggle } from '@/components/layout/LanguageToggle'
 import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { SidebarProvider } from '@/components/layout/SidebarContext'
@@ -18,6 +17,7 @@ import { SidebarMobileToggle } from '@/components/layout/SidebarMobileToggle'
 import { ToastProvider } from '@/components/ui/ToastContext'
 import { TranslatorFab } from '@/components/ui/TranslatorFab'
 import { ViewAsStudentBanner } from '@/components/admin/ViewAsStudentBanner'
+import { WelcomeModal } from '@/components/dashboard/WelcomeModal'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
@@ -52,11 +52,21 @@ export default async function DashboardLayout({
     redirect('/auth/login')
   }
 
-  const { data: realProfile } = await supabase
+  const { data: realProfileRaw } = await supabase
     .from('profiles')
-    .select('role, full_name, email, is_reseller')
+    .select('*')
     .eq('id', user.id)
     .single()
+    
+  const realProfile = realProfileRaw as any
+
+  let appSettings = null
+  try {
+    const { data } = await supabase.from('app_settings').select('*').limit(1).single()
+    appSettings = data
+  } catch (e) {
+    // Ignore if table missing
+  }
 
   // Check for admin "view as student" impersonation cookie
   const cookieStore = await cookies()
@@ -137,7 +147,6 @@ export default async function DashboardLayout({
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <DarkModeToggle />
-            <LanguageToggle />
             <NotificationBell userId={displayUserId} />
             {isImpersonating ? (
               <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold uppercase tracking-wider">
@@ -156,6 +165,13 @@ export default async function DashboardLayout({
       </div>
       <WhatsAppButton />
       <TranslatorFab />
+      {!isImpersonating && (
+        <WelcomeModal 
+          template={appSettings?.welcome_message_template || 'Welcome {name}! We are excited to have you join the Sales Academy.'}
+          name={profile?.full_name || 'Student'}
+          shouldShow={profile?.has_seen_welcome === false}
+        />
+      )}
       </div>
         </SidebarProvider>
       </ToastProvider>

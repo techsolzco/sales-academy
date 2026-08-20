@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import { Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { fetchNotifications, markAllRead } from '@/lib/actions/notifications'
+import { Confetti } from '@/components/ui/Confetti'
 
 export function NotificationBell({ userId }: { userId: string }) {
   const [notifications, setNotifications] = useState<any[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [toast, setToast] = useState<{ title: string, body: string } | null>(null)
+  const [showConfetti, setShowConfetti] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
@@ -29,7 +31,12 @@ export function NotificationBell({ userId }: { userId: string }) {
           const newNotif = payload.new as any
           setNotifications(prev => [newNotif, ...prev])
           setToast({ title: newNotif.title, body: newNotif.body })
-          setTimeout(() => setToast(null), 3000)
+          setTimeout(() => setToast(null), 5000)
+          
+          if (newNotif.type === 'badge') {
+            setShowConfetti(true)
+            setTimeout(() => setShowConfetti(false), 5000)
+          }
         }
       )
       .subscribe()
@@ -57,7 +64,9 @@ export function NotificationBell({ userId }: { userId: string }) {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
+      {showConfetti && <Confetti duration={4000} />}
+      <div ref={containerRef} className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="p-2 rounded-full hover:bg-gray-100 transition relative"
@@ -105,5 +114,6 @@ export function NotificationBell({ userId }: { userId: string }) {
         </div>
       )}
     </div>
+    </>
   )
 }

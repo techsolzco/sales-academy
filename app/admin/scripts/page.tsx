@@ -2,7 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { ScriptManager } from '@/components/admin/ScriptManager'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
 
-export default async function AdminScriptsPage() {
+export default async function AdminScriptsPage({
+  searchParams,
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
 
   const [scriptsRes, copiesRes, toolsRes] = await Promise.all([
@@ -43,10 +47,11 @@ export default async function AdminScriptsPage() {
         </p>
       </div>
 
-      <ScriptManager
-        initialScripts={scriptsRes.data ?? []}
-        copyCounts={copyCounts}
-        tools={tools}
+      <ScriptManager 
+        initialScripts={scriptsRes.data ?? []} 
+        copyCounts={copyCounts} 
+        tools={tools} 
+        initialToolId={searchParams.tool} 
       />
     </div>
   )

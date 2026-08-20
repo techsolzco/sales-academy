@@ -50,11 +50,11 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
         />
       )}
       <aside className={cn(
-        "fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-brand-900 border-r border-brand-800 flex flex-col transition-transform duration-300 ease-in-out",
+        "fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-gradient-to-b from-brand-800 to-slate-950 border-r border-brand-800 flex flex-col transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-brand-800 flex items-center justify-between">
+      <div className="px-6 py-5 border-b border-brand-800 flex items-center justify-between bg-gradient-to-r from-brand-700/30 to-transparent">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center flex-shrink-0">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

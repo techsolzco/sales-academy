@@ -6,12 +6,20 @@ import { EmptyState } from '@/components/ui/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
-export default async function QuizzesAdminPage() {
+export default async function QuizzesAdminPage({
+  searchParams
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: quizzes } = await supabase.from('quizzes').select('*, lesson:lessons(title)').order('created_at', { ascending: false })
+  let query = supabase.from('quizzes').select('*, lesson:lessons(title)').order('created_at', { ascending: false })
+  if (searchParams.tool) {
+    query = query.eq('tool_id', searchParams.tool)
+  }
+  const { data: quizzes } = await query
 
   return (
     <div className="p-8 max-w-7xl mx-auto">

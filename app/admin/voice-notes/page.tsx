@@ -2,7 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { VoiceNoteManager } from '@/components/admin/VoiceNoteManager'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
 
-export default async function AdminVoiceNotesPage() {
+export default async function AdminVoiceNotesPage({
+  searchParams,
+}: {
+  searchParams: { tool?: string }
+}) {
   const supabase = await createClient()
 
   const [notesRes, toolsRes] = await Promise.all([
@@ -31,7 +35,7 @@ export default async function AdminVoiceNotesPage() {
         </p>
       </div>
 
-      <VoiceNoteManager initialNotes={notesRes.data ?? []} tools={toolsRes.data ?? []} />
+      <VoiceNoteManager initialNotes={notesRes.data ?? []} tools={toolsRes.data ?? []} initialToolId={searchParams.tool} />
     </div>
   )
 }

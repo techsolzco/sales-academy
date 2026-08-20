@@ -9,16 +9,22 @@ export async function toggleReviewStatus(contentId: string, contentType: string,
   if (!user) return
 
   if (markReviewed) {
-    await supabase.from('kb_reviews').insert({
+    const { error } = await supabase.from('kb_reviews').insert({
       user_id: user.id,
       content_id: contentId,
       content_type: contentType
     })
+    if (error && error.code !== '23505') {
+      console.error('toggleReviewStatus insert error:', error)
+    }
   } else {
-    await supabase.from('kb_reviews')
+    const { error } = await supabase.from('kb_reviews')
       .delete()
       .eq('user_id', user.id)
       .eq('content_id', contentId)
       .eq('content_type', contentType)
+    if (error) {
+      console.error('toggleReviewStatus delete error:', error)
+    }
   }
 }
