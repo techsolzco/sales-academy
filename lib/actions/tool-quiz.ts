@@ -84,8 +84,7 @@ Make questions practical and test real sales knowledge. Mix easy and hard questi
         description: parsed.description,
         tool_id: toolId,
         created_by: userId,
-        status: 'published',
-        passing_score: 70,
+        pass_score: 70,
       }).select('id').single()
       if (quizErr || !quiz) return
       quizId = quiz.id
