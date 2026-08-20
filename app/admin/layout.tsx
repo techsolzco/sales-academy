@@ -43,7 +43,7 @@ export default async function AdminLayout({
   const adminNavItems = [
     { label: 'Dashboard',   href: '/admin',             icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Leaderboard', href: '/admin/leaderboard', icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
-    { label: 'Salesmen',    href: '/admin/salesmen',     icon: <Users className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Users',       href: '/admin/salesmen',     icon: <Users className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Enrollments', href: '/admin/enrollments',  icon: <UserPlus className="w-4 h-4 flex-shrink-0" />, badge: pendingEnrollments || 0 },
     { label: 'Password Resets', href: '/admin/password-resets', icon: <Key className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Reseller Requests', href: '/admin/reseller-requests', icon: <UserCheck className="w-4 h-4 flex-shrink-0" /> },
