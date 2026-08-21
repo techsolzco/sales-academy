@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { fetchToolTree } from '@/lib/actions/tool-onboard'
 import { ToolTreeView } from '@/components/admin/ToolTreeView'
+import { QuizPerformancePanel } from '@/components/admin/QuizPerformancePanel'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
 
 export default async function ToolTreePage({
@@ -25,15 +26,43 @@ export default async function ToolTreePage({
 
   const { tool, course, faqs, objections, scripts } = result.data
 
-  // Fetch additional counts not in the tree
-  const { count: quizCount } = await supabase
+  // Fetch quizzes for this tool
+  const { data: quizzes } = await supabase
     .from('quizzes')
-    .select('id', { count: 'exact', head: true })
+    .select('id, title, status').is('deleted_at', null)
     .eq('tool_id', tool.id)
+    .order('created_at', { ascending: false })
 
+  const quizList = quizzes ?? []
+  const quizIds = quizList.map(q => q.id)
+
+  // Fetch attempts if there are quizzes
+  let quizAttempts: Array<{
+    id: string
+    quiz_id: string
+    user_id: string
+    score: number
+    max_score: number
+    percentage: number
+    passed: boolean
+    completed_at: string | null
+    profile: { full_name: string | null; email: string } | null
+  }> = []
+
+  if (quizIds.length > 0) {
+    const { data: attempts } = await supabase
+      .from('quiz_attempts')
+      .select('id, quiz_id, user_id, score, max_score, percentage, passed, completed_at, profile:profiles(full_name, email)')
+      .in('quiz_id', quizIds)
+      .order('completed_at', { ascending: false })
+      .limit(50)
+    quizAttempts = (attempts ?? []) as unknown as typeof quizAttempts
+  }
+
+  // Fetch additional counts not in the tree
   const { count: vnCount } = await supabase
     .from('voice_notes')
-    .select('id', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true }).is('deleted_at', null)
     .eq('tool_id', tool.id)
 
   const cards = [
@@ -41,7 +70,7 @@ export default async function ToolTreePage({
     { title: 'FAQs', count: faqs.length, href: `/admin/faqs?tool=${tool.id}`, icon: '❓', color: 'bg-emerald-50 text-emerald-700' },
     { title: 'Scripts', count: scripts.length, href: `/admin/scripts?tool=${tool.id}`, icon: '💬', color: 'bg-violet-50 text-violet-700' },
     { title: 'Objections', count: objections.length, href: `/admin/objections?tool=${tool.id}`, icon: '🛡️', color: 'bg-amber-50 text-amber-700' },
-    { title: 'Quizzes', count: quizCount ?? 0, href: `/admin/quizzes?tool=${tool.id}`, icon: '📝', color: 'bg-rose-50 text-rose-700' },
+    { title: 'Quizzes', count: quizList.length, href: `/admin/quizzes?tool=${tool.id}`, icon: '📝', color: 'bg-rose-50 text-rose-700' },
     { title: 'Voice Notes', count: vnCount ?? 0, href: `/admin/voice-notes?tool=${tool.id}`, icon: '🎙️', color: 'bg-cyan-50 text-cyan-700' },
   ]
 
@@ -80,6 +109,12 @@ export default async function ToolTreePage({
       </div>
 
       <ToolTreeView data={result.data} />
+
+      <QuizPerformancePanel
+        toolId={tool.id}
+        quizzes={quizList}
+        attempts={quizAttempts}
+      />
     </div>
   )
 }

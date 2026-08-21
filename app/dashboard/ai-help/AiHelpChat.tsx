@@ -10,24 +10,97 @@ interface Message {
   content: string
 }
 
-/** Parse structured AI response into two parts, stripping markdown bold */
+function stripAsterisks(text: string): string {
+  return text.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').trim()
+}
+
 function parseAiResponse(content: string): { instructions: string; clientMessage: string } | null {
-  if (!content.includes('---CLIENT MESSAGE---')) return null
+  const instructionMarker = '---SALESMAN INSTRUCTIONS---'
+  const clientMarker = '---CLIENT MESSAGE---'
+  if (!content.includes(instructionMarker) || !content.includes(clientMarker)) return null
+  const afterInstructions = content.split(instructionMarker)[1] ?? ''
+  const [rawInstructions, afterClient] = afterInstructions.split(clientMarker)
+  return {
+    instructions: stripAsterisks(rawInstructions ?? ''),
+    clientMessage: stripAsterisks(afterClient ?? ''),
+  }
+}
 
-  const instrMarker = '---SALESMAN INSTRUCTIONS---'
-  const msgMarker = '---CLIENT MESSAGE---'
+interface StructuredMessageProps {
+  messageId: string
+  content: string
+}
 
-  const afterInstr = content.indexOf(instrMarker)
-  const afterMsg = content.indexOf(msgMarker)
+function StructuredAiMessage({ messageId, content }: StructuredMessageProps) {
+  const [copiedInstructions, setCopiedInstructions] = useState(false)
+  const [copiedClient, setCopiedClient] = useState(false)
 
-  if (afterInstr === -1 || afterMsg === -1) return null
+  const parsed = parseAiResponse(content)
 
-  const stripBold = (s: string) => s.replace(/\*\*([^*]+)\*\*/g, '$1').trim()
+  const handleCopyInstructions = () => {
+    if (!parsed) return
+    navigator.clipboard.writeText(parsed.instructions)
+    setCopiedInstructions(true)
+    setTimeout(() => setCopiedInstructions(false), 2000)
+  }
 
-  const instructions = stripBold(content.slice(afterInstr + instrMarker.length, afterMsg))
-  const clientMessage = stripBold(content.slice(afterMsg + msgMarker.length))
+  const handleCopyClient = () => {
+    if (!parsed) return
+    navigator.clipboard.writeText(parsed.clientMessage)
+    setCopiedClient(true)
+    setTimeout(() => setCopiedClient(false), 2000)
+  }
 
-  return { instructions, clientMessage }
+  if (!parsed) {
+    // Fallback: plain response
+    return (
+      <div className="bg-brand-600 text-white px-5 py-3.5 rounded-2xl rounded-tl-sm text-sm whitespace-pre-wrap leading-relaxed shadow-md">
+        {stripAsterisks(content)}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2 max-w-[85%]">
+      {/* Salesman instructions */}
+      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-600">
+          <span className="text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wide">
+            💡 For You
+          </span>
+          <button
+            onClick={handleCopyInstructions}
+            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition"
+          >
+            {copiedInstructions ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {copiedInstructions ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+        <p className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 leading-relaxed">
+          {parsed.instructions}
+        </p>
+      </div>
+
+      {/* Client-facing message */}
+      <div className="bg-emerald-600 rounded-2xl overflow-hidden shadow-md">
+        <div className="flex items-center justify-between px-4 py-2 bg-emerald-700">
+          <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wide">
+            📨 Message to Send
+          </span>
+          <button
+            onClick={handleCopyClient}
+            className="flex items-center gap-1.5 text-xs font-medium text-emerald-100 hover:text-white bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 rounded-lg transition"
+          >
+            {copiedClient ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {copiedClient ? 'Copied!' : 'Copy for WhatsApp'}
+          </button>
+        </div>
+        <p className="px-4 py-3 text-sm text-white leading-relaxed whitespace-pre-wrap">
+          {parsed.clientMessage}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 export function AiHelpChat() {
@@ -35,13 +108,12 @@ export function AiHelpChat() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [cooldown, setCooldown] = useState(false)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const handleSend = async () => {
     if (!input.trim() || cooldown || isLoading) return
 
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input }
-    setMessages(prev => [...prev, userMsg].slice(-10)) // Keep last 5 pairs
+    setMessages(prev => [...prev, userMsg].slice(-10))
 
     setInput('')
     setIsLoading(true)
@@ -61,14 +133,8 @@ export function AiHelpChat() {
     }
   }
 
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
-  }
-
   return (
-    <div className="flex flex-col h-[600px] bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+    <div className="flex flex-col h-[680px] bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
 
       {/* Chat History */}
       <div className="flex-1 p-6 overflow-y-auto space-y-6">
@@ -76,95 +142,35 @@ export function AiHelpChat() {
           <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 dark:text-gray-400 p-8 space-y-4">
             <Bot className="w-12 h-12 text-brand-200 dark:text-brand-800" />
             <p className="text-sm max-w-sm">
-              I can help you respond to difficult customers, handle objections, or craft the perfect follow-up message.
+              Describe your customer situation — I&apos;ll give you coaching tips and a ready-to-send WhatsApp message.
             </p>
           </div>
         ) : (
-          messages.map(msg => {
-            const parsed = msg.role === 'ai' && !msg.content.startsWith('Error:')
-              ? parseAiResponse(msg.content)
-              : null
+          messages.map(msg => (
+            <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
 
-            return (
-              <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-
-                {msg.role === 'ai' && (
-                  <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
-                    <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                  </div>
-                )}
-
-                <div className={`max-w-[85%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-
-                  {parsed ? (
-                    /* ── Structured AI response ── */
-                    <div className="flex flex-col gap-3 w-full">
-                      {/* Block 1 — Salesman instructions */}
-                      <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-gray-200 dark:bg-gray-700 text-sm leading-relaxed">
-                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
-                          💡 For You
-                        </p>
-                        <p className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{parsed.instructions}</p>
-                      </div>
-
-                      {/* Block 2 — Client message */}
-                      <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-emerald-600 dark:bg-emerald-700 text-sm leading-relaxed shadow-md">
-                        <p className="text-xs font-semibold text-emerald-100 mb-1.5 uppercase tracking-wide">
-                          📨 Message to Send
-                        </p>
-                        <p className="text-white whitespace-pre-wrap">{parsed.clientMessage}</p>
-                      </div>
-
-                      {/* Copy button for client message only */}
-                      <button
-                        onClick={() => handleCopy(msg.id + '-client', parsed.clientMessage)}
-                        className="self-start mt-1 flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-3 py-1.5 rounded-full transition-colors border border-emerald-200 dark:border-emerald-800"
-                      >
-                        {copiedId === msg.id + '-client' ? (
-                          <><Check className="w-3.5 h-3.5" /> Copied!</>
-                        ) : (
-                          <><Copy className="w-3.5 h-3.5" /> Copy Message</>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    /* ── Fallback: plain response ── */
-                    <>
-                      <div
-                        className={`px-5 py-3.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed
-                          ${msg.role === 'user'
-                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tr-sm'
-                            : 'bg-brand-600 text-white rounded-tl-sm shadow-md'
-                          }`}
-                      >
-                        {msg.content}
-                      </div>
-
-                      {msg.role === 'ai' && !msg.content.startsWith('Error:') && (
-                        <button
-                          onClick={() => handleCopy(msg.id, msg.content)}
-                          className="mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-brand-50 dark:bg-brand-950/50 hover:bg-brand-100 dark:hover:bg-brand-900/50 px-3 py-1.5 rounded-full transition-colors border border-brand-200 dark:border-brand-800"
-                        >
-                          {copiedId === msg.id ? (
-                            <><Check className="w-3.5 h-3.5" /> Copied!</>
-                          ) : (
-                            <><Copy className="w-3.5 h-3.5" /> Copy Response</>
-                          )}
-                        </button>
-                      )}
-                    </>
-                  )}
+              {msg.role === 'ai' && (
+                <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
+                  <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                 </div>
+              )}
 
-                {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex flex-shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600">
-                    <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                  </div>
-                )}
+              {msg.role === 'user' ? (
+                <div className="max-w-[75%] px-5 py-3.5 rounded-2xl rounded-tr-sm text-sm whitespace-pre-wrap leading-relaxed bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100">
+                  {msg.content}
+                </div>
+              ) : (
+                <StructuredAiMessage messageId={msg.id} content={msg.content} />
+              )}
 
-              </div>
-            )
-          })
+              {msg.role === 'user' && (
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex flex-shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600">
+                  <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                </div>
+              )}
+
+            </div>
+          ))
         )}
 
         {isLoading && (

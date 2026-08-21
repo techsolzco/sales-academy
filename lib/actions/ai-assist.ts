@@ -268,10 +268,11 @@ Return ONLY valid JSON:
 {
   "title": string,
   "script_type": one of ["greeting","whatsapp","voice_note_script","follow_up","closing","payment","objection_response","upsell","cross_sell","after_sales","review_request","warranty_explanation"],
-  "content": string (the actual script text, WhatsApp Hinglish style),
-  "when_to_use": string,
+  "when_to_use": string (coaching note for the salesman: context, timing, and how to use this script — NOT the message itself),
+  "content": string (ONLY the client-facing WhatsApp message — plain Hinglish text as it would appear in WhatsApp; no asterisks, no markdown, no [placeholder] text, no salesman instructions, no meta-commentary),
   "tags": [string]
-}`
+}
+CRITICAL: 'content' must be ONLY the ready-to-send message. All instructions/context for the salesman go in 'when_to_use'.`
     } else if (params.contentType === 'objection') {
       userPrompt = `Create a complete objection handling entry for: ${params.description}
 Return ONLY valid JSON:
