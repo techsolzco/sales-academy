@@ -78,7 +78,7 @@ export default function AdminChatPage() {
               // Add conversation to list if it doesn't exist
               setConversations(prev => {
                 if (prev.some(c => c.id === id)) return prev
-                return [{ id, participant_a: currentUserId, participant_b: user.id, otherUser: user, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }, ...prev]
+                return [{ id, participant_a: currentUserId, participant_b: user.id, otherUser: user, created_at: new Date().toISOString(), last_message_at: new Date().toISOString() }, ...prev]
               })
               await handleSelectConversation(id, user)
             }} 
