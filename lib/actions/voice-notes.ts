@@ -86,7 +86,7 @@ export async function deleteVoiceNote(id: string): Promise<ActionResult> {
       .eq('id', id)
       .single()
       
-    const { error } = await supabase.from('voice_notes').delete().eq('id', id)
+    const { error } = await supabase.from('voice_notes').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
     
     if (existing?.tool_id) {
@@ -95,6 +95,19 @@ export async function deleteVoiceNote(id: string): Promise<ActionResult> {
     
     revalidatePath('/admin/voice-notes')
     revalidatePath('/dashboard/voice-notes')
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function bulkSoftDeleteVoiceNotes(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('voice_notes').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/voice-notes')
+    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }

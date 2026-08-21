@@ -5,12 +5,15 @@ import { Plus, Edit, Trash2, Search, HelpCircle, ChevronDown, ChevronRight, Layo
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
-import { deleteFAQ } from '@/lib/actions/faqs'
+import { deleteFAQ, bulkSoftDeleteFAQs } from '@/lib/actions/faqs'
+import { Loader2 } from 'lucide-react'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { FAQ } from '@/types'
 
 export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[], initialToolId?: string }) {
   const [faqs, setFaqs] = useState(initialFaqs)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [filterToolId, setFilterToolId] = useState(initialToolId || '')
@@ -79,6 +82,17 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
     setAiDraft(null)
   }
 
+  async function handleBulkDelete() {
+    if(!confirm(`Delete ${selectedIds.size} FAQs?`)) return;
+    setIsBulkDeleting(true);
+    const res = await bulkSoftDeleteFAQs(Array.from(selectedIds));
+    setIsBulkDeleting(false);
+    if (!res.error) {
+      setFaqs(prev => prev.filter(f => !selectedIds.has(f.id)));
+      setSelectedIds(new Set());
+    }
+  }
+
   function handleDelete(id: string) {
     if (!confirm('Are you sure you want to delete this FAQ?')) return
     startTransition(async () => {
@@ -109,6 +123,9 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
         {({ displayTexts, toggleButton }) => (
           <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
             <div className="flex items-start justify-between gap-4">
+              <input type="checkbox" checked={selectedIds.has(faq.id)} onChange={e => {
+                setSelectedIds(prev => { const next = new Set(prev); e.target.checked ? next.add(faq.id) : next.delete(faq.id); return next; })
+              }} className="w-4 h-4 rounded border-gray-300 mt-1 mr-2" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5">
                   <StatusBadge status={faq.status} />
@@ -162,6 +179,16 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
 
   return (
     <div>
+      {selectedIds.size > 0 && (
+  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
+    <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+    <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
+      {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+      Delete {selectedIds.size} selected
+    </button>
+    <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+  </div>
+)}
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 flex-1">

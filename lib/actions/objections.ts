@@ -83,7 +83,7 @@ export async function deleteObjection(id: string): Promise<ActionResult> {
       .eq('id', id)
       .single()
       
-    const { error } = await supabase.from('objections').delete().eq('id', id)
+    const { error } = await supabase.from('objections').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
     
     if (existing?.tool_id) {
@@ -92,6 +92,19 @@ export async function deleteObjection(id: string): Promise<ActionResult> {
     
     revalidatePath('/admin/objections')
     revalidatePath('/dashboard/objections')
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function bulkSoftDeleteObjections(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('objections').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/objections')
+    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }

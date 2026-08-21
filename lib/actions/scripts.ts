@@ -85,7 +85,7 @@ export async function deleteScript(id: string): Promise<ActionResult> {
       .eq('id', id)
       .single()
       
-    const { error } = await supabase.from('scripts').delete().eq('id', id)
+    const { error } = await supabase.from('scripts').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
     
     if (existing?.tool_id) {
@@ -117,6 +117,19 @@ export async function logScriptCopy(scriptId: string): Promise<ActionResult> {
       checkAndAwardBadge(user.id, 'first_script_copy').catch(() => {})
     }).catch(() => {})
 
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function bulkSoftDeleteScripts(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('scripts').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/scripts')
+    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }

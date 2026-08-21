@@ -88,7 +88,7 @@ export async function unpublishCourse(id: string): Promise<ActionResult<Course>>
 export async function deleteCourse(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    const { error } = await supabase.from('courses').delete().eq('id', id)
+    const { error } = await supabase.from('courses').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
     revalidatePath('/admin/courses')
     return { data: undefined }
@@ -102,4 +102,17 @@ export async function deleteCourse(id: string): Promise<ActionResult> {
 export async function deleteCourseAndRedirect(id: string) {
   const result = await deleteCourse(id)
   if (!result.error) redirect('/admin/courses')
+}
+
+export async function bulkSoftDeleteCourses(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('courses').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/courses')
+    
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
 }

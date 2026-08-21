@@ -269,9 +269,22 @@ export async function deleteAssignment(id: string): Promise<ActionResult> {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
-  const { error } = await supabase.from('assignments').delete().eq('id', id)
+  const { error } = await supabase.from('assignments').update({ deleted_at: new Date().toISOString() }).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/assignments')
   return { data: undefined }
 }
 
+
+export async function bulkSoftDeleteAssignments(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('assignments').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/assignments')
+    
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}

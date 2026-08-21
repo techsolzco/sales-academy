@@ -82,7 +82,7 @@ export async function deleteLesson(
 ): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    const { error } = await supabase.from('lessons').delete().eq('id', lessonId)
+    const { error } = await supabase.from('lessons').update({ deleted_at: new Date().toISOString() }).eq('id', lessonId)
     if (error) return { error: error.message }
     revalidatePath(`/admin/courses/${courseId}/modules/${moduleId}`)
     return { data: undefined }
@@ -165,4 +165,17 @@ export async function markLessonComplete(
   revalidatePath(`/dashboard/training/${courseId}`)
   revalidatePath(`/dashboard/training`)
   return { data }
+}
+
+export async function bulkSoftDeleteLessons(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('lessons').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/lessons')
+    
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
 }

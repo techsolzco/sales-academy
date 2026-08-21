@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText, BarChart2
+  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText, BarChart2, Trash2
 } from 'lucide-react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
@@ -66,7 +66,8 @@ export default async function AdminLayout({
     { label: 'My Profile',  href: '/admin/profile',      icon: <User className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Policies',    href: '/admin/policies',     icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Announcements', href: '/admin/announcements', icon: <Megaphone className="w-4 h-4 flex-shrink-0" /> },
-    { label: 'Reports', href: '/admin/reports/daily', icon: <BarChart2 className="w-4 h-4 flex-shrink-0" /> }
+    { label: 'Reports', href: '/admin/reports/daily', icon: <BarChart2 className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Recycle Bin', href: '/admin/settings/recycle-bin', icon: <Trash2 className="w-4 h-4 flex-shrink-0" /> },
   ]
 
   return (

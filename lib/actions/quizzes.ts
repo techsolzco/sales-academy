@@ -349,3 +349,15 @@ export async function fetchQuizStats(quizId: string): Promise<{ totalAttempts: n
 
   return { totalAttempts, avgPercentage, passRate }
 }
+
+export async function bulkSoftDeleteQuizzes(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('quizzes').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/quizzes')
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}

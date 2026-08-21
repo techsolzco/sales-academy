@@ -66,7 +66,7 @@ export async function updateModule(moduleId: string, courseId: string, input: Pa
 export async function deleteModule(moduleId: string, courseId: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    const { error } = await supabase.from('modules').delete().eq('id', moduleId)
+    const { error } = await supabase.from('modules').update({ deleted_at: new Date().toISOString() }).eq('id', moduleId)
     if (error) return { error: error.message }
     revalidatePath(`/admin/courses/${courseId}`)
     return { data: undefined }
@@ -86,6 +86,19 @@ export async function reorderModules(courseId: string, orderedIds: string[]): Pr
     const failed = results.find(r => r.error)
     if (failed?.error) return { error: failed.error.message }
     revalidatePath(`/admin/courses/${courseId}`)
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function bulkSoftDeleteModules(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('modules').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/modules')
+    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }

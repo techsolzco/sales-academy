@@ -74,10 +74,23 @@ export async function updateTool(id: string, input: Partial<ToolInput>): Promise
 export async function deleteTool(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    const { error } = await supabase.from('tools').delete().eq('id', id)
+    const { error } = await supabase.from('tools').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
     revalidatePath('/admin/tools')
     revalidatePath('/dashboard/tools')
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function bulkSoftDeleteTools(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('tools').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/tools')
+    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }
