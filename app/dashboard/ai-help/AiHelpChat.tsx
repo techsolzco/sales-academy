@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { askAi } from '@/lib/actions/ai-assist'
 import { Send, Loader2, Copy, Bot, User, Check } from 'lucide-react'
 
@@ -26,76 +26,65 @@ function parseAiResponse(content: string): { instructions: string; clientMessage
   }
 }
 
-interface StructuredMessageProps {
-  messageId: string
-  content: string
+function CopyBtn({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false)
+  const handle = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button
+      onClick={handle}
+      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all active:scale-95
+        bg-white/20 hover:bg-white/30 text-white"
+    >
+      {copied ? <><Check className="w-3 h-3" /> Copied!</> : <><Copy className="w-3 h-3" /> {label}</>}
+    </button>
+  )
 }
 
-function StructuredAiMessage({ messageId, content }: StructuredMessageProps) {
-  const [copiedInstructions, setCopiedInstructions] = useState(false)
-  const [copiedClient, setCopiedClient] = useState(false)
-
+function AiMessageBubble({ content }: { content: string }) {
   const parsed = parseAiResponse(content)
 
-  const handleCopyInstructions = () => {
-    if (!parsed) return
-    navigator.clipboard.writeText(parsed.instructions)
-    setCopiedInstructions(true)
-    setTimeout(() => setCopiedInstructions(false), 2000)
-  }
-
-  const handleCopyClient = () => {
-    if (!parsed) return
-    navigator.clipboard.writeText(parsed.clientMessage)
-    setCopiedClient(true)
-    setTimeout(() => setCopiedClient(false), 2000)
-  }
-
   if (!parsed) {
-    // Fallback: plain response
+    // Fallback single bubble
     return (
-      <div className="bg-brand-600 text-white px-5 py-3.5 rounded-2xl rounded-tl-sm text-sm whitespace-pre-wrap leading-relaxed shadow-md">
+      <div className="bg-gradient-to-br from-brand-600 to-brand-700 text-white px-4 py-3.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed shadow-md max-w-full break-words">
         {stripAsterisks(content)}
       </div>
     )
   }
 
   return (
-    <div className="space-y-2 max-w-[85%]">
-      {/* Salesman instructions */}
-      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-600">
-          <span className="text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wide">
+    <div className="space-y-2 w-full max-w-full">
+      {/* For salesman */}
+      <div className="rounded-2xl rounded-tl-sm overflow-hidden shadow-sm border border-gray-100 bg-white dark:bg-gray-800 dark:border-gray-700">
+        <div className="flex items-center justify-between px-3.5 py-2 bg-gray-50 dark:bg-gray-700/60 border-b border-gray-100 dark:border-gray-700">
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
             💡 For You
           </span>
           <button
-            onClick={handleCopyInstructions}
-            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition"
+            onClick={() => { navigator.clipboard.writeText(parsed.instructions) }}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition flex items-center gap-1"
           >
-            {copiedInstructions ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            {copiedInstructions ? 'Copied' : 'Copy'}
+            <Copy className="w-3 h-3" />
           </button>
         </div>
-        <p className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 leading-relaxed">
+        <p className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200 leading-relaxed break-words whitespace-pre-wrap">
           {parsed.instructions}
         </p>
       </div>
 
-      {/* Client-facing message */}
-      <div className="bg-emerald-600 rounded-2xl overflow-hidden shadow-md">
-        <div className="flex items-center justify-between px-4 py-2 bg-emerald-700">
-          <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wide">
-            📨 Message to Send
+      {/* Client message */}
+      <div className="rounded-2xl overflow-hidden shadow-md bg-gradient-to-br from-emerald-500 to-emerald-600">
+        <div className="flex items-center justify-between px-3.5 py-2 bg-emerald-700/60">
+          <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">
+            📨 Send to Client
           </span>
-          <button
-            onClick={handleCopyClient}
-            className="flex items-center gap-1.5 text-xs font-medium text-emerald-100 hover:text-white bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 rounded-lg transition"
-          >
-            {copiedClient ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            {copiedClient ? 'Copied!' : 'Copy for WhatsApp'}
-          </button>
+          <CopyBtn text={parsed.clientMessage} label="Copy for WhatsApp" />
         </div>
-        <p className="px-4 py-3 text-sm text-white leading-relaxed whitespace-pre-wrap">
+        <p className="px-4 py-3 text-sm text-white leading-relaxed break-words whitespace-pre-wrap">
           {parsed.clientMessage}
         </p>
       </div>
@@ -108,6 +97,12 @@ export function AiHelpChat() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [cooldown, setCooldown] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
 
   const handleSend = async () => {
     if (!input.trim() || cooldown || isLoading) return
@@ -134,78 +129,104 @@ export function AiHelpChat() {
   }
 
   return (
-    <div className="flex flex-col h-[680px] bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-
-      {/* Chat History */}
-      <div className="flex-1 p-6 overflow-y-auto space-y-6">
+    <div
+      ref={chatRef}
+      className="flex flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden"
+      style={{ height: 'min(620px, calc(100svh - 220px))' }}
+    >
+      {/* Chat history */}
+      <div className="flex-1 px-4 py-5 overflow-y-auto space-y-4 overscroll-contain">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 dark:text-gray-400 p-8 space-y-4">
-            <Bot className="w-12 h-12 text-brand-200 dark:text-brand-800" />
-            <p className="text-sm max-w-sm">
-              Describe your customer situation — I&apos;ll give you coaching tips and a ready-to-send WhatsApp message.
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center shadow-inner">
+              <Bot className="w-7 h-7 text-brand-500 dark:text-brand-400" />
+            </div>
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              Your AI Sales Coach
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 max-w-xs leading-relaxed">
+              Describe a customer situation or objection — I&apos;ll give you coaching tips and a ready-to-send message.
             </p>
           </div>
         ) : (
           messages.map(msg => (
-            <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-
+            <div
+              key={msg.id}
+              className={`flex gap-2.5 items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
               {msg.role === 'ai' && (
-                <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
-                  <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <div className="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700 mt-0.5">
+                  <Bot className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
                 </div>
               )}
 
-              {msg.role === 'user' ? (
-                <div className="max-w-[75%] px-5 py-3.5 rounded-2xl rounded-tr-sm text-sm whitespace-pre-wrap leading-relaxed bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100">
-                  {msg.content}
-                </div>
-              ) : (
-                <StructuredAiMessage messageId={msg.id} content={msg.content} />
-              )}
+              <div className={`min-w-0 ${msg.role === 'user' ? 'max-w-[80%]' : 'flex-1 max-w-full'}`}>
+                {msg.role === 'user' ? (
+                  <div className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-4 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words shadow-sm">
+                    {msg.content}
+                  </div>
+                ) : (
+                  <AiMessageBubble content={msg.content} />
+                )}
+              </div>
 
               {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex flex-shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600">
-                  <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex flex-shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600 mt-0.5">
+                  <User className="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" />
                 </div>
               )}
-
             </div>
           ))
         )}
 
         {isLoading && (
-          <div className="flex gap-4 justify-start">
-            <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
-              <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+          <div className="flex gap-2.5 items-start justify-start">
+            <div className="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
+              <Bot className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
             </div>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-5 py-3.5 rounded-2xl rounded-tl-sm flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 shadow-sm">
-              <Loader2 className="w-4 h-4 animate-spin text-brand-500" /> Thinking...
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-2 text-sm text-gray-400 shadow-sm">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-500" />
+              <span className="text-xs">Thinking…</span>
             </div>
           </div>
         )}
+
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-        <div className="relative flex items-center">
-          <input
-            type="text"
+      {/* Input area — always visible, never covered by FABs */}
+      <div className="px-3 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-end gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm px-3 py-2.5 focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
+          <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSend()
+            onChange={(e) => {
+              setInput(e.target.value)
+              // auto-grow
+              e.target.style.height = 'auto'
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
             }}
-            placeholder="Describe the customer situation or paste their message..."
-            className="w-full pl-5 pr-14 py-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white dark:focus:bg-gray-700 transition-all shadow-inner"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSend()
+              }
+            }}
+            placeholder="Describe the customer situation…"
+            rows={1}
+            className="flex-1 resize-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none leading-relaxed min-h-[24px] max-h-[120px]"
+            style={{ height: '24px' }}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading || cooldown}
-            className="absolute right-2 top-2 bottom-2 w-10 flex items-center justify-center bg-brand-600 hover:bg-brand-700 text-white rounded-lg disabled:opacity-50 disabled:hover:bg-brand-600 transition-colors shadow-sm"
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
           >
-            <Send className="w-4 h-4" />
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>
         </div>
+        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-2">
+          Press Enter to send · Shift+Enter for new line
+        </p>
       </div>
     </div>
   )
