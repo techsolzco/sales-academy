@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { chatWithEnglishTutor } from '@/lib/actions/english-practice'
 import { Send, Loader2, Bot, User } from 'lucide-react'
 
@@ -14,25 +14,32 @@ export function EnglishPracticeChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
-    
+
     const userMsg: Message = { id: Date.now().toString(), role: 'user', text: input }
+
+    // Capture history BEFORE adding current message — these are prior turns
+    // The current message is passed separately to chatWithEnglishTutor
+    const history = messages.map(m => ({ role: m.role, text: m.text }))
+
     setMessages(prev => [...prev, userMsg])
-    
     setInput('')
     setIsLoading(true)
-    
-    // We send only the history format required by the API
-    const history = messages.map(m => ({ role: m.role, text: m.text }))
-    
+
     const result = await chatWithEnglishTutor(userMsg.text, history)
-    
+
     setIsLoading(false)
-    
+
     if (result.error) {
-      const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: `Error: ${result.error}` }
+      const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: `⚠️ ${result.error}` }
       setMessages(prev => [...prev, errorMsg])
     } else if (result.data) {
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: result.data }
@@ -94,6 +101,7 @@ export function EnglishPracticeChat() {
             </div>
           </div>
         )}
+        <div ref={bottomRef} />
       </div>
 
       {/* Input Area */}

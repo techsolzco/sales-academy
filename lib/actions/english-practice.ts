@@ -64,13 +64,31 @@ export async function chatWithEnglishTutor(
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
           contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,  // increased from 512 — prevents mid-sentence cutoff
+          },
         }),
       })
       if (!res.ok) continue
       const data = await res.json()
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-      if (text) return { data: text.trim() }
+
+      const candidate = data.candidates?.[0]
+      const text = candidate?.content?.parts?.[0]?.text
+      const finishReason = candidate?.finishReason
+
+      // Log finish reason server-side for production debugging
+      if (finishReason && finishReason !== 'STOP') {
+        console.warn(`[EnglishPractice] Gemini finishReason=${finishReason} model=${model}`)
+      }
+
+      if (text) {
+        // If response was cut off by token limit, append a clear notice
+        if (finishReason === 'MAX_TOKENS') {
+          return { data: text.trim() + '\n\n_(Response was cut off — please ask me to continue.)_' }
+        }
+        return { data: text.trim() }
+      }
     }
     return { error: 'AI is busy, please try again.' }
   } catch (e: any) {
