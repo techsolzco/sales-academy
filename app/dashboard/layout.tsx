@@ -77,8 +77,8 @@ export default async function DashboardLayout({
   if (realProfile?.role === 'admin' && !isImpersonating) {
     redirect('/admin')
   }
-  // If neither admin nor salesman → go to login
-  if (realProfile?.role !== 'admin' && realProfile?.role !== 'salesman') {
+  // If no profile at all → go to login
+  if (!realProfile?.role) {
     redirect('/auth/login')
   }
 

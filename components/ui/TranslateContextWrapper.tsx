@@ -75,8 +75,8 @@ export function TranslateContextWrapper({
       className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold bg-white border border-gray-200 rounded-md shadow-sm text-gray-600 hover:text-brand-600 hover:bg-gray-50 transition"
       title="Translate Content"
     >
-      {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-      {isTranslated ? '🌐 Hinglish' : '🌐 English'}
+      {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3" />}
+      {isTranslated ? '🔤 Show English' : '🌐 Show Hinglish'}
     </button>
   )
 

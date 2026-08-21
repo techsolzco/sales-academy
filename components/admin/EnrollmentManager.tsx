@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { approveApplication, rejectApplication } from '@/lib/actions/enrollment'
@@ -26,7 +26,7 @@ export function EnrollmentManager({ initialApplications }: { initialApplications
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectInputFor, setShowRejectInputFor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [loadingId, setLoadingId] = useState<string | null>(null)  // per-row loading
   const router = useRouter()
 
   useEffect(() => {
@@ -48,30 +48,42 @@ export function EnrollmentManager({ initialApplications }: { initialApplications
   const filtered = applications.filter(a => filter === 'all' || a.status === filter)
 
   const handleApprove = async (id: string) => {
-    startTransition(async () => {
+    setLoadingId(id)
+    setError(null)
+    try {
       const result = await approveApplication(id)
       if (result?.error) {
         setError(result.error)
       } else {
-        setError(null)
+        // Optimistically update the row so UI refreshes immediately
+        setApplications(prev => prev.map(a => a.id === id ? { ...a, status: 'approved' as const } : a))
+        setExpandedId(null)
         router.refresh()
       }
-    })
+    } finally {
+      setLoadingId(null)
+    }
   }
 
   const handleReject = async (id: string) => {
-    if (!rejectReason) return
-    startTransition(async () => {
+    if (!rejectReason.trim()) return
+    setLoadingId(id)
+    setError(null)
+    try {
       const result = await rejectApplication(id, rejectReason)
       if (result?.error) {
         setError(result.error)
       } else {
-        setError(null)
+        // Optimistically update
+        setApplications(prev => prev.map(a => a.id === id ? { ...a, status: 'rejected' as const } : a))
         setShowRejectInputFor(null)
         setRejectReason('')
+        setExpandedId(null)
         router.refresh()
       }
-    })
+    } finally {
+      setLoadingId(null)
+    }
   }
 
   return (
@@ -146,18 +158,18 @@ export function EnrollmentManager({ initialApplications }: { initialApplications
                     {showRejectInputFor === app.id ? (
                       <div className="flex gap-2 items-center flex-1">
                         <input type="text" value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason for rejection..." className="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-red-500" />
-                        <button onClick={() => handleReject(app.id)} disabled={isPending} className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-1.5">
-                          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Submit
+                        <button onClick={() => handleReject(app.id)} disabled={loadingId === app.id} className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-1.5">
+                          {loadingId === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Submit
                         </button>
                         <button onClick={() => setShowRejectInputFor(null)} className="text-gray-500 text-sm hover:text-gray-700 px-2">Cancel</button>
                       </div>
                     ) : (
                       <>
-                        <button onClick={() => setShowRejectInputFor(app.id)} disabled={isPending} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 text-sm font-medium transition disabled:opacity-50">
+                        <button onClick={() => setShowRejectInputFor(app.id)} disabled={loadingId === app.id} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 text-sm font-medium transition disabled:opacity-50">
                           <X className="w-4 h-4" /> Reject
                         </button>
-                        <button onClick={() => handleApprove(app.id)} disabled={isPending} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-green-600 bg-green-50 hover:bg-green-100 text-sm font-medium transition disabled:opacity-50">
-                          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Approve
+                        <button onClick={() => handleApprove(app.id)} disabled={loadingId === app.id} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-green-600 bg-green-50 hover:bg-green-100 text-sm font-medium transition disabled:opacity-50">
+                          {loadingId === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Approve
                         </button>
                       </>
                     )}

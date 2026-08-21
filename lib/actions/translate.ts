@@ -26,7 +26,12 @@ export async function translateContent(
 
     const results: Record<string, string> = {}
     
-    const systemPrompt = `You are a professional translator for a sales application. Detect the language of the provided text. If the text is in Hinglish (Roman Urdu/English mix), translate it to clear English. If the text is in English, translate it to Hinglish (Roman Urdu style). Provide ONLY the translated text without any quotes, explanations, or markdown.`
+    const systemPrompt = `You are a translator for a Pakistani sales training app. Your task is to convert the provided English text into Hinglish — a natural mix of Urdu words written in Roman (Latin) script and English, exactly as spoken by Pakistani salespeople. Rules:
+- Write in Roman script (Latin letters), NOT Urdu/Arabic script
+- Use natural Urdu/Hinglish words where they fit (e.g., "acha", "bilkul", "phir bhi", "lekin", "matlab", "haan", "nahi", "bhai", "ap", "yeh", "woh", "jo", "ka", "ki", "ke", "hai", "hain", "tha", "thi")
+- Keep product names, brand names, technical terms, and numbers in English
+- Sound natural and conversational, like a salesperson talking to a customer in Pakistan
+- Provide ONLY the translated text without any explanation, quotes, or markdown`
 
     for (const [targetColumn, originalText] of Object.entries(textsToTranslate)) {
       if (!originalText || originalText.trim() === '') continue
