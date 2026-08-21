@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
-import { Plus, Edit, Trash2, Search, FileText, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, FileText, ChevronDown, ChevronRight, LayoutList, FolderTree, Loader2 } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
-import { deleteScript } from '@/lib/actions/scripts'
+import { deleteScript, bulkSoftDeleteScripts } from '@/lib/actions/scripts'
 import type { SalesScript } from '@/types'
 
 export function ScriptManager({
@@ -30,6 +30,8 @@ export function ScriptManager({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [filterToolId, setFilterToolId] = useState(initialToolId)
   const [tabLang, setTabLang] = useState<'en' | 'hi'>('hi')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 
@@ -93,8 +95,25 @@ export function ScriptManager({
       const res = await deleteScript(id)
       if (!res.error) {
         setScripts(prev => prev.filter(s => s.id !== id))
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
       }
     })
+  }
+
+  async function handleBulkDelete() {
+    if (!confirm(`Delete ${selectedIds.size} selected scripts?`)) return
+    setIsBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    const res = await bulkSoftDeleteScripts(ids)
+    if (!res.error) {
+      setScripts(prev => prev.filter(s => !selectedIds.has(s.id)))
+      setSelectedIds(new Set())
+    }
+    setIsBulkDeleting(false)
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
   }
 
   function renderScriptCard(script: SalesScript) {
@@ -104,7 +123,15 @@ export function ScriptManager({
     return (
       <div key={script.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <input
+              type="checkbox"
+              checked={selectedIds.has(script.id)}
+              onChange={() => toggleSelect(script.id)}
+              onClick={e => e.stopPropagation()}
+              className="w-4 h-4 rounded border-gray-300 mt-1 flex-shrink-0 cursor-pointer"
+            />
+            <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <StatusBadge status={script.status} />
               <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold uppercase">
@@ -139,6 +166,7 @@ export function ScriptManager({
               )}
             </div>
             <h3 className="font-bold text-gray-900 text-base">{script.title}</h3>
+          </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
@@ -289,6 +317,17 @@ export function ScriptManager({
         onClose={handleClose}
         defaultValues={aiDraft || undefined}
       />
+
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
+            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete {selectedIds.size} selected
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+        </div>
+      )}
     </div>
   )
 }

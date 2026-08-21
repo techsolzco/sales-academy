@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, Edit, Trash2, Search, Wrench, ExternalLink, Play, TreeDeciduous } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Wrench, ExternalLink, Play, TreeDeciduous, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ToolFormModal } from '@/components/admin/ToolFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
-import { deleteTool } from '@/lib/actions/tools'
+import { deleteTool, bulkSoftDeleteTools } from '@/lib/actions/tools'
 import type { Tool } from '@/types'
 
 export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
@@ -17,6 +17,8 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
   const categories = ['All', ...Array.from(new Set(tools.map(t => t.category)))]
 
@@ -60,8 +62,25 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
       const res = await deleteTool(id)
       if (!res.error) {
         setTools(prev => prev.filter(t => t.id !== id))
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
       }
     })
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+  }
+
+  async function handleBulkDelete() {
+    if (!confirm(`Delete ${selectedIds.size} selected tools?`)) return
+    setIsBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    const res = await bulkSoftDeleteTools(ids)
+    if (!res.error) {
+      setTools(prev => prev.filter(t => !selectedIds.has(t.id)))
+      setSelectedIds(new Set())
+    }
+    setIsBulkDeleting(false)
   }
 
   return (
@@ -123,6 +142,13 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
               <div>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(tool.id)}
+                      onChange={() => toggleSelect(tool.id)}
+                      onClick={e => e.stopPropagation()}
+                      className="w-4 h-4 rounded border-gray-300 flex-shrink-0 cursor-pointer"
+                    />
                     {tool.logo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={tool.logo_url} alt={tool.name} className="w-10 h-10 rounded-xl object-cover border border-gray-100" />
@@ -207,6 +233,17 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
         onClose={handleClose}
         defaultValues={aiDraft || undefined}
       />
+
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
+            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete {selectedIds.size} selected
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+        </div>
+      )}
     </div>
   )
 }

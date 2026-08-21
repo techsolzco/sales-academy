@@ -3,6 +3,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+async function requireAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Forbidden')
+  return { supabase, user }
+}
 import { ActionResult, Quiz, QuizQuestion, QuizOption, QuizAttempt, QuizAttemptAnswer, QuizAttemptResult } from '@/types'
 
 function getServiceClient() {

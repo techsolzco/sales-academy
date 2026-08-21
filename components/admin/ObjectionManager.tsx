@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
-import { Plus, Edit, Trash2, Search, AlertCircle, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, AlertCircle, ChevronDown, ChevronRight, LayoutList, FolderTree, Loader2 } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
-import { deleteObjection } from '@/lib/actions/objections'
+import { deleteObjection, bulkSoftDeleteObjections } from '@/lib/actions/objections'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { Objection } from '@/types'
 
@@ -19,6 +19,8 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
 
   const filtered = objections.filter(o => {
     const q = search.toLowerCase()
@@ -73,14 +75,31 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
     setAiDraft(null)
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+  }
+
   function handleDelete(id: string) {
     if (!confirm('Are you sure you want to delete this objection response?')) return
     startTransition(async () => {
       const res = await deleteObjection(id)
       if (!res.error) {
         setObjections(prev => prev.filter(o => o.id !== id))
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
       }
     })
+  }
+
+  async function handleBulkDelete() {
+    if (!confirm(`Delete ${selectedIds.size} selected objections?`)) return
+    setIsBulkDeleting(true)
+    const ids = Array.from(selectedIds)
+    const res = await bulkSoftDeleteObjections(ids)
+    if (!res.error) {
+      setObjections(prev => prev.filter(o => !selectedIds.has(o.id)))
+      setSelectedIds(new Set())
+    }
+    setIsBulkDeleting(false)
   }
 
   function renderObjectionCard(o: Objection) {
@@ -99,7 +118,15 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
         {({ displayTexts, toggleButton }) => (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-gray-200 transition space-y-3">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(o.id)}
+                  onChange={() => toggleSelect(o.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="w-4 h-4 rounded border-gray-300 mt-1 flex-shrink-0 cursor-pointer"
+                />
+                <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5">
                   <StatusBadge status={o.status} />
                   {o.difficulty && (
@@ -115,6 +142,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
                   {toggleButton}
                 </div>
                 <h3 className="font-bold text-gray-900 text-base">&ldquo;{o.objection_text}&rdquo;</h3>
+              </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
@@ -259,6 +287,17 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
         onClose={handleClose}
         defaultValues={aiDraft || undefined}
       />
+
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
+            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete {selectedIds.size} selected
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+        </div>
+      )}
     </div>
   )
 }
