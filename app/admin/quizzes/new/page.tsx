@@ -9,7 +9,7 @@ export default async function NewQuizPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: lessons } = await supabase.from('lessons').select('id, title').order('order_index')
+  const { data: lessons } = await supabase.from('lessons').select('id, title').is('deleted_at', null).order('order_index')
 
   return <QuizEditor quizId={null} lessons={lessons || []} />
 }

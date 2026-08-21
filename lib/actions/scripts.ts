@@ -81,7 +81,7 @@ export async function deleteScript(id: string): Promise<ActionResult> {
     
     const { data: existing } = await supabase
       .from('scripts')
-      .select('tool_id')
+      .select('tool_id').is('deleted_at', null)
       .eq('id', id)
       .single()
       

@@ -177,7 +177,7 @@ export async function fetchQuizForLesson(lessonId: string): Promise<Quiz | null>
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('quizzes')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .eq('lesson_id', lessonId)
     .single()
 

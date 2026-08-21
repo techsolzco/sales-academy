@@ -11,7 +11,7 @@ export default async function QuizStudentPage({ params }: { params: { id: string
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: quiz } = await supabase.from('quizzes').select('*').eq('id', params.id).single()
+  const { data: quiz } = await supabase.from('quizzes').select('*').is('deleted_at', null).eq('id', params.id).single()
   if (!quiz) return <div>Quiz not found</div>
 
   const { data: questions } = await supabase.from('quiz_questions').select('*').eq('quiz_id', params.id).order('order_index')

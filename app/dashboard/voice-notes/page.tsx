@@ -14,12 +14,12 @@ export default async function SalesmanVoiceNotesPage({
   const [notesRes, toolsRes, recordingsRes] = await Promise.all([
     supabase
       .from('voice_notes')
-      .select('*')
+      .select('*').is('deleted_at', null)
       .eq('status', 'published')
       .order('created_at', { ascending: false }),
     supabase
       .from('tools')
-      .select('id, name')
+      .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
       .order('name'),
     supabase

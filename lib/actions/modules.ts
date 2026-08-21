@@ -27,7 +27,7 @@ export async function createModule(courseId: string, input: ModuleInput): Promis
     // Get max order_index for this course
     const { data: existing } = await supabase
       .from('modules')
-      .select('order_index')
+      .select('order_index').is('deleted_at', null)
       .eq('course_id', courseId)
       .order('order_index', { ascending: false })
       .limit(1)

@@ -25,7 +25,7 @@ export default async function LessonViewerPage({
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .eq('id', params.lessonId)
     .eq('status', 'published')
     .single()
@@ -33,7 +33,7 @@ export default async function LessonViewerPage({
 
   const { data: course } = await supabase
     .from('courses')
-    .select('id, title')
+    .select('id, title').is('deleted_at', null)
     .eq('id', params.courseId)
     .single()
 

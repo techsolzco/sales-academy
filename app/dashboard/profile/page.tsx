@@ -26,7 +26,7 @@ export default async function ProfilePage() {
 
   const { data: qualifyingCourses } = await supabase
     .from('courses')
-    .select('id, name, qualifying_for_reseller, modules(lessons(lesson_progress(user_id, completed)))')
+    .select('id, name, qualifying_for_reseller, modules(lessons(lesson_progress(user_id, completed)))').is('deleted_at', null)
     .eq('qualifying_for_reseller', true)
     
   const qualifiesForReseller = qualifyingCourses?.some((course: any) => {

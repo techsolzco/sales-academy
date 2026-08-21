@@ -9,7 +9,7 @@ export default async function SalesmanToolsPage() {
 
   const { data: tools } = await supabase
     .from('tools')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .eq('status', 'published')
     .order('created_at', { ascending: false })
 

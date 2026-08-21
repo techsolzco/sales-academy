@@ -9,12 +9,12 @@ export default async function AdminCoursesPage() {
 
   const { data: courses } = await supabase
     .from('courses')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   // Fetch module counts and assignment counts in parallel
   const [{ data: moduleCounts }, { data: assignmentCounts }] = await Promise.all([
-    supabase.from('modules').select('course_id'),
+    supabase.from('modules').select('course_id').is('deleted_at', null),
     supabase.from('course_assignments').select('course_id'),
   ])
 

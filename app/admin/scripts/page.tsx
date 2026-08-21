@@ -12,7 +12,7 @@ export default async function AdminScriptsPage({
   const [scriptsRes, copiesRes, toolsRes] = await Promise.all([
     supabase
       .from('scripts')
-      .select('*')
+      .select('*').is('deleted_at', null)
       .order('created_at', { ascending: false }),
 
     supabase
@@ -21,7 +21,7 @@ export default async function AdminScriptsPage({
       
     supabase
       .from('tools')
-      .select('id, name')
+      .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
       .order('name'),
   ])

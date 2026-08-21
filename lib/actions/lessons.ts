@@ -34,7 +34,7 @@ export async function createLesson(
     const { supabase } = await requireAdmin()
     const { data: existing } = await supabase
       .from('lessons')
-      .select('order_index')
+      .select('order_index').is('deleted_at', null)
       .eq('module_id', moduleId)
       .order('order_index', { ascending: false })
       .limit(1)
@@ -139,7 +139,7 @@ export async function markLessonComplete(
     // Check if entire course is now complete
     supabase
       .from('lessons')
-      .select('id, modules!inner(course_id)')
+      .select('id, modules!inner(course_id)').is('deleted_at', null)
       .eq('modules.course_id', courseId)
       .then(async ({ data: courseLessons }) => {
         if (!courseLessons?.length) return

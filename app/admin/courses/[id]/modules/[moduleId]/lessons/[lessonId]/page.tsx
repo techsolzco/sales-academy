@@ -14,9 +14,9 @@ export default async function LessonEditorPage({
   const supabase = await createClient()
 
   const [{ data: course }, { data: module }, { data: lesson }, { data: blocks }] = await Promise.all([
-    supabase.from('courses').select('id, title').eq('id', params.id).single(),
-    supabase.from('modules').select('id, title').eq('id', params.moduleId).single(),
-    supabase.from('lessons').select('*').eq('id', params.lessonId).single(),
+    supabase.from('courses').select('id, title').is('deleted_at', null).eq('id', params.id).single(),
+    supabase.from('modules').select('id, title').is('deleted_at', null).eq('id', params.moduleId).single(),
+    supabase.from('lessons').select('*').is('deleted_at', null).eq('id', params.lessonId).single(),
     supabase.from('content_blocks').select('*').eq('lesson_id', params.lessonId).order('order_index'),
   ])
 

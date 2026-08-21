@@ -82,7 +82,7 @@ export async function deleteVoiceNote(id: string): Promise<ActionResult> {
     
     const { data: existing } = await supabase
       .from('voice_notes')
-      .select('tool_id')
+      .select('tool_id').is('deleted_at', null)
       .eq('id', id)
       .single()
       

@@ -5,7 +5,7 @@ import { CourseForm } from '@/components/admin/CourseForm'
 
 export default async function EditCoursePage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
-  const { data: course } = await supabase.from('courses').select('*').eq('id', params.id).single()
+  const { data: course } = await supabase.from('courses').select('*').is('deleted_at', null).eq('id', params.id).single()
   if (!course) notFound()
 
   return (

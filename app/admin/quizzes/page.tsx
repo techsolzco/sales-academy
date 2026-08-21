@@ -15,7 +15,7 @@ export default async function QuizzesAdminPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  let query = supabase.from('quizzes').select('*, lesson:lessons(title)').order('created_at', { ascending: false })
+  let query = supabase.from('quizzes').select('*, lesson:lessons(title)').is('deleted_at', null).order('created_at', { ascending: false })
   if (searchParams.tool) {
     query = query.eq('tool_id', searchParams.tool)
   }

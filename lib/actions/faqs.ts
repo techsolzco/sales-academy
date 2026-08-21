@@ -82,7 +82,7 @@ export async function deleteFAQ(id: string): Promise<ActionResult> {
     // Fetch tool_id before deleting
     const { data: existing } = await supabase
       .from('faqs')
-      .select('tool_id')
+      .select('tool_id').is('deleted_at', null)
       .eq('id', id)
       .single()
       

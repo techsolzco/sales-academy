@@ -15,12 +15,12 @@ export default async function SalesmanScriptsPage({
   const [scriptsRes, toolsRes] = await Promise.all([
     supabase
       .from('scripts')
-      .select('*')
+      .select('*').is('deleted_at', null)
       .eq('status', 'published')
       .order('created_at', { ascending: false }),
     supabase
       .from('tools')
-      .select('id, name')
+      .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
       .order('name')
   ])

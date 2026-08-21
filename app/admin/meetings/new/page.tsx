@@ -15,7 +15,7 @@ export default async function NewMeetingPage() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const courses = await supabase.from('courses').select('id, title').order('title').then(r => r.data ?? [])
+  const courses = await supabase.from('courses').select('id, title').is('deleted_at', null).order('title').then(r => r.data ?? [])
   const salesmen = await fetchSalesmen()
 
   return (

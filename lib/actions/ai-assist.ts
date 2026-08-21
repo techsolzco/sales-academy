@@ -52,7 +52,7 @@ async function fetchToolKnowledge(questionText: string): Promise<string> {
     const sb = getServiceClient()
     const { data: tools } = await sb
       .from('tools')
-      .select('name, knowledge_summary')
+      .select('name, knowledge_summary').is('deleted_at', null)
       .eq('status', 'published')
       .not('knowledge_summary', 'is', null)
 

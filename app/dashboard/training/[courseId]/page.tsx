@@ -32,7 +32,7 @@ export default async function TrainingCoursePage({
 
   const { data: course } = await supabase
     .from('courses')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .eq('id', params.courseId)
     .eq('status', 'published')
     .single()
@@ -43,7 +43,7 @@ export default async function TrainingCoursePage({
 
   const { data: modules } = await supabase
     .from('modules')
-    .select('*, lessons(*)')
+    .select('*, lessons(*)').is('deleted_at', null)
     .eq('course_id', params.courseId)
     .order('order_index')
 
@@ -80,10 +80,10 @@ export default async function TrainingCoursePage({
       objectionsRes,
       voiceNotesRes
     ] = await Promise.all([
-      supabase.from('faqs').select('*').eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('scripts').select('*').eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('objections').select('*').eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('voice_notes').select('*').eq('tool_id', course.tool_id).eq('status', 'published')
+      supabase.from('faqs').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('scripts').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('objections').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('voice_notes').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published')
     ])
     
     faqs = faqsRes.data
@@ -118,7 +118,7 @@ export default async function TrainingCoursePage({
   let submissions = null
   if (course.tool_id && tab === 'assignments') {
     const [aRes, sRes] = await Promise.all([
-      supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').eq('tool_id', course.tool_id).order('created_at', { ascending: false }),
+      supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false }),
       supabase.from('assignment_submissions').select('assignment_id, status').eq('user_id', userId)
     ])
     assignments = aRes.data

@@ -11,7 +11,7 @@ export default async function AssignmentsStudentPage() {
   const supabase = await createClient()
   const { userId } = await getEffectiveUser()
 
-  const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title)')
+  const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title)').is('deleted_at', null)
   const { data: submissions } = await supabase.from('assignment_submissions').select('*').eq('user_id', userId)
 
   const items = assignments?.map(a => {

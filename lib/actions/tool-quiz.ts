@@ -71,7 +71,7 @@ Make questions practical and test real sales knowledge. Mix easy and hard questi
     if (!parsed.questions?.length) return
 
     // Check if quiz already exists for this tool
-    const { data: existingQuiz } = await sb.from('quizzes').select('id').eq('tool_id', toolId).maybeSingle()
+    const { data: existingQuiz } = await sb.from('quizzes').select('id').is('deleted_at', null).eq('tool_id', toolId).maybeSingle()
     
     let quizId: string
     if (existingQuiz) {

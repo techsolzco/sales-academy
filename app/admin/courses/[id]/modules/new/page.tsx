@@ -5,7 +5,7 @@ import { ModuleForm } from '@/components/admin/ModuleForm'
 
 export default async function NewModulePage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
-  const { data: course } = await supabase.from('courses').select('id, title').eq('id', params.id).single()
+  const { data: course } = await supabase.from('courses').select('id, title').is('deleted_at', null).eq('id', params.id).single()
   if (!course) notFound()
 
   return (

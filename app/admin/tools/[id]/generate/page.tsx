@@ -12,7 +12,7 @@ export default async function GenerateTrainingPage({ params }: { params: { id: s
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const { data: tool } = await supabase.from('tools').select('id, name, description').eq('id', params.id).single()
+  const { data: tool } = await supabase.from('tools').select('id, name, description').is('deleted_at', null).eq('id', params.id).single()
   if (!tool) redirect('/admin/tools')
 
   return (

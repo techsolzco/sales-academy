@@ -53,7 +53,7 @@ export default async function TrainingPage() {
   // Fetch published courses
   const { data: courses } = await supabase
     .from('courses')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .in('id', courseIds)
     .eq('status', 'published')
 
@@ -74,11 +74,11 @@ export default async function TrainingPage() {
 
   // Get all lessons for these courses (for progress calc)
   const { data: modules } = await supabase
-    .from('modules').select('id, course_id').in('course_id', courseIds)
+    .from('modules').select('id, course_id').is('deleted_at', null).in('course_id', courseIds)
 
   const moduleIds = (modules ?? []).map(m => m.id)
   const { data: lessons } = moduleIds.length > 0
-    ? await supabase.from('lessons').select('id, module_id').in('module_id', moduleIds)
+    ? await supabase.from('lessons').select('id, module_id').is('deleted_at', null).in('module_id', moduleIds)
     : { data: [] }
 
   // Build course→lesson map
@@ -106,10 +106,10 @@ export default async function TrainingPage() {
   const toolIds = Array.from(new Set(courses.map(c => c.tool_id).filter(Boolean))) as string[]
   const [{ data: allFaqs }, { data: allScripts }, { data: allObjections }, { data: allVoiceNotes }] = toolIds.length > 0
     ? await Promise.all([
-        supabase.from('faqs').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published'),
-        supabase.from('scripts').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published'),
-        supabase.from('objections').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published'),
-        supabase.from('voice_notes').select('id, tool_id').in('tool_id', toolIds).eq('status', 'published')
+        supabase.from('faqs').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published'),
+        supabase.from('scripts').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published'),
+        supabase.from('objections').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published'),
+        supabase.from('voice_notes').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published')
       ])
     : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }]
 

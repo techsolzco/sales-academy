@@ -13,7 +13,7 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
   if (!user) redirect('/auth/login')
 
   const { data: assignment } = await supabase.from('assignments')
-    .select('*, course:courses(title), lesson:lessons(title)')
+    .select('*, course:courses(title), lesson:lessons(title)').is('deleted_at', null)
     .eq('id', params.id).single()
 
   if (!assignment) return <div>Not found</div>

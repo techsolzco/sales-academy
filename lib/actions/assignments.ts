@@ -167,7 +167,7 @@ export async function submitAssignment(assignmentId: string, responseText?: stri
 
   const serviceClient = getServiceClient()
   
-  const { data: assignment } = await serviceClient.from('assignments').select('title').eq('id', assignmentId).single()
+  const { data: assignment } = await serviceClient.from('assignments').select('title').is('deleted_at', null).eq('id', assignmentId).single()
   const title = assignment?.title || 'Unknown Assignment'
 
   const { data: admins } = await serviceClient.from('profiles').select('id').eq('role', 'admin')

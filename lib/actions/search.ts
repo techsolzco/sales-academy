@@ -13,42 +13,42 @@ export async function globalSearch(query: string): Promise<{ data: SearchResultI
   const [faqsRes, scriptsRes, voiceNotesRes, objectionsRes, toolsRes, lessonsRes] = await Promise.all([
     supabase
       .from('faqs')
-      .select('id, question, short_answer, category, tags')
+      .select('id, question, short_answer, category, tags').is('deleted_at', null)
       .eq('status', 'published')
       .or(`question.ilike.%${q}%,short_answer.ilike.%${q}%,detailed_answer.ilike.%${q}%,category.ilike.%${q}%`)
       .limit(5),
 
     supabase
       .from('scripts')
-      .select('id, title, content, script_type, language')
+      .select('id, title, content, script_type, language').is('deleted_at', null)
       .eq('status', 'published')
       .or(`title.ilike.%${q}%,content.ilike.%${q}%,when_to_use.ilike.%${q}%,script_type.ilike.%${q}%`)
       .limit(5),
 
     supabase
       .from('voice_notes')
-      .select('id, title, transcript, purpose')
+      .select('id, title, transcript, purpose').is('deleted_at', null)
       .eq('status', 'published')
       .or(`title.ilike.%${q}%,transcript.ilike.%${q}%,purpose.ilike.%${q}%`)
       .limit(5),
 
     supabase
       .from('objections')
-      .select('id, objection_text, recommended_response, meaning')
+      .select('id, objection_text, recommended_response, meaning').is('deleted_at', null)
       .eq('status', 'published')
       .or(`objection_text.ilike.%${q}%,recommended_response.ilike.%${q}%,meaning.ilike.%${q}%`)
       .limit(5),
 
     supabase
       .from('tools')
-      .select('id, name, description, category')
+      .select('id, name, description, category').is('deleted_at', null)
       .eq('status', 'published')
       .or(`name.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`)
       .limit(5),
 
     supabase
       .from('lessons')
-      .select('id, title, description, module_id')
+      .select('id, title, description, module_id').is('deleted_at', null)
       .eq('status', 'published')
       .or(`title.ilike.%${q}%,description.ilike.%${q}%`)
       .limit(5),

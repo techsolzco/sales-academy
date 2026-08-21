@@ -12,11 +12,11 @@ export default async function AdminObjectionsPage({
   const [objectionsRes, toolsRes] = await Promise.all([
     supabase
       .from('objections')
-      .select('*')
+      .select('*').is('deleted_at', null)
       .order('created_at', { ascending: false }),
     supabase
       .from('tools')
-      .select('id, name')
+      .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
       .order('name')
   ])

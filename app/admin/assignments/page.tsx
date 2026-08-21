@@ -13,7 +13,7 @@ export default async function AssignmentsAdminPage() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').order('created_at', { ascending: false })
+  const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').is('deleted_at', null).order('created_at', { ascending: false })
   const { data: submissions } = await supabase.from('assignment_submissions').select('assignment_id, status')
 
   const stats = assignments?.map(a => {

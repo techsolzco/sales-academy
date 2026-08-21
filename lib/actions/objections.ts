@@ -79,7 +79,7 @@ export async function deleteObjection(id: string): Promise<ActionResult> {
     
     const { data: existing } = await supabase
       .from('objections')
-      .select('tool_id')
+      .select('tool_id').is('deleted_at', null)
       .eq('id', id)
       .single()
       

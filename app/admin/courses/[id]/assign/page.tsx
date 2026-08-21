@@ -7,7 +7,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 export default async function AssignCoursePage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
 
-  const { data: course } = await supabase.from('courses').select('*').eq('id', params.id).single()
+  const { data: course } = await supabase.from('courses').select('*').is('deleted_at', null).eq('id', params.id).single()
   if (!course) notFound()
 
   // Fetch all active salesmen
@@ -27,12 +27,12 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
   // Fetch total lesson count for this course
   const { data: modules } = await supabase
     .from('modules')
-    .select('id')
+    .select('id').is('deleted_at', null)
     .eq('course_id', params.id)
 
   const moduleIds = (modules ?? []).map(m => m.id)
   const { data: lessons } = moduleIds.length > 0
-    ? await supabase.from('lessons').select('id').in('module_id', moduleIds)
+    ? await supabase.from('lessons').select('id').is('deleted_at', null).in('module_id', moduleIds)
     : { data: [] }
   const totalLessons = lessons?.length ?? 0
 

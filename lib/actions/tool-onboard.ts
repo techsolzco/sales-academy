@@ -520,7 +520,7 @@ Complete the auto-generated quiz to demonstrate your knowledge. You need to pass
 📤 STEP 4 — Submit
 Once you complete all steps and pass the quiz, mark this assignment as done.`
       
-      const { data: existingAssignment } = await sb.from('assignments').select('id').eq('tool_id', toolId).maybeSingle()
+      const { data: existingAssignment } = await sb.from('assignments').select('id').is('deleted_at', null).eq('tool_id', toolId).maybeSingle()
       if (existingAssignment) {
         await sb.from('assignments').update({
           title: assignmentTitle,
@@ -569,7 +569,7 @@ export async function fetchToolTree(toolId: string): Promise<ActionResult<ToolTr
 
     const { data: tool, error: toolErr } = await sb
       .from('tools')
-      .select('*')
+      .select('*').is('deleted_at', null)
       .eq('id', toolId)
       .single()
     if (toolErr || !tool) return { error: 'Tool not found' }
@@ -577,7 +577,7 @@ export async function fetchToolTree(toolId: string): Promise<ActionResult<ToolTr
     // Course with nested modules > lessons > content blocks
     const { data: courses } = await sb
       .from('courses')
-      .select('*')
+      .select('*').is('deleted_at', null)
       .eq('tool_id', toolId)
       .limit(1)
 
@@ -586,7 +586,7 @@ export async function fetchToolTree(toolId: string): Promise<ActionResult<ToolTr
       const course = courses[0]
       const { data: modules } = await sb
         .from('modules')
-        .select('*')
+        .select('*').is('deleted_at', null)
         .eq('course_id', course.id)
         .order('order_index')
 
@@ -594,7 +594,7 @@ export async function fetchToolTree(toolId: string): Promise<ActionResult<ToolTr
       for (const mod of (modules || [])) {
         const { data: lessons } = await sb
           .from('lessons')
-          .select('*')
+          .select('*').is('deleted_at', null)
           .eq('module_id', mod.id)
           .order('order_index')
 
@@ -612,9 +612,9 @@ export async function fetchToolTree(toolId: string): Promise<ActionResult<ToolTr
       courseWithModules = { ...course, modules: modulesWithLessons }
     }
 
-    const { data: faqs } = await sb.from('faqs').select('*').eq('tool_id', toolId).order('created_at')
-    const { data: objections } = await sb.from('objections').select('*').eq('tool_id', toolId).order('created_at')
-    const { data: scripts } = await sb.from('scripts').select('*').eq('tool_id', toolId).order('created_at')
+    const { data: faqs } = await sb.from('faqs').select('*').is('deleted_at', null).eq('tool_id', toolId).order('created_at')
+    const { data: objections } = await sb.from('objections').select('*').is('deleted_at', null).eq('tool_id', toolId).order('created_at')
+    const { data: scripts } = await sb.from('scripts').select('*').is('deleted_at', null).eq('tool_id', toolId).order('created_at')
 
     return {
       data: {
@@ -643,15 +643,15 @@ export async function publishToolTree(
 
     if (target === 'all' || target === 'course') {
       // Find course linked to tool
-      const { data: courses } = await sb.from('courses').select('id').eq('tool_id', toolId)
+      const { data: courses } = await sb.from('courses').select('id').is('deleted_at', null).eq('tool_id', toolId)
       for (const course of (courses || [])) {
         await sb.from('courses').update({ status: 'published' }).eq('id', course.id)
         // Modules
-        const { data: modules } = await sb.from('modules').select('id').eq('course_id', course.id)
+        const { data: modules } = await sb.from('modules').select('id').is('deleted_at', null).eq('course_id', course.id)
         for (const mod of (modules || [])) {
           await sb.from('modules').update({ status: 'published' }).eq('id', mod.id)
           // Lessons
-          const { data: lessons } = await sb.from('lessons').select('id').eq('module_id', mod.id)
+          const { data: lessons } = await sb.from('lessons').select('id').is('deleted_at', null).eq('module_id', mod.id)
           for (const lesson of (lessons || [])) {
             await sb.from('lessons').update({ status: 'published' }).eq('id', lesson.id)
           }
@@ -695,7 +695,7 @@ export async function refreshToolKnowledge(toolId: string): Promise<ActionResult
     await requireAdmin()
     const sb = getServiceClient()
 
-    const { data: tool } = await sb.from('tools').select('*').eq('id', toolId).single()
+    const { data: tool } = await sb.from('tools').select('*').is('deleted_at', null).eq('id', toolId).single()
     if (!tool) return { error: 'Tool not found' }
 
     const settings = await getAiTrainingSettings()

@@ -11,7 +11,7 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: assignment } = await supabase.from('assignments').select('*, course:courses(title)').eq('id', params.id).single()
+  const { data: assignment } = await supabase.from('assignments').select('*, course:courses(title)').is('deleted_at', null).eq('id', params.id).single()
   if (!assignment) return <div>Not found</div>
 
   const { data: submission } = await supabase.from('assignment_submissions').select('*').eq('assignment_id', params.id).eq('user_id', user.id).single()

@@ -15,13 +15,13 @@ export default async function SalesmanFAQsPage({
   const [faqsRes, toolsRes] = await Promise.all([
     supabase
       .from('faqs')
-      .select('*')
+      .select('*').is('deleted_at', null)
       .eq('status', 'published')
       .order('priority', { ascending: false })
       .order('created_at', { ascending: false }),
     supabase
       .from('tools')
-      .select('id, name')
+      .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
       .order('name')
   ])

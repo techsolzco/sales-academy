@@ -19,14 +19,14 @@ export default async function ModuleDetailPage({
   const supabase = await createClient()
 
   const [{ data: course }, { data: module }] = await Promise.all([
-    supabase.from('courses').select('id, title').eq('id', params.id).single(),
-    supabase.from('modules').select('*').eq('id', params.moduleId).single(),
+    supabase.from('courses').select('id, title').is('deleted_at', null).eq('id', params.id).single(),
+    supabase.from('modules').select('*').is('deleted_at', null).eq('id', params.moduleId).single(),
   ])
   if (!course || !module) notFound()
 
   const { data: lessons } = await supabase
     .from('lessons')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .eq('module_id', params.moduleId)
     .order('order_index', { ascending: true })
 

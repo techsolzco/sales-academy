@@ -11,10 +11,10 @@ export default async function QuizDetailPage({ params }: { params: { id: string 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: quiz } = await supabase.from('quizzes').select('*').eq('id', params.id).single()
+  const { data: quiz } = await supabase.from('quizzes').select('*').is('deleted_at', null).eq('id', params.id).single()
   if (!quiz) return <div>Not found</div>
 
-  const { data: lessons } = await supabase.from('lessons').select('id, title').order('order_index')
+  const { data: lessons } = await supabase.from('lessons').select('id, title').is('deleted_at', null).order('order_index')
 
   const { data: attempts } = await supabase.from('quiz_attempts').select('*, profile:profiles(full_name)').eq('quiz_id', params.id).order('completed_at', { ascending: false })
 

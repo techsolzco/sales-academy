@@ -8,7 +8,7 @@ export default async function AdminToolsPage() {
 
   const { data: tools } = await supabase
     .from('tools')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   return (

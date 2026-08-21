@@ -38,7 +38,7 @@ export default async function CourseDetailPage({
 
   const { data: course } = await supabase
     .from('courses')
-    .select('*')
+    .select('*').is('deleted_at', null)
     .eq('id', params.id)
     .single()
 
@@ -49,7 +49,7 @@ export default async function CourseDetailPage({
 
   const { data: modules } = await supabase
     .from('modules')
-    .select('*, lessons(count)')
+    .select('*, lessons(count)').is('deleted_at', null)
     .eq('course_id', params.id)
     .order('order_index', { ascending: true })
 
@@ -126,14 +126,14 @@ export default async function CourseDetailPage({
       </>
     )
   } else if (tab === 'faqs' && showContentTabs) {
-    const { data: faqs } = await supabase.from('faqs').select('*').eq('tool_id', course.tool_id).order('priority', { ascending: false }).order('created_at', { ascending: false })
+    const { data: faqs } = await supabase.from('faqs').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).order('priority', { ascending: false }).order('created_at', { ascending: false })
     tabContent = (
       <div className="mt-4">
         <FAQManager initialFaqs={faqs ?? []} initialToolId={course.tool_id} />
       </div>
     )
   } else if (tab === 'scripts' && showContentTabs) {
-    const { data: scripts } = await supabase.from('scripts').select('*').eq('tool_id', course.tool_id).order('created_at', { ascending: false })
+    const { data: scripts } = await supabase.from('scripts').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false })
     const { data: copiesRes } = await supabase.from('script_copies').select('script_id')
     const copyCounts: Record<string, number> = {}
     for (const row of copiesRes ?? []) {
@@ -145,21 +145,21 @@ export default async function CourseDetailPage({
       </div>
     )
   } else if (tab === 'objections' && showContentTabs) {
-    const { data: objections } = await supabase.from('objections').select('*').eq('tool_id', course.tool_id).order('created_at', { ascending: false })
+    const { data: objections } = await supabase.from('objections').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false })
     tabContent = (
       <div className="mt-4">
         <ObjectionManager initialObjections={objections ?? []} initialToolId={course.tool_id} />
       </div>
     )
   } else if (tab === 'voice-notes' && showContentTabs) {
-    const { data: voiceNotes } = await supabase.from('voice_notes').select('*').eq('tool_id', course.tool_id).order('created_at', { ascending: false })
+    const { data: voiceNotes } = await supabase.from('voice_notes').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false })
     tabContent = (
       <div className="mt-4">
         <VoiceNoteManager initialNotes={voiceNotes ?? []} initialToolId={course.tool_id} />
       </div>
     )
   } else if (tab === 'assignments' && showContentTabs) {
-    const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').eq('tool_id', course.tool_id).order('created_at', { ascending: false })
+    const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false })
     const { data: submissions } = await supabase.from('assignment_submissions').select('assignment_id, status')
     
     const stats = assignments?.map(a => {
