@@ -49,16 +49,21 @@ export default function LoginPage() {
 
   return (
     <div className="p-8">
-      <h2 className="text-xl font-semibold text-white mb-1">Welcome back</h2>
-      <p className="text-brand-200 text-sm mb-6">Sign in to continue</p>
+      {/* Heading */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-white tracking-tight">Welcome back</h2>
+        {/* Thin brand accent underline */}
+        <div className="mt-1.5 h-0.5 w-10 rounded-full bg-brand-400" />
+        <p className="text-brand-200 text-sm mt-3">Sign in to continue</p>
+      </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-sm animate-fade-in">
+        <div className="mb-5 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-sm animate-fade-in">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-5">
         {/* Email */}
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-brand-100 mb-1.5">
@@ -72,7 +77,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
-            className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 transition text-sm"
+            className="w-full px-4 py-3 rounded-lg bg-white/15 border border-white/25 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 focus:bg-white/20 focus:border-white/50 transition text-sm"
           />
         </div>
 
@@ -90,7 +95,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 pr-10 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 transition text-sm"
+              className="w-full px-4 py-3 pr-10 rounded-lg bg-white/15 border border-white/25 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 focus:bg-white/20 focus:border-white/50 transition text-sm"
             />
             <button
               type="button"
@@ -128,14 +133,14 @@ export default function LoginPage() {
           type="submit"
           disabled={loading}
           id="btn-login"
-          className="w-full py-2.5 rounded-lg bg-white text-brand-700 font-semibold hover:bg-brand-50 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+          className="w-full py-3 rounded-lg bg-gradient-to-r from-brand-500 to-brand-400 text-white font-semibold hover:opacity-90 active:scale-[0.98] transition shadow-lg shadow-brand-900/40 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-      
-      {/* Register Link */}
+
+      {/* Divider + Register Link */}
       <div className="mt-8 text-center border-t border-white/10 pt-6">
         <p className="text-sm text-brand-200">
           New here?{' '}

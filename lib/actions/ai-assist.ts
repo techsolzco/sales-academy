@@ -332,7 +332,11 @@ export async function askAi(question: string): Promise<ActionResult<string>> {
     const userPrompt = `A salesman is asking for help with this customer situation:
 ${question}
 
-Provide a suggested WhatsApp reply they can send to the customer. Be concise, warm, and match our Hinglish tone. Format as a message they can copy and paste directly.`
+Respond in EXACTLY this format with no other text before or after:
+---SALESMAN INSTRUCTIONS---
+[2-3 sentences coaching the salesman on how to approach this. Plain text only, no asterisks, no bold.]
+---CLIENT MESSAGE---
+[The actual WhatsApp message to send to the customer. Plain Hinglish text only. No asterisks, no markdown, no meta-commentary, no [placeholder] text.]`
 
     const text = await callGemini(systemPrompt, userPrompt, false)
     

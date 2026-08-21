@@ -10,28 +10,48 @@ interface Message {
   content: string
 }
 
+/** Parse structured AI response into two parts, stripping markdown bold */
+function parseAiResponse(content: string): { instructions: string; clientMessage: string } | null {
+  if (!content.includes('---CLIENT MESSAGE---')) return null
+
+  const instrMarker = '---SALESMAN INSTRUCTIONS---'
+  const msgMarker = '---CLIENT MESSAGE---'
+
+  const afterInstr = content.indexOf(instrMarker)
+  const afterMsg = content.indexOf(msgMarker)
+
+  if (afterInstr === -1 || afterMsg === -1) return null
+
+  const stripBold = (s: string) => s.replace(/\*\*([^*]+)\*\*/g, '$1').trim()
+
+  const instructions = stripBold(content.slice(afterInstr + instrMarker.length, afterMsg))
+  const clientMessage = stripBold(content.slice(afterMsg + msgMarker.length))
+
+  return { instructions, clientMessage }
+}
+
 export function AiHelpChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [cooldown, setCooldown] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  
+
   const handleSend = async () => {
     if (!input.trim() || cooldown || isLoading) return
-    
+
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input }
     setMessages(prev => [...prev, userMsg].slice(-10)) // Keep last 5 pairs
-    
+
     setInput('')
     setIsLoading(true)
-    
+
     const result = await askAi(userMsg.content)
-    
+
     setIsLoading(false)
     setCooldown(true)
     setTimeout(() => setCooldown(false), 3000)
-    
+
     if (result.error) {
       const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: `Error: ${result.error}` }
       setMessages(prev => [...prev, errorMsg].slice(-10))
@@ -49,7 +69,7 @@ export function AiHelpChat() {
 
   return (
     <div className="flex flex-col h-[600px] bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-      
+
       {/* Chat History */}
       <div className="flex-1 p-6 overflow-y-auto space-y-6">
         {messages.length === 0 ? (
@@ -60,50 +80,93 @@ export function AiHelpChat() {
             </p>
           </div>
         ) : (
-          messages.map(msg => (
-            <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              
-              {msg.role === 'ai' && (
-                <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
-                  <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                </div>
-              )}
-              
-              <div className={`max-w-[85%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div 
-                  className={`px-5 py-3.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed
-                    ${msg.role === 'user' 
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tr-sm' 
-                      : 'bg-brand-600 text-white rounded-tl-sm shadow-md'
-                    }`}
-                >
-                  {msg.content}
-                </div>
-                
-                {msg.role === 'ai' && !msg.content.startsWith('Error:') && (
-                  <button
-                    onClick={() => handleCopy(msg.id, msg.content)}
-                    className="mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-brand-50 dark:bg-brand-950/50 hover:bg-brand-100 dark:hover:bg-brand-900/50 px-3 py-1.5 rounded-full transition-colors border border-brand-200 dark:border-brand-800"
-                  >
-                    {copiedId === msg.id ? (
-                      <><Check className="w-3.5 h-3.5" /> Copied!</>
-                    ) : (
-                      <><Copy className="w-3.5 h-3.5" /> Copy Response</>
-                    )}
-                  </button>
+          messages.map(msg => {
+            const parsed = msg.role === 'ai' && !msg.content.startsWith('Error:')
+              ? parseAiResponse(msg.content)
+              : null
+
+            return (
+              <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+
+                {msg.role === 'ai' && (
+                  <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
+                    <Bot className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                  </div>
                 )}
-              </div>
-              
-              {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex flex-shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600">
-                  <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+
+                <div className={`max-w-[85%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+
+                  {parsed ? (
+                    /* ── Structured AI response ── */
+                    <div className="flex flex-col gap-3 w-full">
+                      {/* Block 1 — Salesman instructions */}
+                      <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-gray-200 dark:bg-gray-700 text-sm leading-relaxed">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                          💡 For You
+                        </p>
+                        <p className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{parsed.instructions}</p>
+                      </div>
+
+                      {/* Block 2 — Client message */}
+                      <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-emerald-600 dark:bg-emerald-700 text-sm leading-relaxed shadow-md">
+                        <p className="text-xs font-semibold text-emerald-100 mb-1.5 uppercase tracking-wide">
+                          📨 Message to Send
+                        </p>
+                        <p className="text-white whitespace-pre-wrap">{parsed.clientMessage}</p>
+                      </div>
+
+                      {/* Copy button for client message only */}
+                      <button
+                        onClick={() => handleCopy(msg.id + '-client', parsed.clientMessage)}
+                        className="self-start mt-1 flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-3 py-1.5 rounded-full transition-colors border border-emerald-200 dark:border-emerald-800"
+                      >
+                        {copiedId === msg.id + '-client' ? (
+                          <><Check className="w-3.5 h-3.5" /> Copied!</>
+                        ) : (
+                          <><Copy className="w-3.5 h-3.5" /> Copy Message</>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    /* ── Fallback: plain response ── */
+                    <>
+                      <div
+                        className={`px-5 py-3.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed
+                          ${msg.role === 'user'
+                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tr-sm'
+                            : 'bg-brand-600 text-white rounded-tl-sm shadow-md'
+                          }`}
+                      >
+                        {msg.content}
+                      </div>
+
+                      {msg.role === 'ai' && !msg.content.startsWith('Error:') && (
+                        <button
+                          onClick={() => handleCopy(msg.id, msg.content)}
+                          className="mt-2 flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-brand-50 dark:bg-brand-950/50 hover:bg-brand-100 dark:hover:bg-brand-900/50 px-3 py-1.5 rounded-full transition-colors border border-brand-200 dark:border-brand-800"
+                        >
+                          {copiedId === msg.id ? (
+                            <><Check className="w-3.5 h-3.5" /> Copied!</>
+                          ) : (
+                            <><Copy className="w-3.5 h-3.5" /> Copy Response</>
+                          )}
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
-              )}
-              
-            </div>
-          ))
+
+                {msg.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex flex-shrink-0 items-center justify-center border border-gray-300 dark:border-gray-600">
+                    <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                  </div>
+                )}
+
+              </div>
+            )
+          })
         )}
-        
+
         {isLoading && (
           <div className="flex gap-4 justify-start">
             <div className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 flex flex-shrink-0 items-center justify-center border border-brand-200 dark:border-brand-700">
