@@ -5,9 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p ${PORT:-3000}",
     "lint": "next lint",
     "seed": "tsx supabase/seed.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.3",
