@@ -39,7 +39,7 @@ const GEMINI_MODELS = [
   'gemini-flash-latest',
 ]
 
-async function callGeminiLarge(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callGeminiLarge(systemPrompt: string, userPrompt: string, maxTokens = 6144): Promise<string> {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('GEMINI_API_KEY is not configured on the server.')
 
@@ -48,7 +48,7 @@ async function callGeminiLarge(systemPrompt: string, userPrompt: string): Promis
     contents: [{ parts: [{ text: userPrompt }], role: 'user' }],
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 8192,
+      maxOutputTokens: maxTokens,
       responseMimeType: 'application/json',
     },
   })
@@ -56,11 +56,26 @@ async function callGeminiLarge(systemPrompt: string, userPrompt: string): Promis
   for (let attempt = 0; attempt <= 2; attempt++) {
     for (const model of GEMINI_MODELS) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-      })
+      // 25-second per-request timeout so slow models don't block the whole generation
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 25000)
+      let response: Response
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: controller.signal,
+        })
+      } catch (fetchErr: any) {
+        clearTimeout(timeoutId)
+        if (fetchErr.name === 'AbortError') {
+          console.warn(`[ToolOnboard] ${model} timed out after 25s, trying next model`)
+          continue
+        }
+        throw fetchErr
+      }
+      clearTimeout(timeoutId)
 
       if (response.status === 429 || response.status === 503 || response.status === 500) continue
       if (response.status === 404 || response.status === 403) continue
@@ -76,10 +91,11 @@ async function callGeminiLarge(systemPrompt: string, userPrompt: string): Promis
       if (!text) continue
       return text
     }
-    if (attempt < 2) await new Promise(r => setTimeout(r, 2500))
+    if (attempt < 2) await new Promise(r => setTimeout(r, 1500))
   }
   throw new Error('AI is currently experiencing high demand. Please wait and try again.')
 }
+
 
 // ── Helper: strip markdown code fences from Gemini output ─────────────
 function stripMarkdownFences(text: string): string {
@@ -239,11 +255,11 @@ Return ONLY valid JSON (no markdown fences, no explanation) in exactly this form
 
     console.log('[ToolOnboard] Starting 3-call generation for:', wizardData.name)
 
-    // Run calls in parallel
+    // Run calls in parallel — token limits tuned to reduce latency on hosted environments
     const [call1Text, call2Text, call3Text] = await Promise.all([
-      callGeminiLarge(systemPrompt, call1Prompt),
-      callGeminiLarge(systemPrompt, call2Prompt),
-      callGeminiLarge(systemPrompt, call3Prompt),
+      callGeminiLarge(systemPrompt, call1Prompt, 4096),   // course structure + summary
+      callGeminiLarge(systemPrompt, call2Prompt, 6144),   // FAQs + objections + scripts (largest)
+      callGeminiLarge(systemPrompt, call3Prompt, 2048),   // voice notes (small)
     ])
 
     console.log('[ToolOnboard] Call 1 raw (first 200):', call1Text.slice(0, 200))

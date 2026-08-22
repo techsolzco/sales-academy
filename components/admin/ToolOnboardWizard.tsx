@@ -110,10 +110,17 @@ export function ToolOnboardWizard() {
         ...wizardData,
         features: wizardData.features?.filter(f => f.trim() !== '')
       })
+
+      // Guard: res can be undefined if the server action timed out or failed to serialize
+      if (!res) {
+        throw new Error('The AI generation timed out or the server did not respond. Please try again — it may take up to 60 seconds.')
+      }
       if (res.error) throw new Error(res.error)
       if (res.data) {
         setPackageData(res.data)
         setStep(3)
+      } else {
+        throw new Error('No data returned from server. Please try again.')
       }
     } catch (err: any) {
       setError(err.message || 'Failed to generate package')
@@ -183,6 +190,9 @@ export function ToolOnboardWizard() {
 
     try {
       const res = await saveToolPackage(wizardData, packageData, publishNow)
+      if (!res) {
+        throw new Error('Server did not respond. Please try again.')
+      }
       if (res.error) throw new Error(res.error)
       if (res.data) {
         setSuccessData(res.data)
