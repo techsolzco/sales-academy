@@ -1,94 +1,23 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-
 export function WhatsAppButton() {
-  // Start position: bottom-right area
-  const [pos, setPos] = useState({ x: -1, y: -1 }) // -1 = not yet initialized
-  const [dragging, setDragging] = useState(false)
-  const [hasDragged, setHasDragged] = useState(false)
-  const dragStart = useRef<{ mx: number; my: number; px: number; py: number } | null>(null)
-  const btnRef = useRef<HTMLAnchorElement>(null)
-
-  // Initialize position to bottom-left (away from send button which is bottom-right)
-  useEffect(() => {
-    const size = 48
-    const margin = 16
-    setPos({
-      x: margin,
-      y: window.innerHeight - size - margin - 72, // above mobile nav
-    })
-  }, [])
-
-  const clamp = useCallback((x: number, y: number) => {
-    const size = 48
-    const maxX = window.innerWidth - size - 4
-    const maxY = window.innerHeight - size - 4
-    return {
-      x: Math.max(4, Math.min(x, maxX)),
-      y: Math.max(4, Math.min(y, maxY)),
-    }
-  }, [])
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    e.currentTarget.setPointerCapture(e.pointerId)
-    dragStart.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y }
-    setDragging(true)
-    setHasDragged(false)
-  }
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragStart.current) return
-    const dx = e.clientX - dragStart.current.mx
-    const dy = e.clientY - dragStart.current.my
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) setHasDragged(true)
-    setPos(clamp(dragStart.current.px + dx, dragStart.current.py + dy))
-  }
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    e.currentTarget.releasePointerCapture(e.pointerId)
-    dragStart.current = null
-    setDragging(false)
-  }
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (hasDragged) {
-      e.preventDefault()
-      setHasDragged(false)
-    }
-  }
-
-  if (pos.x === -1) return null // not yet mounted on client
-
   return (
     <a
-      ref={btnRef}
       href="https://wa.me/923107902212?text=Hi%2C+I+need+help+with+the+Sales+Academy+platform."
       target="_blank"
       rel="noreferrer"
       title="Chat with us on WhatsApp"
-      onClick={handleClick}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
-      className={`
-        fixed z-50 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center
-        shadow-lg select-none
-        ${dragging ? 'scale-110 shadow-2xl cursor-grabbing ring-2 ring-green-300' : 'cursor-grab hover:scale-105 hover:bg-green-600'}
-        transition-shadow duration-150
-      `}
+      className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-lg transition-transform duration-150 select-none"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      {/* Pulse ring - only when not dragging */}
-      {!dragging && (
-        <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-60 pointer-events-none" />
-      )}
+      {/* Pulse ring */}
+      <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-60 pointer-events-none" />
 
       {/* WhatsApp icon */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="22"
-        height="22"
+        width="26"
+        height="26"
         fill="currentColor"
         className="text-white relative z-10"
         viewBox="0 0 16 16"

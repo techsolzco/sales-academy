@@ -50,10 +50,11 @@ ${settings.tone_examples}`
 async function fetchToolKnowledge(questionText: string): Promise<string> {
   try {
     const sb = getServiceClient()
+    // Fetch ALL tools that have a knowledge_summary (regardless of status)
+    // so newly onboarded tools are immediately available to Ask AI
     const { data: tools } = await sb
       .from('tools')
       .select('name, knowledge_summary').is('deleted_at', null)
-      .eq('status', 'published')
       .not('knowledge_summary', 'is', null)
 
     if (!tools || tools.length === 0) return ''
@@ -61,9 +62,11 @@ async function fetchToolKnowledge(questionText: string): Promise<string> {
     const q = questionText.toLowerCase()
     const matches = tools.filter(t => q.includes(t.name.toLowerCase()))
 
-    if (matches.length === 0) return ''
+    // If no exact name match in the question, still return all summaries
+    // so the AI can use context for general product questions
+    const toUse = matches.length > 0 ? matches : tools
 
-    return matches
+    return toUse
       .map(t => `### ${t.name}\n${t.knowledge_summary}`)
       .join('\n\n')
   } catch {

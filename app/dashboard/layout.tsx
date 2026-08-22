@@ -126,8 +126,7 @@ export default async function DashboardLayout({
     <LanguageProvider>
       <ToastProvider>
         <SidebarProvider>
-          {isImpersonating && <ViewAsStudentBanner />}
-          <div className={`flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 ${isImpersonating ? 'pt-10' : ''}`}>
+          <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Sidebar
         navItems={navItems}
         footer={
@@ -141,6 +140,8 @@ export default async function DashboardLayout({
         }
       />
       <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
+        {/* Banner sits in flow — pushes header down, never overlays anything */}
+        {isImpersonating && <ViewAsStudentBanner />}
         <header className="h-14 md:h-16 border-b border-gray-200/80 bg-white/80 dark:bg-gray-900/80 dark:border-gray-800 backdrop-blur-md px-3 md:px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <SidebarMobileToggle />
@@ -180,3 +181,4 @@ export default async function DashboardLayout({
     </LanguageProvider>
   )
 }
+
