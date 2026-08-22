@@ -87,21 +87,21 @@ export default async function AdminLayout({
           </div>
         }
       />
-      <div className="flex-1 flex flex-col min-w-0 w-full">
-        <header className="h-16 border-b border-gray-200/80 bg-white/80 dark:bg-gray-900/80 dark:border-gray-800 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-2">
+      <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
+        <header className="h-14 md:h-16 border-b border-gray-200/80 bg-white/80 dark:bg-gray-900/80 dark:border-gray-800 backdrop-blur-md px-3 md:px-8 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <SidebarMobileToggle />
             <GlobalSearchBar />
           </div>
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
             <DarkModeToggle />
             <NotificationBell userId={user.id} />
-            <span className="text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 font-semibold uppercase tracking-wider">
+            <span className="hidden sm:inline-flex text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 font-semibold uppercase tracking-wider">
               Admin Portal
             </span>
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-full">
+        <main className="flex-1 overflow-auto overflow-x-hidden bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-full">
           {children}
         </main>
       </div>

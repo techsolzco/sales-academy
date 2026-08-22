@@ -18,6 +18,7 @@ import { ToastProvider } from '@/components/ui/ToastContext'
 import { TranslatorFab } from '@/components/ui/TranslatorFab'
 import { ViewAsStudentBanner } from '@/components/admin/ViewAsStudentBanner'
 import { WelcomeModal } from '@/components/dashboard/WelcomeModal'
+import { BottomTabBar } from '@/components/layout/BottomTabBar'
 
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
@@ -139,34 +140,35 @@ export default async function DashboardLayout({
           </div>
         }
       />
-      <div className="flex-1 flex flex-col min-w-0 w-full">
-        <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-2">
+      <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
+        <header className="h-14 md:h-16 border-b border-gray-200/80 bg-white/80 dark:bg-gray-900/80 dark:border-gray-800 backdrop-blur-md px-3 md:px-8 flex items-center justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <SidebarMobileToggle />
             <GlobalSearchBar />
           </div>
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
             <DarkModeToggle />
             <NotificationBell userId={displayUserId} />
             {isImpersonating ? (
-              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold uppercase tracking-wider">
+              <span className="hidden sm:inline-flex text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold uppercase tracking-wider">
                 Preview Mode
               </span>
             ) : (
-              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold uppercase tracking-wider">
+              <span className="hidden sm:inline-flex text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-semibold uppercase tracking-wider">
                 Sales Portal
               </span>
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto overflow-x-hidden pb-16 md:pb-0">
           {children}
         </main>
       </div>
+      <BottomTabBar />
       <WhatsAppButton />
       <TranslatorFab />
       {!isImpersonating && (
-        <WelcomeModal 
+        <WelcomeModal
           template={appSettings?.welcome_message_template || 'Welcome {name}! We are excited to have you join the Sales Academy.'}
           name={profile?.full_name || 'Student'}
           shouldShow={profile?.has_seen_welcome === false}
