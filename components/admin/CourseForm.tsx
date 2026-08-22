@@ -109,7 +109,7 @@ export function CourseForm({ course, onSuccess }: CourseFormProps) {
       </div>
 
       {/* Category + Difficulty row */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Category</label>
           <select
@@ -137,7 +137,7 @@ export function CourseForm({ course, onSuccess }: CourseFormProps) {
       </div>
 
       {/* Duration + Status row */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Estimated Duration (minutes)</label>
           <input

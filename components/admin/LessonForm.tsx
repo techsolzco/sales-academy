@@ -99,7 +99,7 @@ export function LessonForm({ moduleId, courseId, lesson }: LessonFormProps) {
           className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration (minutes)</label>
           <input
@@ -125,7 +125,7 @@ export function LessonForm({ moduleId, courseId, lesson }: LessonFormProps) {
           </select>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
           <select
