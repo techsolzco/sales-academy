@@ -19,7 +19,7 @@ export default async function NewMeetingPage() {
   const salesmen = await fetchSalesmen()
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="px-4 py-5 md:p-8 max-w-3xl mx-auto">
       <div className="mb-8">
         <Link href="/admin/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-4 transition-colors">
           <ArrowLeft className="w-4 h-4" />

@@ -7,7 +7,7 @@ export default async function AnnouncementsPage() {
   const announcements = await fetchAnnouncements(true)
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="px-4 py-5 md:p-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Announcements</h1>
         <p className="text-gray-400 text-sm mt-1">Important notices and updates from management.</p>

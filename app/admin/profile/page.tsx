@@ -20,7 +20,7 @@ export default async function AdminProfilePage() {
   const initials = profile?.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'A'
 
   return (
-    <div className="p-8 max-w-3xl mx-auto space-y-6">
+    <div className="px-4 py-5 md:p-8 max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
       
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">

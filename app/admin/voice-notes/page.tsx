@@ -22,7 +22,7 @@ export default async function AdminVoiceNotesPage({
   ])
 
   return (
-    <div className="p-8 max-w-6xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-6xl animate-fade-in">
       <Breadcrumb crumbs={[
         { label: 'Admin', href: '/admin' },
         { label: 'Voice Notes' },

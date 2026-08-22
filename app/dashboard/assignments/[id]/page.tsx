@@ -17,7 +17,7 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
   const { data: submission } = await supabase.from('assignment_submissions').select('*').eq('assignment_id', params.id).eq('user_id', user.id).single()
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="px-4 py-5 md:p-8 max-w-3xl mx-auto">
       <Link href="/dashboard/assignments" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" /> Back to Assignments
       </Link>

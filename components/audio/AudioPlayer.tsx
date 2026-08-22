@@ -153,7 +153,7 @@ export function AudioPlayer({
         </div>
 
         {/* Speed Controls */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-200/60">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200/60">
           <div className="flex items-center gap-1">
             <span className="text-xs font-medium text-gray-400 mr-1.5">Speed:</span>
             {SPEEDS.map(s => (
@@ -172,7 +172,7 @@ export function AudioPlayer({
           </div>
 
           {whenToSend && (
-            <span className="text-xs text-gray-400 truncate max-w-[200px]" title={whenToSend}>
+            <span className="text-xs text-gray-400 break-words min-w-0" title={whenToSend}>
               💡 Send when: {whenToSend}
             </span>
           )}

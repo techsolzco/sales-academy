@@ -3,7 +3,7 @@ import { CourseForm } from '@/components/admin/CourseForm'
 
 export default function NewCoursePage() {
   return (
-    <div className="p-8 max-w-2xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-2xl animate-fade-in">
       <Breadcrumb crumbs={[
         { label: 'Courses', href: '/admin/courses' },
         { label: 'New Course' },

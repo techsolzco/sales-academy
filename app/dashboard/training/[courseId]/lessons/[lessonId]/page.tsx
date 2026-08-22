@@ -55,7 +55,7 @@ export default async function LessonViewerPage({
   const quiz = await fetchQuizForLesson(params.lessonId)
 
   return (
-    <div className="p-8 max-w-3xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-3xl animate-fade-in">
       <Link
         href={`/dashboard/training/${params.courseId}`}
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition"

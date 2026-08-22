@@ -185,7 +185,7 @@ export default async function CourseDetailPage({
           <tbody className="divide-y divide-gray-100">
             {stats.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-8">
+                <td colSpan={4} className="px-4 py-5 md:p-8">
                   <EmptyState 
                     icon={BookOpen} 
                     title="No assignments linked to this tool" 
@@ -230,7 +230,7 @@ export default async function CourseDetailPage({
   }
 
   return (
-    <div className="p-8 max-w-5xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-5xl animate-fade-in">
       <Breadcrumb crumbs={[
         { label: 'Courses', href: '/admin/courses' },
         { label: course.title },

@@ -80,8 +80,8 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 animate-fade-in">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl border-0 sm:border border-gray-100 dark:border-gray-700 shadow-2xl w-full sm:max-w-xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-6 animate-fade-in">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {faq ? 'Edit FAQ' : 'Create FAQ'}

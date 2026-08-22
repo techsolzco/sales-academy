@@ -39,7 +39,7 @@ export default async function ProfilePage() {
   const initials = profile?.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'U'
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8">
+    <div className="px-4 py-5 md:p-8 max-w-4xl mx-auto space-y-8">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="h-32 bg-brand-600"></div>
         <div className="px-8 pb-8">

@@ -17,7 +17,7 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
   
   if (!meeting) {
     return (
-      <div className="p-8 text-center">
+      <div className="px-4 py-5 md:p-8 text-center">
         <h2 className="text-xl font-bold text-gray-900">Meeting not found</h2>
         <Link href="/dashboard/meetings" className="text-brand-600 mt-4 inline-block hover:underline">
           Return to Meetings
@@ -33,7 +33,7 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-6 flex flex-col h-[calc(100vh-4rem)]">
+    <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-6 flex flex-col h-[calc(100vh-4rem)]">
       <div>
         <Link href="/dashboard/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-4 transition-colors">
           <ArrowLeft className="w-4 h-4" />

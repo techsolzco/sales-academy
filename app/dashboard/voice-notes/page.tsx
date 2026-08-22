@@ -36,7 +36,7 @@ export default async function SalesmanVoiceNotesPage({
   }, {})
 
   return (
-    <div className="p-8 max-w-6xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-6xl animate-fade-in">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Audio Pitches & Voice Notes</h1>
         <p className="text-gray-400 text-sm mt-1">

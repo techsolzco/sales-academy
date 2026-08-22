@@ -30,7 +30,7 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
     .order('full_name')
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto">
       <Link href="/admin/assignments" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" /> Back to Assignments
       </Link>

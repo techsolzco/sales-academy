@@ -169,7 +169,7 @@ export default async function DailyReportPage({
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="px-4 py-5 md:p-8 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Daily Activity Report</h1>
         <p className="text-sm text-gray-500 mt-1">Track student progress, completions, and activity on a daily basis.</p>

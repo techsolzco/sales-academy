@@ -16,7 +16,7 @@ export default async function GenerateTrainingPage({ params }: { params: { id: s
   if (!tool) redirect('/admin/tools')
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="px-4 py-5 md:p-8 max-w-4xl">
       <Breadcrumb crumbs={[
         { label: 'Admin', href: '/admin' },
         { label: 'Tools', href: '/admin/tools' },

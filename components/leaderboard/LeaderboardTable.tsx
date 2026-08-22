@@ -67,8 +67,8 @@ export function LeaderboardTable({ entries, currentUserId }: Props) {
           <Trophy className="w-3.5 h-3.5 text-amber-400" />
           {entry.score.toLocaleString()}
         </div>
-        {/* Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 w-64 bg-gray-900 text-white text-xs p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-xl border border-gray-700">
+        {/* Tooltip — centered to avoid edge bleed on mobile */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-900 text-white text-xs p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-xl border border-gray-700">
           <div className="font-semibold mb-1 text-gray-300">Score Breakdown</div>
           <div className="flex justify-between"><span>{entry.courses_completed} Courses × 300</span><span>{entry.courses_completed * 300}</span></div>
           <div className="flex justify-between"><span>{entry.lessons_completed} Lessons × 10</span><span>{entry.lessons_completed * 10}</span></div>

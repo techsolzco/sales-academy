@@ -32,7 +32,7 @@ export default async function ResellerDetailsPage(
     .single()
 
   if (!profile) {
-    return <div className="p-8">Reseller not found</div>
+    return <div className="px-4 py-5 md:p-8">Reseller not found</div>
   }
 
   const commissions = await fetchCommissions(params.id)
@@ -49,7 +49,7 @@ export default async function ResellerDetailsPage(
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-6">
+    <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-6">
       <Link href="/admin/resellers" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition mb-2">
         <ArrowLeft className="w-4 h-4" /> Back to Resellers
       </Link>

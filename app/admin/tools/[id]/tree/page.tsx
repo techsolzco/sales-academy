@@ -18,7 +18,7 @@ export default async function ToolTreePage({
 
   if (result.error || !result.data) {
     return (
-      <div className="p-8 max-w-5xl">
+      <div className="px-4 py-5 md:p-8 max-w-5xl">
         <p className="text-red-500">Tool not found or error loading data.</p>
       </div>
     )
@@ -75,7 +75,7 @@ export default async function ToolTreePage({
   ]
 
   return (
-    <div className="p-8 max-w-5xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-5xl animate-fade-in">
       <Breadcrumb crumbs={[
         { label: 'Admin', href: '/admin' },
         { label: 'Tools', href: '/admin/tools' },

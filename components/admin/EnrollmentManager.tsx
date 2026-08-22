@@ -110,46 +110,50 @@ export function EnrollmentManager({ initialApplications }: { initialApplications
       <div className="space-y-4">
         {filtered.map(app => (
           <div key={app.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div 
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+            <div
+              className="p-3 md:p-4 flex flex-wrap items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition"
               onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
             >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold">
+              {/* Avatar + name/email */}
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {app.full_name.charAt(0)}
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100">{app.full_name}</h4>
-                  <p className="text-xs text-gray-500">{app.email} • {app.phone}</p>
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm break-words">{app.full_name}</h4>
+                  <p className="text-xs text-gray-500 truncate">{app.email}</p>
+                  <p className="text-xs text-gray-400 md:hidden">{app.phone}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              {/* Meta row */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="hidden md:block text-xs text-gray-400">{app.phone}</span>
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${app.status === 'approved' ? 'bg-green-100 text-green-700' : app.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                   {app.status.toUpperCase()}
                 </span>
-                <span className="text-xs text-gray-400">{new Date(app.created_at).toLocaleDateString()}</span>
-                {expandedId === app.id ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                <span className="text-xs text-gray-400 hidden sm:block">{new Date(app.created_at).toLocaleDateString()}</span>
+                {expandedId === app.id ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
               </div>
             </div>
 
             {expandedId === app.id && (
               <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <h5 className="text-xs font-semibold text-gray-500 uppercase">Knowledge Level</h5>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1 capitalize">{app.knowledge_level}</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1 capitalize break-words">{app.knowledge_level}</p>
                   </div>
                   <div>
                     <h5 className="text-xs font-semibold text-gray-500 uppercase">Desired Course</h5>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1">{app.desired_course}</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1 break-words">{app.desired_course}</p>
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <h5 className="text-xs font-semibold text-gray-500 uppercase">Reason</h5>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1">{app.reason}</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1 break-words">{app.reason}</p>
                   </div>
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <h5 className="text-xs font-semibold text-gray-500 uppercase">Prior Experience</h5>
-                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1">{app.prior_experience}</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 mt-1 break-words">{app.prior_experience}</p>
                   </div>
                 </div>
 

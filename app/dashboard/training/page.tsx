@@ -33,7 +33,7 @@ export default async function TrainingPage() {
 
   if (!assignments || assignments.length === 0) {
     return (
-      <div className="p-8 animate-fade-in">
+      <div className="px-4 py-5 md:p-8 animate-fade-in">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
@@ -59,7 +59,7 @@ export default async function TrainingPage() {
 
   if (!courses || courses.length === 0) {
     return (
-      <div className="p-8 animate-fade-in">
+      <div className="px-4 py-5 md:p-8 animate-fade-in">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
@@ -137,7 +137,7 @@ export default async function TrainingPage() {
   const assignmentByCourse = Object.fromEntries(assignments.map(a => [a.course_id, a]))
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="px-4 py-5 md:p-8 animate-fade-in">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
           {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋

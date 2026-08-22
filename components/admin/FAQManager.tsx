@@ -205,7 +205,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
           <select
             value={filterToolId}
             onChange={e => setFilterToolId(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="">All Tools</option>
             {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}

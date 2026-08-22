@@ -22,7 +22,7 @@ export default async function AdminObjectionsPage({
   ])
 
   return (
-    <div className="p-8 max-w-5xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-5xl animate-fade-in">
       <Breadcrumb crumbs={[
         { label: 'Admin', href: '/admin' },
         { label: 'Objection Handling' },

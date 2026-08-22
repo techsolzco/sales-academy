@@ -24,7 +24,7 @@ export default async function QuizDetailPage({ params }: { params: { id: string 
   const passRate = totalAttempts ? Math.round((passCount / totalAttempts) * 100) : 0
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto">
       <Link href="/admin/quizzes" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" /> Back to Quizzes
       </Link>

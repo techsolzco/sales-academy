@@ -16,7 +16,7 @@ export default async function EditModulePage({
   if (!course || !module) notFound()
 
   return (
-    <div className="p-8 max-w-2xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-2xl animate-fade-in">
       <Breadcrumb crumbs={[
         { label: 'Courses', href: '/admin/courses' },
         { label: course.title, href: `/admin/courses/${course.id}` },

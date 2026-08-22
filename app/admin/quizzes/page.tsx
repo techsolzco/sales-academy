@@ -22,7 +22,7 @@ export default async function QuizzesAdminPage({
   const { data: quizzes } = await query
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="px-4 py-5 md:p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quizzes</h1>
@@ -50,7 +50,7 @@ export default async function QuizzesAdminPage({
           <tbody className="divide-y divide-gray-100">
             {(!quizzes || quizzes.length === 0) ? (
               <tr>
-                <td colSpan={4} className="p-8">
+                <td colSpan={4} className="px-4 py-5 md:p-8">
                   <EmptyState 
                     icon={Brain} 
                     title="No quizzes created yet" 

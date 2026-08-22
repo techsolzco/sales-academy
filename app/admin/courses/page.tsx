@@ -32,7 +32,7 @@ export default async function AdminCoursesPage() {
   const drafts = (courses ?? []).filter(c => c.status === 'draft').length
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="px-4 py-5 md:p-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

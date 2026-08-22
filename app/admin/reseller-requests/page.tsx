@@ -22,7 +22,7 @@ export default async function ResellerRequestsPage() {
   const applications = await fetchResellerApplications()
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-6">
+    <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Reseller Applications</h1>
         <p className="text-sm text-gray-500 mt-1">Review and manage partner applications from salesmen.</p>

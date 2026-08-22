@@ -264,7 +264,7 @@ export default async function TrainingCoursePage({
           <tbody className="divide-y divide-gray-100">
             {stats.length === 0 ? (
               <tr>
-                <td colSpan={2} className="p-8">
+                <td colSpan={2} className="px-4 py-5 md:p-8">
                   <EmptyState 
                     icon={BookOpen} 
                     title="No assignments" 
@@ -300,7 +300,7 @@ export default async function TrainingCoursePage({
   }
 
   return (
-    <div className="p-8 max-w-3xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-3xl animate-fade-in">
       <Link
         href="/dashboard/training"
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition"

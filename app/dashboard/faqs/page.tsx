@@ -31,7 +31,7 @@ export default async function SalesmanFAQsPage({
   const reviewedItems = await getReviewedKbItems('faq')
 
   return (
-    <div className="p-8 max-w-4xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-4xl animate-fade-in">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Knowledge Base — FAQs</h1>
         <p className="text-gray-400 text-sm mt-1">

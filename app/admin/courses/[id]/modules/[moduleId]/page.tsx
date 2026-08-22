@@ -31,7 +31,7 @@ export default async function ModuleDetailPage({
     .order('order_index', { ascending: true })
 
   return (
-    <div className="p-8 max-w-4xl animate-fade-in">
+    <div className="px-4 py-5 md:p-8 max-w-4xl animate-fade-in">
       <Breadcrumb crumbs={[
         { label: 'Courses', href: '/admin/courses' },
         { label: course.title, href: `/admin/courses/${course.id}` },
