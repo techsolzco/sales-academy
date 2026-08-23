@@ -74,17 +74,16 @@ async function fetchToolKnowledge(questionText: string): Promise<string> {
   }
 }
 
-// Models tried in order — first success wins.
-// Shifted to 3.7 and 3.6 as primary to help avoid high demand on older/other models.
-const GEMINI_MODELS = [
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-flash-latest',
-]
+// Only gemini-3.5-flash works on this API key (live-tested 2026-08-23).
+// gemini-3.7-flash/gemini-flash-latest → 429, gemini-3.6-flash → timeout,
+// gemini-2.0-flash/gemini-1.5-flash → 404 (removed from v1beta).
+const GEMINI_MODEL = 'gemini-3.5-flash'
 
 const MAX_RETRIES = 2
-const RETRY_DELAY_MS = 2500
+// 429 = quota exceeded: must wait for the per-minute window to reset (~60s).
+// 503 = transient overload: 5s is sufficient.
+const BACKOFF_429_MS = 30000   // 30s for ask-AI (lower stakes, shorter wait)
+const BACKOFF_503_MS = 5000
 
 export async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {
   const key = process.env.GEMINI_API_KEY
@@ -100,56 +99,43 @@ export async function callGemini(systemPrompt: string, userPrompt: string, jsonM
     },
   })
 
-  let lastError = 'AI request failed.'
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    for (const model of GEMINI_MODELS) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-      })
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    })
 
-      if (response.status === 429 || response.status === 503 || response.status === 500) {
-        // High demand / rate limited — try the next model in the list
-        lastError = `Model ${model} is currently busy (HTTP ${response.status}).`
-        continue 
-      }
-
-      if (response.status === 404 || response.status === 403) {
-        // This model is unavailable for this key — try next
-        const errData = await response.json().catch(() => ({}))
-        lastError = (errData as any)?.error?.message ?? `Model ${model} unavailable (${response.status})`
-        continue
-      }
-
-      if (!response.ok) {
-        // Bad request or other client errors shouldn't be retried
-        const errData = await response.json().catch(() => ({}))
-        throw new Error((errData as any)?.error?.message ?? `AI request failed with status ${response.status}`)
-      }
-
-      const data = await response.json()
-      const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-      if (!text) {
-        lastError = 'AI returned an empty response.'
-        continue // Treat empty response like an error and try next model
-      }
-      
-      return text
+    if (response.status === 429) {
+      const errData = await response.json().catch(() => ({}))
+      console.warn(`[callGemini] attempt=${attempt} → 429 RATE_LIMIT | ${(errData as any)?.error?.message || ''}`)
+      if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, BACKOFF_429_MS))
+      continue
+    }
+    if (response.status === 503 || response.status === 500) {
+      console.warn(`[callGemini] attempt=${attempt} → ${response.status} transient`)
+      if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, BACKOFF_503_MS))
+      continue
+    }
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}))
+      throw new Error((errData as any)?.error?.message ?? `AI request failed with status ${response.status}`)
     }
 
-    // If we've tried all models and haven't succeeded, but have retries left:
-    if (attempt < MAX_RETRIES) {
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS))
+    const data = await response.json()
+    const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!text) {
+      if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, BACKOFF_503_MS))
+      continue
     }
+    return text
   }
 
-  // If we get here, all models and retries failed due to being busy or unavailable.
   throw new Error('AI is currently experiencing high demand. Please wait a moment and try again.')
 }
+
 
 async function logUsage(userId: string, feature: 'ai_assist' | 'quick_create' | 'ask_ai' | 'test_ai', contentType?: string | null, instruction?: string | null) {
   try {

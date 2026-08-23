@@ -10,12 +10,8 @@ function getServiceClient() {
   )
 }
 
-const GEMINI_MODELS = [
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-flash-latest',
-]
+// Only gemini-3.5-flash works on this API key (live-tested 2026-08-23).
+const GEMINI_MODEL = 'gemini-3.5-flash'
 
 async function generateKnowledgeSummary(tool: {
   name: string
@@ -41,23 +37,22 @@ This summary is for internal AI context only — not customer-facing. Cover key 
     generationConfig: { temperature: 0.5, maxOutputTokens: 512 },
   })
 
-  for (const model of GEMINI_MODELS) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-      })
-      if (!res.ok) continue
-      const data = await res.json()
-      const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
-      if (text?.trim()) return text.trim()
-    } catch {
-      continue
-    }
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (text?.trim()) return text.trim()
+  } catch {
+    // fire-and-forget — swallow errors silently
   }
   return null
+
 }
 
 /**

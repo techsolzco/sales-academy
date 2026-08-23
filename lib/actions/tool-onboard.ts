@@ -31,13 +31,11 @@ async function requireAdmin() {
 }
 
 // ── Gemini call (higher token limit for package generation) ──────────────
+// Live-tested 2026-08-23: only gemini-3.5-flash returns 200 on this API key.
+// gemini-3.7-flash → 429 (quota), gemini-3.6-flash → timeout, gemini-flash-latest → 429,
+// gemini-2.0-flash/gemini-1.5-flash → 404 (removed from v1beta API).
 
-const GEMINI_MODELS = [
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-flash-latest',
-]
+const GEMINI_MODEL = 'gemini-3.5-flash'
 
 async function callGeminiLarge(systemPrompt: string, userPrompt: string, maxTokens = 6144): Promise<string> {
   const key = process.env.GEMINI_API_KEY
@@ -53,48 +51,92 @@ async function callGeminiLarge(systemPrompt: string, userPrompt: string, maxToke
     },
   })
 
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`
+
+  // 3 attempts with 429-aware backoff:
+  //   attempt 0 → try immediately
+  //   attempt 1 → if 429: wait 62s (RPM quota window = 60s + 2s buffer)
+  //   attempt 2 → if 429 again: wait 62s more
+  // For 503 (transient overload): 5s backoff is sufficient
+  const BACKOFF_MS: Record<number, number> = { 0: 0, 1: 62000, 2: 62000 }
+
   for (let attempt = 0; attempt <= 2; attempt++) {
-    for (const model of GEMINI_MODELS) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
-      // 25-second per-request timeout so slow models don't block the whole generation
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 25000)
-      let response: Response
-      try {
-        response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-          signal: controller.signal,
-        })
-      } catch (fetchErr: any) {
-        clearTimeout(timeoutId)
-        if (fetchErr.name === 'AbortError') {
-          console.warn(`[ToolOnboard] ${model} timed out after 25s, trying next model`)
-          continue
-        }
-        throw fetchErr
-      }
-      clearTimeout(timeoutId)
-
-      if (response.status === 429 || response.status === 503 || response.status === 500) continue
-      if (response.status === 404 || response.status === 403) continue
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error((errData as Record<string, unknown>)?.error
-          ? String((errData as Record<string, Record<string, string>>).error.message)
-          : `AI request failed with status ${response.status}`)
-      }
-
-      const data = await response.json()
-      const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
-      if (!text) continue
-      return text
+    if (attempt > 0) {
+      const wait = BACKOFF_MS[attempt] ?? 62000
+      console.warn(`[GeminiCall] attempt=${attempt} waiting ${wait}ms before retry...`)
+      await new Promise(r => setTimeout(r, wait))
     }
-    if (attempt < 2) await new Promise(r => setTimeout(r, 1500))
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 55000)  // 55s < nginx 60s ceiling
+    const t0 = Date.now()
+    let response: Response
+
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: controller.signal,
+      })
+    } catch (fetchErr: any) {
+      clearTimeout(timeoutId)
+      if (fetchErr.name === 'AbortError') {
+        console.warn(`[GeminiCall] attempt=${attempt} model=${GEMINI_MODEL} → TIMEOUT after ${Date.now()-t0}ms`)
+        continue
+      }
+      throw fetchErr
+    }
+    clearTimeout(timeoutId)
+
+    const elapsed = Date.now() - t0
+    const retryAfter = response.headers.get('retry-after') || ''
+
+    if (response.status === 429) {
+      const body429 = await response.json().catch(() => ({}))
+      const reason = (body429 as any)?.error?.message || (body429 as any)?.error?.status || 'no detail'
+      console.warn(`[GeminiCall] attempt=${attempt} model=${GEMINI_MODEL} → 429 RATE_LIMIT in ${elapsed}ms | retryAfter=${retryAfter || 'none'} | reason: ${reason}`)
+      if (attempt === 2) {
+        throw new Error('Gemini API quota exceeded (429). Please wait 1 minute and try again.')
+      }
+      continue
+    }
+    if (response.status === 503) {
+      const body503 = await response.json().catch(() => ({}))
+      const reason = (body503 as any)?.error?.message || 'no detail'
+      console.warn(`[GeminiCall] attempt=${attempt} model=${GEMINI_MODEL} → 503 OVERLOADED in ${elapsed}ms | reason: ${reason}`)
+      // 503 is transient — short backoff is fine, override the long 429 wait
+      if (attempt < 2) await new Promise(r => setTimeout(r, 5000))
+      continue
+    }
+    if (response.status === 500) {
+      const body500 = await response.json().catch(() => ({}))
+      console.warn(`[GeminiCall] attempt=${attempt} model=${GEMINI_MODEL} → 500 SERVER_ERROR in ${elapsed}ms | ${(body500 as any)?.error?.message || ''}`)
+      continue
+    }
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}))
+      console.error(`[GeminiCall] attempt=${attempt} model=${GEMINI_MODEL} → ${response.status} UNEXPECTED in ${elapsed}ms`, errData)
+      throw new Error((errData as Record<string, unknown>)?.error
+        ? String((errData as Record<string, Record<string, string>>).error.message)
+        : `AI request failed with status ${response.status}`)
+    }
+
+    const data = await response.json()
+    const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!text) {
+      console.warn(`[GeminiCall] attempt=${attempt} model=${GEMINI_MODEL} → 200 OK but EMPTY response in ${elapsed}ms`)
+      continue
+    }
+
+    console.log(`[GeminiCall] attempt=${attempt} model=${GEMINI_MODEL} → SUCCESS in ${elapsed}ms (${text.length} chars)`)
+    return text
   }
-  throw new Error('AI is currently experiencing high demand. Please wait and try again.')
+
+  throw new Error('AI is unavailable after 3 attempts. Please wait a moment and try again.')
 }
+
+
 
 
 // ── Helper: strip markdown code fences from Gemini output ─────────────
