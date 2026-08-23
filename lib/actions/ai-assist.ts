@@ -317,6 +317,7 @@ export async function askAi(question: string): Promise<ActionResult<string>> {
     }
     
     const toolContext = await fetchToolKnowledge(question)
+    console.log(`[askAi] question="${question.slice(0, 60)}" | toolContext=${toolContext.length} chars | hasContent=${toolContext.length > 0}`)
     const systemPrompt = buildSystemPrompt(settings, toolContext)
     
     const userPrompt = `A salesman is asking for help with this customer situation:
@@ -329,11 +330,13 @@ Respond in EXACTLY this format with no other text before or after:
 [The actual WhatsApp message to send to the customer. Plain Hinglish text only. No asterisks, no markdown, no meta-commentary, no [placeholder] text.]`
 
     const text = await callGemini(systemPrompt, userPrompt, false)
+    console.log(`[askAi] SUCCESS — response=${text.length} chars`)
     
     await logUsage(user.id, 'ask_ai', null, question)
     
     return { data: text }
   } catch (error: any) {
+    console.error(`[askAi] FAILED:`, error.message)
     return { error: error.message || 'Failed to get AI suggestion' }
   }
 }
