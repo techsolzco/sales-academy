@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Package,
@@ -13,7 +13,8 @@ import {
   TreeDeciduous,
   Save,
   Sparkles,
-  Plus
+  Plus,
+  RefreshCw,
 } from 'lucide-react'
 
 import type {
@@ -28,7 +29,7 @@ import type {
   GeneratedContentBlock,
   GeneratedCourse
 } from '@/types'
-import { generateToolPackage, saveToolPackage } from '@/lib/actions/tool-onboard'
+import { generateStep1_CourseAndSummary, generateStep2_KBContent, generateStep3_VoiceNotes, saveToolPackage } from '@/lib/actions/tool-onboard'
 
 const CATEGORIES: ToolCategory[] = [
   'AI Tools',
@@ -41,14 +42,8 @@ const CATEGORIES: ToolCategory[] = [
   'Automation'
 ]
 
-const LOADING_MESSAGES = [
-  'Analyzing tool details...',
-  'Generating course content...',
-  'Creating FAQs...',
-  'Building objection responses...',
-  'Writing sales scripts...',
-  'Assembling training package...'
-]
+// Sub-step state: null = not started, 'loading' = in progress, 'done' = complete, 'error' = failed
+type SubStepState = null | 'loading' | 'done' | 'error'
 
 export function ToolOnboardWizard() {
   const router = useRouter()
@@ -66,18 +61,46 @@ export function ToolOnboardWizard() {
     brief: ''
   })
 
-  // Step 2 State
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0)
+  // Step 2 sub-step progress
+  const [subStep1, setSubStep1] = useState<SubStepState>(null)
+  const [subStep2, setSubStep2] = useState<SubStepState>(null)
+  const [subStep3, setSubStep3] = useState<SubStepState>(null)
+
+  // Partial results — preserved across per-step retries
+  const [part1, setPart1] = useState<{ knowledge_summary: string; course: GeneratedToolPackage['course'] } | null>(null)
+  const [part2, setPart2] = useState<{ faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] } | null>(null)
+  const [part3, setPart3] = useState<{ voice_notes: GeneratedToolPackage['voice_notes'] } | null>(null)
+
+  // General error
   const [error, setError] = useState<string | null>(null)
+  const [failedStep, setFailedStep] = useState<1 | 2 | 3 | null>(null)
 
   // Step 3/4 State
   const [packageData, setPackageData] = useState<GeneratedToolPackage | null>(null)
-  
+
   // Step 4 State
   const [publishNow, setPublishNow] = useState(false)
   const [publishConfirmed, setPublishConfirmed] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [successData, setSuccessData] = useState<{ toolId: string } | null>(null)
+
+  // Assemble and advance once all 3 parts are done
+  const assembleAndAdvance = (
+    p1: typeof part1,
+    p2: typeof part2,
+    p3: typeof part3
+  ) => {
+    if (!p1 || !p2 || !p3) return
+    setPackageData({
+      knowledge_summary: p1.knowledge_summary,
+      course: p1.course,
+      faqs: p2.faqs,
+      objections: p2.objections,
+      scripts: p2.scripts,
+      voice_notes: p3.voice_notes,
+    })
+    setStep(3)
+  }
 
   // Handlers for Step 1
   const handleFeatureChange = (index: number, value: string) => {
@@ -96,6 +119,48 @@ export function ToolOnboardWizard() {
     setWizardData({ ...wizardData, features: newFeatures })
   }
 
+  const runStep1 = async (data: OnboardWizardData): Promise<typeof part1 | null> => {
+    setSubStep1('loading')
+    const res = await generateStep1_CourseAndSummary(data)
+    if (!res || res.error || !res.data) {
+      setSubStep1('error')
+      setError(res?.error || 'Failed to generate course structure. Please retry.')
+      setFailedStep(1)
+      return null
+    }
+    setSubStep1('done')
+    setPart1(res.data)
+    return res.data
+  }
+
+  const runStep2 = async (data: OnboardWizardData): Promise<typeof part2 | null> => {
+    setSubStep2('loading')
+    const res = await generateStep2_KBContent(data)
+    if (!res || res.error || !res.data) {
+      setSubStep2('error')
+      setError(res?.error || 'Failed to generate FAQs and scripts. Please retry.')
+      setFailedStep(2)
+      return null
+    }
+    setSubStep2('done')
+    setPart2(res.data)
+    return res.data
+  }
+
+  const runStep3 = async (data: OnboardWizardData): Promise<typeof part3 | null> => {
+    setSubStep3('loading')
+    const res = await generateStep3_VoiceNotes(data)
+    if (!res || res.error || !res.data) {
+      setSubStep3('error')
+      setError(res?.error || 'Failed to generate voice notes. Please retry.')
+      setFailedStep(3)
+      return null
+    }
+    setSubStep3('done')
+    setPart3(res.data)
+    return res.data
+  }
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!wizardData.name || !wizardData.brief) {
@@ -103,41 +168,57 @@ export function ToolOnboardWizard() {
       return
     }
     setError(null)
+    setFailedStep(null)
+    setPart1(null); setPart2(null); setPart3(null)
+    setSubStep1(null); setSubStep2(null); setSubStep3(null)
     setStep(2)
 
-    try {
-      const res = await generateToolPackage({
-        ...wizardData,
-        features: wizardData.features?.filter(f => f.trim() !== '')
-      })
+    const data = { ...wizardData, features: wizardData.features?.filter(f => f.trim() !== '') }
 
-      // Guard: res can be undefined if the server action timed out or failed to serialize
-      if (!res) {
-        throw new Error('The AI generation timed out or the server did not respond. Please try again — it may take up to 60 seconds.')
-      }
-      if (res.error) throw new Error(res.error)
-      if (res.data) {
-        setPackageData(res.data)
-        setStep(3)
-      } else {
-        throw new Error('No data returned from server. Please try again.')
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate package')
-      setStep(1)
+    // Sequential: each step is a separate HTTP request, max ~20s each
+    const r1 = await runStep1(data)
+    if (!r1) return  // step 1 failed — stay on step 2 with error UI
+
+    const r2 = await runStep2(data)
+    if (!r2) return  // step 2 failed
+
+    const r3 = await runStep3(data)
+    if (!r3) return  // step 3 failed
+
+    assembleAndAdvance(r1, r2, r3)
+  }
+
+  // Retry just the failed step (earlier steps already succeeded)
+  const handleRetryStep = async () => {
+    if (!failedStep) return
+    setError(null)
+
+    const data = { ...wizardData, features: wizardData.features?.filter(f => f.trim() !== '') }
+
+    if (failedStep === 1) {
+      setFailedStep(null)
+      const r1 = await runStep1(data)
+      if (!r1) return
+      const r2 = await runStep2(data)
+      if (!r2) return
+      const r3 = await runStep3(data)
+      if (!r3) return
+      assembleAndAdvance(r1, r2, r3)
+    } else if (failedStep === 2) {
+      setFailedStep(null)
+      const r2 = await runStep2(data)
+      if (!r2) return
+      const r3 = part3 ?? await runStep3(data)
+      if (!r3) return
+      assembleAndAdvance(part1, r2, r3)
+    } else if (failedStep === 3) {
+      setFailedStep(null)
+      const r3 = await runStep3(data)
+      if (!r3) return
+      assembleAndAdvance(part1, part2, r3)
     }
   }
 
-  // Loading animation effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (step === 2) {
-      interval = setInterval(() => {
-        setLoadingMessageIndex(prev => (prev + 1) % LOADING_MESSAGES.length)
-      }, 3000)
-    }
-    return () => clearInterval(interval)
-  }, [step])
 
   // Tree Handlers
   const toggleRemoval = (type: string, path: number[]) => {
@@ -315,19 +396,63 @@ export function ToolOnboardWizard() {
         </div>
       )}
 
-      {/* Step 2: Generating */}
+      {/* Step 2: Generating — 3 sequential sub-steps */}
       {step === 2 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-16 animate-fade-in border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center min-h-[400px]">
-          <Loader2 className="w-16 h-16 text-brand-600 animate-spin mb-8" />
-          <div className="h-8 relative w-full max-w-sm overflow-hidden text-center">
-            {LOADING_MESSAGES.map((msg, i) => (
-              <p key={i} className={`absolute w-full text-lg font-medium text-gray-600 dark:text-gray-300 transition-all duration-500
-                ${i === loadingMessageIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                {msg}
-              </p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-8 md:p-12 animate-fade-in border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center min-h-[400px] gap-8">
+          <div className="text-center">
+            <h2 className="text-xl font-bold dark:text-gray-100 mb-1">Generating Training Package</h2>
+            <p className="text-sm text-gray-400">Each section is generated separately — please wait...</p>
+          </div>
+
+          {/* Sub-step rows */}
+          <div className="w-full max-w-sm space-y-3">
+            {([
+              { state: subStep1, label: 'Course structure & summary', icon: '📚' },
+              { state: subStep2, label: 'FAQs, objections & scripts',  icon: '💬' },
+              { state: subStep3, label: 'Voice note scripts',           icon: '🎙️' },
+            ] as const).map(({ state, label, icon }, i) => (
+              <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border transition-all
+                ${state === 'done'    ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20' :
+                  state === 'error'   ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20' :
+                  state === 'loading' ? 'border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20' :
+                                        'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40'}`}>
+                <span className="text-lg">{icon}</span>
+                <span className={`flex-1 text-sm font-medium
+                  ${state === 'done'    ? 'text-green-700 dark:text-green-300' :
+                    state === 'error'   ? 'text-red-600 dark:text-red-400' :
+                    state === 'loading' ? 'text-brand-700 dark:text-brand-300' :
+                                          'text-gray-400 dark:text-gray-500'}`}>
+                  {label}
+                </span>
+                {state === 'loading' && <Loader2 className="w-4 h-4 text-brand-500 animate-spin" />}
+                {state === 'done'    && <Check className="w-4 h-4 text-green-500" />}
+                {state === 'error'   && <X className="w-4 h-4 text-red-500" />}
+                {state === null      && <div className="w-4 h-4 rounded-full border-2 border-gray-200 dark:border-gray-700" />}
+              </div>
             ))}
           </div>
-          <p className="text-gray-400 mt-4 text-sm">This may take a minute...</p>
+
+          {/* Error + retry */}
+          {error && failedStep && (
+            <div className="w-full max-w-sm">
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 text-sm mb-3">
+                {error}
+              </div>
+              <button
+                onClick={handleRetryStep}
+                className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl font-medium transition"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Retry Step {failedStep}
+              </button>
+              <button
+                onClick={() => { setStep(1); setError(null); setFailedStep(null) }}
+                className="w-full mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+              >
+                ← Back to edit tool info
+              </button>
+            </div>
+          )}
         </div>
       )}
 

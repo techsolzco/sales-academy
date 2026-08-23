@@ -118,37 +118,38 @@ function safeJsonParse<T>(text: string, label: string): T | null {
   }
 }
 
-// ── Generate full tool package ──────────────────────────────────────────
+// ── Shared helper: build system prompt + tool context ───────────────────
 
-export async function generateToolPackage(
-  wizardData: OnboardWizardData
-): Promise<ActionResult<GeneratedToolPackage>> {
-  try {
-    await requireAdmin()
-    const settings = await getAiTrainingSettings()
+async function buildGenerationContext(wizardData: OnboardWizardData) {
+  const settings = await getAiTrainingSettings()
+  const systemPrompt = settings
+    ? `[PERSONA]\n${settings.persona_instructions}\n\n[SALES STYLE RULES]\n${settings.sales_style_rules}\n\nIMPORTANT: Write all generated content in Hinglish — a natural mix of English and Roman Urdu. Do not use pure Urdu script or pure formal English.\n\n[LOCKED FACTS]\n${settings.locked_facts}\n\n[TONE EXAMPLES]\n${settings.tone_examples}`
+    : 'You are a sales training content creator. Write in Hinglish style.'
 
-    const systemPrompt = settings
-      ? `[PERSONA]\n${settings.persona_instructions}\n\n[SALES STYLE RULES]\n${settings.sales_style_rules}\n\nIMPORTANT: Write all generated content in Hinglish — a natural mix of English and Roman Urdu. Do not use pure Urdu script or pure formal English.\n\n[LOCKED FACTS]\n${settings.locked_facts}\n\n[TONE EXAMPLES]\n${settings.tone_examples}`
-      : 'You are a sales training content creator. Write in Hinglish style.'
-
-    const featuresStr = wizardData.features?.length ? `Key features: ${wizardData.features.join(', ')}` : ''
-    const pricingStr = wizardData.pricing ? `Pricing: ${wizardData.pricing}` : ''
-    const audienceStr = wizardData.targetAudience ? `Target audience: ${wizardData.targetAudience}` : ''
-    const sellingStr = wizardData.sellingPoints ? `Main selling points: ${wizardData.sellingPoints}` : ''
-    const warrantyStr = wizardData.warrantyNotes ? `Warranty/policy notes: ${wizardData.warrantyNotes}` : ''
-    const categoryStr = wizardData.category ? `Category: ${wizardData.category}` : ''
-
-    const toolContext = `Tool: "${wizardData.name}"
-${categoryStr}
-${pricingStr}
-${featuresStr}
-${audienceStr}
-${sellingStr}
-${warrantyStr}
+  const toolContext = `Tool: "${wizardData.name}"
+${wizardData.category ? `Category: ${wizardData.category}` : ''}
+${wizardData.pricing ? `Pricing: ${wizardData.pricing}` : ''}
+${wizardData.features?.length ? `Key features: ${wizardData.features.join(', ')}` : ''}
+${wizardData.targetAudience ? `Target audience: ${wizardData.targetAudience}` : ''}
+${wizardData.sellingPoints ? `Main selling points: ${wizardData.sellingPoints}` : ''}
+${wizardData.warrantyNotes ? `Warranty/policy notes: ${wizardData.warrantyNotes}` : ''}
 Admin's brief: ${wizardData.brief}`
 
-    // ── CALL 1: Course structure + knowledge summary ──────────────────────
-    const call1Prompt = `${toolContext}
+  return { systemPrompt, toolContext }
+}
+
+// ── STEP 1: Course structure + knowledge summary (~8-15s) ────────────────
+// One Gemini call. Safe within Hostinger's 60s nginx timeout ceiling.
+
+export async function generateStep1_CourseAndSummary(
+  wizardData: OnboardWizardData
+): Promise<ActionResult<{ knowledge_summary: string; course: GeneratedToolPackage['course'] }>> {
+  try {
+    await requireAdmin()
+    const { systemPrompt, toolContext } = await buildGenerationContext(wizardData)
+    const t0 = Date.now()
+
+    const prompt = `${toolContext}
 
 Generate ONLY the course training structure and knowledge summary for this sales tool.
 Return ONLY valid JSON (no markdown, no explanation):
@@ -177,8 +178,43 @@ Return ONLY valid JSON (no markdown, no explanation):
 }
 Requirements: 2 modules, each with 1-2 lessons, each lesson with 3-4 content blocks (mix of heading + text).`
 
-    // ── CALL 2: FAQs + Objections + Scripts (KB content) ─────────────────
-    const call2Prompt = `${toolContext}
+    const rawText = await callGeminiLarge(systemPrompt, prompt, 4096)
+    console.log(`[ToolOnboard] Step 1 completed in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+
+    type Result = { knowledge_summary: string; course: GeneratedToolPackage['course'] }
+    let parsed = safeJsonParse<Result>(rawText, 'step1-course+summary')
+
+    if (!parsed) {
+      console.log('[ToolOnboard] Step 1 JSON parse failed, retrying...')
+      const retry = await callGeminiLarge(
+        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
+        prompt, 4096
+      )
+      parsed = safeJsonParse<Result>(retry, 'step1-retry')
+    }
+
+    if (!parsed?.knowledge_summary || !parsed?.course) {
+      return { error: 'AI could not generate the course structure. Please try again.' }
+    }
+    return { data: parsed }
+  } catch (error: unknown) {
+    console.error('[ToolOnboard] Step 1 error:', error)
+    return { error: (error as Error).message || 'Failed to generate course structure.' }
+  }
+}
+
+// ── STEP 2: FAQs + Objections + Scripts (~12-18s) ────────────────────────
+// One Gemini call. Largest payload but still well within 60s ceiling.
+
+export async function generateStep2_KBContent(
+  wizardData: OnboardWizardData
+): Promise<ActionResult<{ faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }>> {
+  try {
+    await requireAdmin()
+    const { systemPrompt, toolContext } = await buildGenerationContext(wizardData)
+    const t0 = Date.now()
+
+    const prompt = `${toolContext}
 
 Generate ONLY the knowledge base content (FAQs, objections, scripts) for this sales tool.
 Return ONLY valid JSON (no markdown, no explanation):
@@ -219,14 +255,48 @@ Return ONLY valid JSON (no markdown, no explanation):
   ]
 }
 Requirements:
-- FAQs: exactly 12 FAQs, try to cover a mix of these categories: Pricing, Product, Warranty, General, Technical, Comparison, Payment, Privacy, Delivery, Features, Policy, Usage, Support, Audience, Guideline
+- FAQs: exactly 12 FAQs, cover a mix: Pricing, Product, Warranty, General, Technical, Comparison, Payment, Privacy, Delivery, Features, Policy, Usage, Support, Audience, Guideline
 - Objections: exactly 8 objections — 3 beginner, 3 intermediate, 2 advanced
-- Scripts: exactly 8 scripts covering these types (one each): greeting, whatsapp, follow_up, closing, payment, objection_response, upsell, after_sales
-- IMPORTANT LANGUAGE RULE: Ensure strict language consistency within an item. For any Hinglish field (e.g. question_hinglish, short_answer_hinglish, recommended_response_hinglish), it MUST be in Hinglish, and it MUST correspond directly to its English counterpart. Do not provide a Hinglish answer to an English question or vice versa. Both must be provided and must match in language style.
-- All Hinglish content must be Roman script (no Urdu script)
+- Scripts: exactly 8 scripts (one each): greeting, whatsapp, follow_up, closing, payment, objection_response, upsell, after_sales
+- Hinglish fields MUST be in Hinglish (Roman script, not Urdu script) and MUST match their English counterpart
 - Make content specific to "${wizardData.name}" and WhatsApp-ready`
 
-    const call3Prompt = `You are a sales training content creator. Generate exactly 3 voice-note-style audio scripts for the sales tool: "${wizardData.name}".
+    const rawText = await callGeminiLarge(systemPrompt, prompt, 6144)
+    console.log(`[ToolOnboard] Step 2 completed in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+
+    type Result = { faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }
+    let parsed = safeJsonParse<Result>(rawText, 'step2-kb-content')
+
+    if (!parsed) {
+      console.log('[ToolOnboard] Step 2 JSON parse failed, retrying...')
+      const retry = await callGeminiLarge(
+        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
+        prompt, 6144
+      )
+      parsed = safeJsonParse<Result>(retry, 'step2-retry')
+    }
+
+    if (!parsed?.faqs || !parsed?.objections || !parsed?.scripts) {
+      return { error: 'AI could not generate the knowledge base content. Please try again.' }
+    }
+    return { data: parsed }
+  } catch (error: unknown) {
+    console.error('[ToolOnboard] Step 2 error:', error)
+    return { error: (error as Error).message || 'Failed to generate FAQs and scripts.' }
+  }
+}
+
+// ── STEP 3: Voice notes (~5-10s) ─────────────────────────────────────────
+// Smallest call. Always completes quickly.
+
+export async function generateStep3_VoiceNotes(
+  wizardData: OnboardWizardData
+): Promise<ActionResult<{ voice_notes: GeneratedToolPackage['voice_notes'] }>> {
+  try {
+    await requireAdmin()
+    const t0 = Date.now()
+
+    const prompt = `You are a sales training content creator. Generate exactly 3 voice-note-style audio scripts for the sales tool: "${wizardData.name}".
 
 Tool context:
 - Pricing: ${wizardData.pricing || 'not specified'}
@@ -253,84 +323,59 @@ Return ONLY valid JSON (no markdown fences, no explanation) in exactly this form
   ]
 }`
 
-    console.log('[ToolOnboard] Starting 3-call generation for:', wizardData.name)
+    const rawText = await callGeminiLarge(
+      'You are a sales training content creator. Write in Hinglish style.',
+      prompt, 2048
+    )
+    console.log(`[ToolOnboard] Step 3 completed in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
 
-    // Run calls in parallel — token limits tuned to reduce latency on hosted environments
-    const [call1Text, call2Text, call3Text] = await Promise.all([
-      callGeminiLarge(systemPrompt, call1Prompt, 4096),   // course structure + summary
-      callGeminiLarge(systemPrompt, call2Prompt, 6144),   // FAQs + objections + scripts (largest)
-      callGeminiLarge(systemPrompt, call3Prompt, 2048),   // voice notes (small)
-    ])
+    type Result = { voice_notes: GeneratedToolPackage['voice_notes'] }
+    let parsed = safeJsonParse<Result>(rawText, 'step3-voice-notes')
 
-    console.log('[ToolOnboard] Call 1 raw (first 200):', call1Text.slice(0, 200))
-    console.log('[ToolOnboard] Call 2 raw (first 200):', call2Text.slice(0, 200))
-    console.log('[ToolOnboard] Call 3 raw (first 200):', call3Text.slice(0, 200))
-
-    type Call1Result = { knowledge_summary: string; course: GeneratedToolPackage['course'] }
-    type Call2Result = { faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }
-    type Call3Result = { voice_notes: GeneratedToolPackage['voice_notes'] }
-
-    const part1 = safeJsonParse<Call1Result>(call1Text, 'course+summary')
-    const part2 = safeJsonParse<Call2Result>(call2Text, 'kb-content')
-    const part3 = safeJsonParse<Call3Result>(call3Text, 'voice-notes')
-
-    // Retry failed parts with simpler prompts
-    let finalPart1 = part1
-    let finalPart2 = part2
-    let finalPart3 = part3
-
-    if (!finalPart1) {
-      console.log('[ToolOnboard] Call 1 failed, retrying with stricter prompt...')
-      const retryText = await callGeminiLarge(
+    if (!parsed) {
+      console.log('[ToolOnboard] Step 3 JSON parse failed, retrying...')
+      const retry = await callGeminiLarge(
         'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
-        call1Prompt
+        prompt, 2048
       )
-      finalPart1 = safeJsonParse<Call1Result>(retryText, 'course+summary retry')
+      parsed = safeJsonParse<Result>(retry, 'step3-retry')
     }
 
-    if (!finalPart2) {
-      console.log('[ToolOnboard] Call 2 failed, retrying with stricter prompt...')
-      const retryText = await callGeminiLarge(
-        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
-        call2Prompt
-      )
-      finalPart2 = safeJsonParse<Call2Result>(retryText, 'kb-content retry')
+    if (!parsed?.voice_notes) {
+      return { error: 'AI could not generate the voice notes. Please try again.' }
     }
-
-    if (!finalPart3) {
-      console.log('[ToolOnboard] Call 3 failed, retrying with stricter prompt...')
-      const retryText = await callGeminiLarge(
-        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
-        call3Prompt
-      )
-      finalPart3 = safeJsonParse<Call3Result>(retryText, 'voice-notes retry')
-    }
-
-    if (!finalPart1 || !finalPart1.knowledge_summary || !finalPart1.course) {
-      return { error: 'AI could not generate the course structure. Please try again in a moment.' }
-    }
-    if (!finalPart2 || !finalPart2.faqs || !finalPart2.objections || !finalPart2.scripts) {
-      return { error: 'AI could not generate the knowledge base content. Please try again in a moment.' }
-    }
-    if (!finalPart3 || !finalPart3.voice_notes) {
-      return { error: 'AI could not generate the voice notes. Please try again in a moment.' }
-    }
-
-    const parsed: GeneratedToolPackage = {
-      knowledge_summary: finalPart1.knowledge_summary,
-      course: finalPart1.course,
-      faqs: finalPart2.faqs,
-      objections: finalPart2.objections,
-      scripts: finalPart2.scripts,
-      voice_notes: finalPart3.voice_notes,
-    }
-
-    console.log('[ToolOnboard] Success — FAQs:', parsed.faqs.length, '| Objections:', parsed.objections.length, '| Scripts:', parsed.scripts.length, '| Voice Notes:', parsed.voice_notes.length)
-
     return { data: parsed }
   } catch (error: unknown) {
-    console.error('[ToolOnboard] generateToolPackage error:', error)
-    return { error: (error as Error).message || 'Failed to generate tool package' }
+    console.error('[ToolOnboard] Step 3 error:', error)
+    return { error: (error as Error).message || 'Failed to generate voice notes.' }
+  }
+}
+
+// ── Legacy wrapper (sequential) — kept for any other callers ─────────────
+// Calls the 3 step functions sequentially. Slower than the old parallel
+// approach but 100% reliable within Hostinger's 60s nginx ceiling.
+
+export async function generateToolPackage(
+  wizardData: OnboardWizardData
+): Promise<ActionResult<GeneratedToolPackage>> {
+  const r1 = await generateStep1_CourseAndSummary(wizardData)
+  if (r1.error || !r1.data) return { error: r1.error || 'Step 1 failed' }
+
+  const r2 = await generateStep2_KBContent(wizardData)
+  if (r2.error || !r2.data) return { error: r2.error || 'Step 2 failed' }
+
+  const r3 = await generateStep3_VoiceNotes(wizardData)
+  if (r3.error || !r3.data) return { error: r3.error || 'Step 3 failed' }
+
+  return {
+    data: {
+      knowledge_summary: r1.data.knowledge_summary,
+      course: r1.data.course,
+      faqs: r2.data.faqs,
+      objections: r2.data.objections,
+      scripts: r2.data.scripts,
+      voice_notes: r3.data.voice_notes,
+    }
   }
 }
 
