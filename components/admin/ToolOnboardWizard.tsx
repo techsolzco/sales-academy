@@ -192,15 +192,26 @@ export function ToolOnboardWizard() {
 
     const data = { ...wizardData, features: wizardData.features?.filter(f => f.trim() !== '') }
 
-    // Sequential: 4 separate HTTP requests, each ~10-15s max
+    // Cooldown between steps to stay within Gemini free-tier RPM quota.
+    // Each step uses 1-2 Gemini calls (~10-15s each). Without gaps, 4 steps
+    // back-to-back fires 4-8 requests in <60s, exceeding RPM limit → 429.
+    // 15s gap between steps spreads them safely over ~100s total.
+    const STEP_COOLDOWN_MS = 15000
+
     const r1 = await runStep1(data)
     if (!r1) return
+
+    await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
 
     const r2a = await runStep2a(data)
     if (!r2a) return
 
+    await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
+
     const r2b = await runStep2b(data)
     if (!r2b) return
+
+    await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
 
     const r3 = await runStep3(data)
     if (!r3) return
@@ -214,15 +225,19 @@ export function ToolOnboardWizard() {
     setError(null)
 
     const data = { ...wizardData, features: wizardData.features?.filter(f => f.trim() !== '') }
+    const STEP_COOLDOWN_MS = 15000
 
     if (failedStep === '1') {
       setFailedStep(null)
       const r1 = await runStep1(data)
       if (!r1) return
+      await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
       const r2a = await runStep2a(data)
       if (!r2a) return
+      await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
       const r2b = await runStep2b(data)
       if (!r2b) return
+      await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
       const r3 = await runStep3(data)
       if (!r3) return
       assembleAndAdvance(r1, r2a, r2b, r3)
@@ -230,8 +245,10 @@ export function ToolOnboardWizard() {
       setFailedStep(null)
       const r2a = await runStep2a(data)
       if (!r2a) return
+      await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
       const r2b = await runStep2b(data)
       if (!r2b) return
+      await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
       const r3 = await runStep3(data)
       if (!r3) return
       assembleAndAdvance(part1, r2a, r2b, r3)
@@ -239,6 +256,7 @@ export function ToolOnboardWizard() {
       setFailedStep(null)
       const r2b = await runStep2b(data)
       if (!r2b) return
+      await new Promise(r => setTimeout(r, STEP_COOLDOWN_MS))
       const r3 = await runStep3(data)
       if (!r3) return
       assembleAndAdvance(part1, part2a, r2b, r3)
