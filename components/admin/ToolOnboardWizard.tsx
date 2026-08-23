@@ -29,7 +29,7 @@ import type {
   GeneratedContentBlock,
   GeneratedCourse
 } from '@/types'
-import { generateStep1_CourseAndSummary, generateStep2_KBContent, generateStep3_VoiceNotes, saveToolPackage } from '@/lib/actions/tool-onboard'
+import { generateStep1_CourseAndSummary, generateStep2a_FAQs, generateStep2b_ObjectionsAndScripts, generateStep3_VoiceNotes, saveToolPackage } from '@/lib/actions/tool-onboard'
 
 const CATEGORIES: ToolCategory[] = [
   'AI Tools',
@@ -61,19 +61,21 @@ export function ToolOnboardWizard() {
     brief: ''
   })
 
-  // Step 2 sub-step progress
+  // Step 2 sub-step progress (4 sub-steps now)
   const [subStep1, setSubStep1] = useState<SubStepState>(null)
-  const [subStep2, setSubStep2] = useState<SubStepState>(null)
+  const [subStep2a, setSubStep2a] = useState<SubStepState>(null)
+  const [subStep2b, setSubStep2b] = useState<SubStepState>(null)
   const [subStep3, setSubStep3] = useState<SubStepState>(null)
 
   // Partial results — preserved across per-step retries
   const [part1, setPart1] = useState<{ knowledge_summary: string; course: GeneratedToolPackage['course'] } | null>(null)
-  const [part2, setPart2] = useState<{ faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] } | null>(null)
+  const [part2a, setPart2a] = useState<{ faqs: GeneratedToolPackage['faqs'] } | null>(null)
+  const [part2b, setPart2b] = useState<{ objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] } | null>(null)
   const [part3, setPart3] = useState<{ voice_notes: GeneratedToolPackage['voice_notes'] } | null>(null)
 
   // General error
   const [error, setError] = useState<string | null>(null)
-  const [failedStep, setFailedStep] = useState<1 | 2 | 3 | null>(null)
+  const [failedStep, setFailedStep] = useState<'1' | '2a' | '2b' | '3' | null>(null)
 
   // Step 3/4 State
   const [packageData, setPackageData] = useState<GeneratedToolPackage | null>(null)
@@ -84,19 +86,20 @@ export function ToolOnboardWizard() {
   const [isSaving, setIsSaving] = useState(false)
   const [successData, setSuccessData] = useState<{ toolId: string } | null>(null)
 
-  // Assemble and advance once all 3 parts are done
+  // Assemble and advance once all 4 parts are done
   const assembleAndAdvance = (
     p1: typeof part1,
-    p2: typeof part2,
+    p2a: typeof part2a,
+    p2b: typeof part2b,
     p3: typeof part3
   ) => {
-    if (!p1 || !p2 || !p3) return
+    if (!p1 || !p2a || !p2b || !p3) return
     setPackageData({
       knowledge_summary: p1.knowledge_summary,
       course: p1.course,
-      faqs: p2.faqs,
-      objections: p2.objections,
-      scripts: p2.scripts,
+      faqs: p2a.faqs,
+      objections: p2b.objections,
+      scripts: p2b.scripts,
       voice_notes: p3.voice_notes,
     })
     setStep(3)
@@ -125,7 +128,7 @@ export function ToolOnboardWizard() {
     if (!res || res.error || !res.data) {
       setSubStep1('error')
       setError(res?.error || 'Failed to generate course structure. Please retry.')
-      setFailedStep(1)
+      setFailedStep('1')
       return null
     }
     setSubStep1('done')
@@ -133,17 +136,31 @@ export function ToolOnboardWizard() {
     return res.data
   }
 
-  const runStep2 = async (data: OnboardWizardData): Promise<typeof part2 | null> => {
-    setSubStep2('loading')
-    const res = await generateStep2_KBContent(data)
+  const runStep2a = async (data: OnboardWizardData): Promise<typeof part2a | null> => {
+    setSubStep2a('loading')
+    const res = await generateStep2a_FAQs(data)
     if (!res || res.error || !res.data) {
-      setSubStep2('error')
-      setError(res?.error || 'Failed to generate FAQs and scripts. Please retry.')
-      setFailedStep(2)
+      setSubStep2a('error')
+      setError(res?.error || 'Failed to generate FAQs. Please retry.')
+      setFailedStep('2a')
       return null
     }
-    setSubStep2('done')
-    setPart2(res.data)
+    setSubStep2a('done')
+    setPart2a(res.data)
+    return res.data
+  }
+
+  const runStep2b = async (data: OnboardWizardData): Promise<typeof part2b | null> => {
+    setSubStep2b('loading')
+    const res = await generateStep2b_ObjectionsAndScripts(data)
+    if (!res || res.error || !res.data) {
+      setSubStep2b('error')
+      setError(res?.error || 'Failed to generate objections & scripts. Please retry.')
+      setFailedStep('2b')
+      return null
+    }
+    setSubStep2b('done')
+    setPart2b(res.data)
     return res.data
   }
 
@@ -153,7 +170,7 @@ export function ToolOnboardWizard() {
     if (!res || res.error || !res.data) {
       setSubStep3('error')
       setError(res?.error || 'Failed to generate voice notes. Please retry.')
-      setFailedStep(3)
+      setFailedStep('3')
       return null
     }
     setSubStep3('done')
@@ -169,53 +186,67 @@ export function ToolOnboardWizard() {
     }
     setError(null)
     setFailedStep(null)
-    setPart1(null); setPart2(null); setPart3(null)
-    setSubStep1(null); setSubStep2(null); setSubStep3(null)
+    setPart1(null); setPart2a(null); setPart2b(null); setPart3(null)
+    setSubStep1(null); setSubStep2a(null); setSubStep2b(null); setSubStep3(null)
     setStep(2)
 
     const data = { ...wizardData, features: wizardData.features?.filter(f => f.trim() !== '') }
 
-    // Sequential: each step is a separate HTTP request, max ~20s each
+    // Sequential: 4 separate HTTP requests, each ~10-15s max
     const r1 = await runStep1(data)
-    if (!r1) return  // step 1 failed — stay on step 2 with error UI
+    if (!r1) return
 
-    const r2 = await runStep2(data)
-    if (!r2) return  // step 2 failed
+    const r2a = await runStep2a(data)
+    if (!r2a) return
+
+    const r2b = await runStep2b(data)
+    if (!r2b) return
 
     const r3 = await runStep3(data)
-    if (!r3) return  // step 3 failed
+    if (!r3) return
 
-    assembleAndAdvance(r1, r2, r3)
+    assembleAndAdvance(r1, r2a, r2b, r3)
   }
 
-  // Retry just the failed step (earlier steps already succeeded)
+  // Retry from the failed step onward (earlier steps already succeeded)
   const handleRetryStep = async () => {
     if (!failedStep) return
     setError(null)
 
     const data = { ...wizardData, features: wizardData.features?.filter(f => f.trim() !== '') }
 
-    if (failedStep === 1) {
+    if (failedStep === '1') {
       setFailedStep(null)
       const r1 = await runStep1(data)
       if (!r1) return
-      const r2 = await runStep2(data)
-      if (!r2) return
+      const r2a = await runStep2a(data)
+      if (!r2a) return
+      const r2b = await runStep2b(data)
+      if (!r2b) return
       const r3 = await runStep3(data)
       if (!r3) return
-      assembleAndAdvance(r1, r2, r3)
-    } else if (failedStep === 2) {
+      assembleAndAdvance(r1, r2a, r2b, r3)
+    } else if (failedStep === '2a') {
       setFailedStep(null)
-      const r2 = await runStep2(data)
-      if (!r2) return
-      const r3 = part3 ?? await runStep3(data)
+      const r2a = await runStep2a(data)
+      if (!r2a) return
+      const r2b = await runStep2b(data)
+      if (!r2b) return
+      const r3 = await runStep3(data)
       if (!r3) return
-      assembleAndAdvance(part1, r2, r3)
-    } else if (failedStep === 3) {
+      assembleAndAdvance(part1, r2a, r2b, r3)
+    } else if (failedStep === '2b') {
+      setFailedStep(null)
+      const r2b = await runStep2b(data)
+      if (!r2b) return
+      const r3 = await runStep3(data)
+      if (!r3) return
+      assembleAndAdvance(part1, part2a, r2b, r3)
+    } else if (failedStep === '3') {
       setFailedStep(null)
       const r3 = await runStep3(data)
       if (!r3) return
-      assembleAndAdvance(part1, part2, r3)
+      assembleAndAdvance(part1, part2a, part2b, r3)
     }
   }
 
@@ -396,7 +427,7 @@ export function ToolOnboardWizard() {
         </div>
       )}
 
-      {/* Step 2: Generating — 3 sequential sub-steps */}
+      {/* Step 2: Generating — 4 sequential sub-steps */}
       {step === 2 && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-8 md:p-12 animate-fade-in border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center min-h-[400px] gap-8">
           <div className="text-center">
@@ -407,9 +438,10 @@ export function ToolOnboardWizard() {
           {/* Sub-step rows */}
           <div className="w-full max-w-sm space-y-3">
             {([
-              { state: subStep1, label: 'Course structure & summary', icon: '📚' },
-              { state: subStep2, label: 'FAQs, objections & scripts',  icon: '💬' },
-              { state: subStep3, label: 'Voice note scripts',           icon: '🎙️' },
+              { state: subStep1,  label: 'Course structure & summary',   icon: '📚' },
+              { state: subStep2a, label: 'FAQs',                         icon: '❓' },
+              { state: subStep2b, label: 'Objections & scripts',         icon: '💬' },
+              { state: subStep3,  label: 'Voice note scripts',           icon: '🎙️' },
             ] as const).map(({ state, label, icon }, i) => (
               <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border transition-all
                 ${state === 'done'    ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20' :

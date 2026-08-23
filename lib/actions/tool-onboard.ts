@@ -245,12 +245,13 @@ Requirements: 2 modules, each with 1-2 lessons, each lesson with 3-4 content blo
   }
 }
 
-// ── STEP 2: FAQs + Objections + Scripts (~12-18s) ────────────────────────
-// One Gemini call. Largest payload but still well within 60s ceiling.
+// ── STEP 2a: FAQs only (~10-15s) ─────────────────────────────────────────
+// Split from old Step 2 which combined FAQs+objections+scripts into one
+// massive call that exceeded maxOutputTokens and produced truncated JSON.
 
-export async function generateStep2_KBContent(
+export async function generateStep2a_FAQs(
   wizardData: OnboardWizardData
-): Promise<ActionResult<{ faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }>> {
+): Promise<ActionResult<{ faqs: GeneratedToolPackage['faqs'] }>> {
   try {
     await requireAdmin()
     const { systemPrompt, toolContext } = await buildGenerationContext(wizardData)
@@ -258,7 +259,7 @@ export async function generateStep2_KBContent(
 
     const prompt = `${toolContext}
 
-Generate ONLY the knowledge base content (FAQs, objections, scripts) for this sales tool.
+Generate ONLY the FAQs for this sales tool.
 Return ONLY valid JSON (no markdown, no explanation):
 {
   "faqs": [
@@ -273,7 +274,54 @@ Return ONLY valid JSON (no markdown, no explanation):
       "category": "Pricing|Product|Warranty|General|Technical|Comparison|Payment|Privacy|Delivery|Features|Policy|Usage|Support|Audience|Guideline",
       "tags": ["tag1"]
     }
-  ],
+  ]
+}
+Requirements:
+- Exactly 8 FAQs covering a mix of: Pricing, Product, Warranty, General, Technical, Features, Usage, Support
+- Hinglish fields MUST be in Hinglish (Roman script, not Urdu script) and MUST match their English counterpart
+- Make content specific to "${wizardData.name}" and WhatsApp-ready`
+
+    const rawText = await callGeminiLarge(systemPrompt, prompt, 8192)
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1)
+    console.log(`[ToolOnboard] Step 2a (FAQs) completed in ${elapsed}s — ${rawText.length} chars`)
+
+    type Result = { faqs: GeneratedToolPackage['faqs'] }
+    let parsed = safeJsonParse<Result>(rawText, 'step2a-faqs')
+
+    if (!parsed) {
+      console.warn(`[ToolOnboard] Step 2a parse failed. Raw text (first 500): ${rawText.slice(0, 500)}`)
+      const retry = await callGeminiLarge(
+        'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
+        prompt, 8192
+      )
+      parsed = safeJsonParse<Result>(retry, 'step2a-retry')
+    }
+
+    if (!parsed?.faqs || !Array.isArray(parsed.faqs) || parsed.faqs.length === 0) {
+      return { error: `Step 2a failed: AI returned ${rawText.length} chars but JSON was invalid or missing "faqs" array. This is likely a response format issue, not a rate limit. Please retry.` }
+    }
+    return { data: parsed }
+  } catch (error: unknown) {
+    console.error('[ToolOnboard] Step 2a error:', error)
+    return { error: (error as Error).message || 'Failed to generate FAQs.' }
+  }
+}
+
+// ── STEP 2b: Objections + Scripts (~8-12s) ───────────────────────────────
+
+export async function generateStep2b_ObjectionsAndScripts(
+  wizardData: OnboardWizardData
+): Promise<ActionResult<{ objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }>> {
+  try {
+    await requireAdmin()
+    const { systemPrompt, toolContext } = await buildGenerationContext(wizardData)
+    const t0 = Date.now()
+
+    const prompt = `${toolContext}
+
+Generate ONLY the objection responses and sales scripts for this sales tool.
+Return ONLY valid JSON (no markdown, no explanation):
+{
   "objections": [
     {
       "objection_text": "What the customer says",
@@ -288,7 +336,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   "scripts": [
     {
       "title": "Script title",
-      "script_type": "greeting|whatsapp|voice_note_script|follow_up|closing|payment|objection_response|upsell|cross_sell|after_sales|review_request",
+      "script_type": "greeting|whatsapp|follow_up|closing|payment|objection_response|upsell|after_sales",
       "content": "Full script text in English",
       "content_hinglish": "Same script in Hinglish",
       "when_to_use": "When to send this",
@@ -297,34 +345,34 @@ Return ONLY valid JSON (no markdown, no explanation):
   ]
 }
 Requirements:
-- FAQs: exactly 12 FAQs, cover a mix: Pricing, Product, Warranty, General, Technical, Comparison, Payment, Privacy, Delivery, Features, Policy, Usage, Support, Audience, Guideline
-- Objections: exactly 8 objections — 3 beginner, 3 intermediate, 2 advanced
-- Scripts: exactly 8 scripts (one each): greeting, whatsapp, follow_up, closing, payment, objection_response, upsell, after_sales
+- Objections: exactly 8 — 3 beginner, 3 intermediate, 2 advanced
+- Scripts: exactly 8 (one each): greeting, whatsapp, follow_up, closing, payment, objection_response, upsell, after_sales
 - Hinglish fields MUST be in Hinglish (Roman script, not Urdu script) and MUST match their English counterpart
 - Make content specific to "${wizardData.name}" and WhatsApp-ready`
 
     const rawText = await callGeminiLarge(systemPrompt, prompt, 6144)
-    console.log(`[ToolOnboard] Step 2 completed in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1)
+    console.log(`[ToolOnboard] Step 2b (Objections+Scripts) completed in ${elapsed}s — ${rawText.length} chars`)
 
-    type Result = { faqs: GeneratedToolPackage['faqs']; objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }
-    let parsed = safeJsonParse<Result>(rawText, 'step2-kb-content')
+    type Result = { objections: GeneratedToolPackage['objections']; scripts: GeneratedToolPackage['scripts'] }
+    let parsed = safeJsonParse<Result>(rawText, 'step2b-objections+scripts')
 
     if (!parsed) {
-      console.log('[ToolOnboard] Step 2 JSON parse failed, retrying...')
+      console.warn(`[ToolOnboard] Step 2b parse failed. Raw text (first 500): ${rawText.slice(0, 500)}`)
       const retry = await callGeminiLarge(
         'You are a JSON generator. Return ONLY valid JSON, no markdown, no explanation.',
         prompt, 6144
       )
-      parsed = safeJsonParse<Result>(retry, 'step2-retry')
+      parsed = safeJsonParse<Result>(retry, 'step2b-retry')
     }
 
-    if (!parsed?.faqs || !parsed?.objections || !parsed?.scripts) {
-      return { error: 'AI could not generate the knowledge base content. Please try again.' }
+    if (!parsed?.objections || !parsed?.scripts) {
+      return { error: `Step 2b failed: AI returned ${rawText.length} chars but JSON was invalid or missing "objections"/"scripts". Please retry.` }
     }
     return { data: parsed }
   } catch (error: unknown) {
-    console.error('[ToolOnboard] Step 2 error:', error)
-    return { error: (error as Error).message || 'Failed to generate FAQs and scripts.' }
+    console.error('[ToolOnboard] Step 2b error:', error)
+    return { error: (error as Error).message || 'Failed to generate objections and scripts.' }
   }
 }
 
@@ -394,8 +442,6 @@ Return ONLY valid JSON (no markdown fences, no explanation) in exactly this form
 }
 
 // ── Legacy wrapper (sequential) — kept for any other callers ─────────────
-// Calls the 3 step functions sequentially. Slower than the old parallel
-// approach but 100% reliable within Hostinger's 60s nginx ceiling.
 
 export async function generateToolPackage(
   wizardData: OnboardWizardData
@@ -403,8 +449,11 @@ export async function generateToolPackage(
   const r1 = await generateStep1_CourseAndSummary(wizardData)
   if (r1.error || !r1.data) return { error: r1.error || 'Step 1 failed' }
 
-  const r2 = await generateStep2_KBContent(wizardData)
-  if (r2.error || !r2.data) return { error: r2.error || 'Step 2 failed' }
+  const r2a = await generateStep2a_FAQs(wizardData)
+  if (r2a.error || !r2a.data) return { error: r2a.error || 'Step 2a failed' }
+
+  const r2b = await generateStep2b_ObjectionsAndScripts(wizardData)
+  if (r2b.error || !r2b.data) return { error: r2b.error || 'Step 2b failed' }
 
   const r3 = await generateStep3_VoiceNotes(wizardData)
   if (r3.error || !r3.data) return { error: r3.error || 'Step 3 failed' }
@@ -413,9 +462,9 @@ export async function generateToolPackage(
     data: {
       knowledge_summary: r1.data.knowledge_summary,
       course: r1.data.course,
-      faqs: r2.data.faqs,
-      objections: r2.data.objections,
-      scripts: r2.data.scripts,
+      faqs: r2a.data.faqs,
+      objections: r2b.data.objections,
+      scripts: r2b.data.scripts,
       voice_notes: r3.data.voice_notes,
     }
   }
