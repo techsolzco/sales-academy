@@ -10,106 +10,79 @@ function getServiceClient() {
   )
 }
 
-// Only gemini-3.5-flash works on this API key (live-tested 2026-08-23).
-const GEMINI_MODEL = 'gemini-3.5-flash'
-
 /**
- * Generates a comprehensive knowledge summary by reading the tool's metadata
- * AND all linked FAQs, scripts, objections, and voice notes.
- * This is the core improvement: previous version only used tool metadata.
+ * Builds a comprehensive knowledge summary by concatenating the tool's metadata
+ * AND all linked FAQs, scripts, objections, and voice notes — NO AI call needed.
+ * 
+ * This is intentionally NOT an AI-generated summary. It's a structured dump of all
+ * content so that Ask AI always has complete, up-to-date context. The admin can
+ * click "Regenerate AI Knowledge" on the Tool Tree page if they want a polished
+ * AI-written version.
+ * 
+ * Why no Gemini call? Because:
+ * 1. Fire-and-forget sync happens on every FAQ/script/objection create/update/delete
+ * 2. The free Gemini tier has strict RPM limits → frequent 429 failures
+ * 3. A 429 silently drops the sync, leaving stale summaries
+ * 4. Raw content is actually MORE useful to the AI than a summary-of-a-summary
  */
-async function generateKnowledgeSummary(
+function buildKnowledgeSummary(
   tool: { name: string; description?: string | null; pricing?: string | null; best_for?: string | null; features?: string[] | null },
   faqs: Array<{ question: string; short_answer: string }>,
   scripts: Array<{ title: string; content: string }>,
   objections: Array<{ objection_text: string; recommended_response: string }>,
-  voiceNotes: Array<{ title: string; transcript: string }>
-): Promise<string | null> {
-  const key = process.env.GEMINI_API_KEY
-  if (!key) return null
-
-  // Build a rich context from ALL tool content
-  const sections: string[] = []
+  voiceNotes: Array<{ title: string; transcript: string | null }>
+): string {
+  const parts: string[] = []
 
   // Tool basics
-  sections.push(`Tool Name: ${tool.name}`)
-  if (tool.description) sections.push(`Description: ${tool.description}`)
-  if (tool.pricing) sections.push(`Pricing: ${tool.pricing}`)
-  if (tool.best_for) sections.push(`Best For: ${tool.best_for}`)
-  if (tool.features?.length) sections.push(`Key Features: ${tool.features.join(', ')}`)
+  parts.push(`${tool.name} — Key Facts:`)
+  if (tool.description) parts.push(`About: ${tool.description}`)
+  if (tool.pricing) parts.push(`Pricing: ${tool.pricing}`)
+  if (tool.best_for) parts.push(`Best for: ${tool.best_for}`)
+  if (tool.features?.length) parts.push(`Features: ${tool.features.join(', ')}`)
 
-  // FAQs — these contain the most useful customer-facing knowledge
+  // FAQs — most useful for Ask AI
   if (faqs.length > 0) {
-    sections.push('\n--- FAQs (Questions customers ask) ---')
-    faqs.forEach(f => sections.push(`Q: ${f.question}\nA: ${f.short_answer}`))
+    parts.push('')
+    parts.push('Frequently Asked Questions:')
+    faqs.forEach(f => parts.push(`Q: ${f.question}\nA: ${f.short_answer}`))
   }
 
-  // Objections — key selling challenge responses
+  // Objections
   if (objections.length > 0) {
-    sections.push('\n--- Common Objections ---')
-    objections.forEach(o => sections.push(`Objection: ${o.objection_text}\nResponse: ${o.recommended_response}`))
+    parts.push('')
+    parts.push('Common Objections & Responses:')
+    objections.forEach(o => parts.push(`Objection: ${o.objection_text}\nResponse: ${o.recommended_response}`))
   }
 
-  // Scripts — selling approach and messaging
+  // Scripts (truncated to keep summary manageable)
   if (scripts.length > 0) {
-    sections.push('\n--- Sales Scripts ---')
-    scripts.forEach(s => sections.push(`${s.title}: ${s.content.slice(0, 200)}`))
+    parts.push('')
+    parts.push('Sales Scripts:')
+    scripts.forEach(s => parts.push(`${s.title}: ${s.content.slice(0, 300)}`))
   }
 
   // Voice notes
   if (voiceNotes.length > 0) {
-    sections.push('\n--- Voice Note Topics ---')
-    voiceNotes.forEach(v => sections.push(`${v.title}: ${v.transcript.slice(0, 150)}`))
-  }
-
-  const contentBlock = sections.join('\n')
-
-  const prompt = `You are creating an internal AI knowledge summary for a sales training platform. 
-Below is ALL the content we have about the tool "${tool.name}" — including its metadata, FAQs, objection responses, sales scripts, and voice notes.
-
-${contentBlock}
-
-Based on ALL of the above content, write a comprehensive 5-8 sentence knowledge summary that covers:
-1. What the tool is and what it does
-2. Exact pricing and any free/student offers
-3. Key features and selling points
-4. Common customer concerns and how to address them
-5. Any warranty, refund, or policy details mentioned in the FAQs
-
-This summary will be used by an AI assistant to answer salesman questions — it must contain specific facts, numbers, and policies, NOT vague descriptions. Write in plain English. Return ONLY the summary text, no JSON, no markdown formatting.`
-
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }], role: 'user' }],
-    generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
-  })
-
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
+    parts.push('')
+    parts.push('Voice Note Topics:')
+    voiceNotes.forEach(v => {
+      const transcript = v.transcript ? v.transcript.slice(0, 200) : '(no transcript)'
+      parts.push(`${v.title}: ${transcript}`)
     })
-    if (!res.ok) {
-      console.warn(`[SyncKnowledge] Gemini returned ${res.status}`)
-      return null
-    }
-    const data = await res.json()
-    const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
-    if (text?.trim()) return text.trim()
-  } catch (e) {
-    console.warn('[SyncKnowledge] Gemini call failed:', e)
   }
-  return null
+
+  return parts.join('\n')
 }
 
 /**
  * Non-blocking knowledge sync — call after any FAQ/script/objection/voice note mutation.
  * Uses service role key directly, no admin session required.
  * 
+ * NO GEMINI CALL — just concatenates raw content. Instant and reliable.
+ * 
  * RESPECTS MANUAL EDITS: If knowledge_summary_source = 'manual', 
- * this function will NOT overwrite the summary. The admin chose to manually
- * edit it, and auto-sync should not silently replace their work.
+ * this function will NOT overwrite the summary.
  */
 export async function syncToolKnowledge(toolId: string | null | undefined) {
   if (!toolId) return
@@ -145,10 +118,10 @@ export async function syncToolKnowledge(toolId: string | null | undefined) {
     const objections = objectionsRes.data ?? []
     const voiceNotes = voiceNotesRes.data ?? []
 
-    console.log(`[SyncKnowledge] Generating summary for "${tool.name}": ${faqs.length} FAQs, ${scripts.length} scripts, ${objections.length} objections, ${voiceNotes.length} voice notes`)
+    // Build summary from raw content — no Gemini call
+    const summary = buildKnowledgeSummary(tool, faqs, scripts, objections, voiceNotes)
 
-    const summary = await generateKnowledgeSummary(tool, faqs, scripts, objections, voiceNotes)
-    if (!summary) return
+    console.log(`[SyncKnowledge] Updated "${tool.name}": ${faqs.length} FAQs, ${scripts.length} scripts, ${objections.length} objections, ${voiceNotes.length} voice notes → ${summary.length} chars`)
 
     await sb
       .from('tools')
@@ -159,9 +132,7 @@ export async function syncToolKnowledge(toolId: string | null | undefined) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', toolId)
-
-    console.log(`[SyncKnowledge] Summary updated for "${tool.name}" (${summary.length} chars)`)
   } catch (e) {
-    console.warn('[SyncKnowledge] Non-fatal refresh error:', e)
+    console.warn('[SyncKnowledge] Non-fatal error:', e)
   }
 }
