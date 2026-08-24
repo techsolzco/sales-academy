@@ -168,27 +168,34 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Category</label>
-              <select
-                value={form.category}
-                onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
-              >
-                <option value="General">General</option>
-                <option value="Pricing">Pricing</option>
-                <option value="Product">Product</option>
-                <option value="Warranty">Warranty</option>
-                <option value="Technical">Technical</option>
-                <option value="Comparison">Comparison</option>
-                <option value="Payment">Payment</option>
-                <option value="Privacy">Privacy</option>
-                <option value="Delivery">Delivery</option>
-                <option value="Features">Features</option>
-                <option value="Policy">Policy</option>
-                <option value="Usage">Usage</option>
-                <option value="Support">Support</option>
-                <option value="Audience">Audience</option>
-                <option value="Guideline">Guideline</option>
-              </select>
+              {(() => {
+                const PRESETS = ['General','Pricing','Product','Warranty','Technical','Comparison','Payment','Privacy','Delivery','Features','Policy','Usage','Support','Audience','Guideline']
+                const isCustom = form.category !== '' && !PRESETS.includes(form.category)
+                return (
+                  <div className="space-y-1">
+                    <select
+                      value={isCustom ? '__custom__' : form.category}
+                      onChange={e => {
+                        if (e.target.value === '__custom__') setForm(f => ({ ...f, category: '' }))
+                        else setForm(f => ({ ...f, category: e.target.value }))
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                    >
+                      {PRESETS.map(p => <option key={p} value={p}>{p}</option>)}
+                      <option value="__custom__">+ Custom…</option>
+                    </select>
+                    {(isCustom || form.category === '') && (
+                      <input
+                        autoFocus
+                        value={form.category}
+                        onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                        placeholder="Type new category…"
+                        className="w-full px-3 py-2 rounded-lg border border-brand-300 dark:border-brand-600 bg-white dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                      />
+                    )}
+                  </div>
+                )
+              })()}
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Difficulty</label>

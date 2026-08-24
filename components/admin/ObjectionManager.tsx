@@ -219,21 +219,9 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
             className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="">All Categories</option>
-            <option value="General">General</option>
-            <option value="Pricing">Pricing</option>
-            <option value="Product">Product</option>
-            <option value="Warranty">Warranty</option>
-            <option value="Technical">Technical</option>
-            <option value="Comparison">Comparison</option>
-            <option value="Payment">Payment</option>
-            <option value="Privacy">Privacy</option>
-            <option value="Delivery">Delivery</option>
-            <option value="Features">Features</option>
-            <option value="Policy">Policy</option>
-            <option value="Usage">Usage</option>
-            <option value="Support">Support</option>
-            <option value="Audience">Audience</option>
-            <option value="Guideline">Guideline</option>
+            {Array.from(new Set(objections.map(o => o.category).filter(Boolean))).sort().map(cat => (
+              <option key={cat} value={cat!}>{cat}</option>
+            ))}
           </select>
         </div>
 
