@@ -16,10 +16,13 @@ import {
   Check,
   Loader2,
   RefreshCw,
-  Globe
+  Globe,
+  Pencil,
+  Save,
+  X
 } from 'lucide-react'
 import { ToolTreeData } from '@/types'
-import { publishToolTree, refreshToolKnowledge } from '@/lib/actions/tool-onboard'
+import { publishToolTree, refreshToolKnowledge, updateToolKnowledgeSummary } from '@/lib/actions/tool-onboard'
 
 interface ToolTreeViewProps {
   data: ToolTreeData
@@ -41,6 +44,12 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [confirmPublish, setConfirmPublish] = useState<string | null>(null)
 
+  // Knowledge summary editing state
+  const [isEditingKS, setIsEditingKS] = useState(false)
+  const [ksText, setKsText] = useState(tool.knowledge_summary || '')
+  const [isSavingKS, setIsSavingKS] = useState(false)
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false)
+
   const handlePublish = (section: 'all' | 'course' | 'faqs' | 'objections' | 'scripts') => {
     setConfirmPublish(null)
     startTransition(async () => {
@@ -55,14 +64,39 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
   }
 
   const handleRefreshKnowledge = async () => {
+    setConfirmRegenerate(false)
     setIsRefreshing(true)
     const result = await refreshToolKnowledge(data.tool.id)
     setIsRefreshing(false)
     if (result.error) {
       setErrorMsg(result.error)
     } else {
-      setSuccessMsg('AI knowledge summary updated!')
+      setSuccessMsg('AI knowledge summary regenerated from current content!')
+      setKsText(result.data || '')
+      setIsEditingKS(false)
       router.refresh()
+    }
+  }
+
+  const handleSaveKnowledgeSummary = async () => {
+    setIsSavingKS(true)
+    const result = await updateToolKnowledgeSummary(data.tool.id, ksText)
+    setIsSavingKS(false)
+    if (result.error) {
+      setErrorMsg(result.error)
+    } else {
+      setSuccessMsg('Knowledge summary saved (marked as manually edited).')
+      setIsEditingKS(false)
+      router.refresh()
+    }
+  }
+
+  const handleRegenerateClick = () => {
+    // If manually edited, show confirmation first
+    if (tool.knowledge_summary_source === 'manual') {
+      setConfirmRegenerate(true)
+    } else {
+      handleRefreshKnowledge()
     }
   }
 
@@ -136,23 +170,82 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
         <button onClick={() => setConfirmPublish('faqs')} className="min-h-[36px] px-3 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium transition">FAQs Only</button>
         <button onClick={() => setConfirmPublish('objections')} className="min-h-[36px] px-3 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-medium transition">Objections</button>
         <button onClick={() => setConfirmPublish('scripts')} className="min-h-[36px] px-3 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-medium transition">Scripts</button>
-        <button onClick={handleRefreshKnowledge} disabled={isRefreshing} className="min-h-[36px] px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium transition flex items-center gap-1 disabled:opacity-50 sm:ml-auto">
-          {isRefreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Update AI Knowledge
+        <button onClick={handleRegenerateClick} disabled={isRefreshing} className="min-h-[36px] px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium transition flex items-center gap-1 disabled:opacity-50 sm:ml-auto">
+          {isRefreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Regenerate AI Knowledge
         </button>
       </div>
 
-      {/* Knowledge Summary */}
-      {tool.knowledge_summary && (
-        <div className="bg-brand-50 dark:bg-brand-900/10 p-4 md:p-6 rounded-2xl border border-brand-100 dark:border-brand-900/30">
-          <h3 className="text-base md:text-lg font-semibold text-brand-900 dark:text-brand-300 flex items-center gap-2 mb-3">
-            <Brain className="w-5 h-5 text-brand-600 dark:text-brand-400 flex-shrink-0" />
-            AI Knowledge Summary
-          </h3>
-          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm leading-relaxed break-words">
-            {tool.knowledge_summary}
-          </p>
+      {/* Regenerate Confirmation Dialog */}
+      {confirmRegenerate && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl">
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">Overwrite Manual Edits?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              This knowledge summary was manually edited. Regenerating will replace your custom text with an AI-generated summary based on current FAQs, scripts, and objections. This cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirmRegenerate(false)} className="min-h-[44px] px-4 py-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition">Cancel</button>
+              <button onClick={handleRefreshKnowledge} disabled={isRefreshing} className="min-h-[44px] px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition disabled:opacity-50 flex items-center gap-2">
+                {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} Regenerate
+              </button>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Knowledge Summary — Editable */}
+      <div className="bg-brand-50 dark:bg-brand-900/10 p-4 md:p-6 rounded-2xl border border-brand-100 dark:border-brand-900/30">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base md:text-lg font-semibold text-brand-900 dark:text-brand-300 flex items-center gap-2">
+              <Brain className="w-5 h-5 text-brand-600 dark:text-brand-400 flex-shrink-0" />
+              AI Knowledge Summary
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              This is exactly what Ask AI knows about this tool. {tool.knowledge_summary_source === 'manual' ? '✏️ Manually edited' : '🤖 Auto-generated from content'}{tool.knowledge_summary_updated_at ? ` · Updated ${new Date(tool.knowledge_summary_updated_at).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
+            </p>
+          </div>
+          {!isEditingKS && (
+            <button
+              onClick={() => { setKsText(tool.knowledge_summary || ''); setIsEditingKS(true) }}
+              className="min-h-[36px] px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-900/40 dark:hover:bg-brand-900/60 text-brand-700 dark:text-brand-300 text-xs font-medium transition flex items-center gap-1 shrink-0"
+            >
+              <Pencil className="w-3 h-3" /> Edit
+            </button>
+          )}
+        </div>
+
+        {isEditingKS ? (
+          <div className="space-y-3">
+            <textarea
+              value={ksText}
+              onChange={e => setKsText(e.target.value)}
+              rows={6}
+              className="w-full px-4 py-3 rounded-xl border border-brand-200 dark:border-brand-800 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm leading-relaxed focus:ring-2 focus:ring-brand-500 outline-none transition resize-y"
+              placeholder="Enter the knowledge summary that Ask AI will use for this tool..."
+            />
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => setIsEditingKS(false)}
+                className="min-h-[36px] px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-medium transition flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Cancel
+              </button>
+              <button
+                onClick={handleSaveKnowledgeSummary}
+                disabled={isSavingKS || !ksText.trim()}
+                className="min-h-[36px] px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold transition flex items-center gap-1 disabled:opacity-50"
+              >
+                {isSavingKS ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Save Manual Edit
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm leading-relaxed break-words">
+            {tool.knowledge_summary || 'No knowledge summary yet. Click "Regenerate AI Knowledge" to generate one from this tool\'s content.'}
+          </p>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-4">
         {/* Course Tree */}

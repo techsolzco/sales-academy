@@ -248,6 +248,8 @@ export interface Tool {
   youtube_tutorial_link: string | null
   tags: string[]
   knowledge_summary: string | null
+  knowledge_summary_source: 'auto' | 'manual' | null
+  knowledge_summary_updated_at: string | null
   status: Status
   created_at: string
   updated_at: string

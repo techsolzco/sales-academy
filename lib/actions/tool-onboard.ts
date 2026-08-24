@@ -850,25 +850,61 @@ export async function refreshToolKnowledge(toolId: string): Promise<ActionResult
     const { data: tool } = await sb.from('tools').select('*').is('deleted_at', null).eq('id', toolId).single()
     if (!tool) return { error: 'Tool not found' }
 
-    const settings = await getAiTrainingSettings()
-    const systemPrompt = settings
-      ? `You are a sales training AI. Write all content in Hinglish style.`
-      : 'You are a sales training AI.'
+    // Fetch ALL linked content for comprehensive summary
+    const [faqsRes, scriptsRes, objectionsRes, voiceNotesRes] = await Promise.all([
+      sb.from('faqs').select('question, short_answer').eq('tool_id', toolId).is('deleted_at', null),
+      sb.from('scripts').select('title, content').eq('tool_id', toolId).is('deleted_at', null),
+      sb.from('objections').select('objection_text, recommended_response').eq('tool_id', toolId).is('deleted_at', null),
+      sb.from('voice_notes').select('title, transcript').eq('tool_id', toolId).is('deleted_at', null),
+    ])
 
-    const featuresStr = tool.features?.length ? `Features: ${tool.features.join(', ')}` : ''
-    const userPrompt = `Generate a concise 3-5 sentence knowledge summary for the sales tool "${tool.name}".
-${tool.description ? `Description: ${tool.description}` : ''}
-${tool.pricing ? `Pricing: ${tool.pricing}` : ''}
-${tool.best_for ? `Best for: ${tool.best_for}` : ''}
-${featuresStr}
+    const faqs = faqsRes.data ?? []
+    const scripts = scriptsRes.data ?? []
+    const objections = objectionsRes.data ?? []
+    const voiceNotes = voiceNotesRes.data ?? []
 
-This summary is for internal AI context only — not customer-facing. Cover key facts about this tool that a salesman would need to know (pricing, policies, features, what it does). Write in Hinglish style. Return ONLY the summary text, no JSON.`
+    // Build rich context from ALL content
+    const sections: string[] = []
+    sections.push(`Tool Name: ${tool.name}`)
+    if (tool.description) sections.push(`Description: ${tool.description}`)
+    if (tool.pricing) sections.push(`Pricing: ${tool.pricing}`)
+    if (tool.best_for) sections.push(`Best For: ${tool.best_for}`)
+    if (tool.features?.length) sections.push(`Key Features: ${tool.features.join(', ')}`)
+
+    if (faqs.length > 0) {
+      sections.push('\n--- FAQs ---')
+      faqs.forEach((f: { question: string; short_answer: string }) => sections.push(`Q: ${f.question}\nA: ${f.short_answer}`))
+    }
+    if (objections.length > 0) {
+      sections.push('\n--- Common Objections ---')
+      objections.forEach((o: { objection_text: string; recommended_response: string }) => sections.push(`Objection: ${o.objection_text}\nResponse: ${o.recommended_response}`))
+    }
+    if (scripts.length > 0) {
+      sections.push('\n--- Sales Scripts ---')
+      scripts.forEach((s: { title: string; content: string }) => sections.push(`${s.title}: ${s.content.slice(0, 200)}`))
+    }
+    if (voiceNotes.length > 0) {
+      sections.push('\n--- Voice Notes ---')
+      voiceNotes.forEach((v: { title: string; transcript: string }) => sections.push(`${v.title}: ${v.transcript.slice(0, 150)}`))
+    }
+
+    const systemPrompt = 'You are a sales training AI that creates comprehensive knowledge summaries.'
+    const userPrompt = `Based on ALL the following content about "${tool.name}", write a comprehensive 5-8 sentence knowledge summary covering: what it is, pricing, key features, common objections and how to handle them, and any policies.
+
+${sections.join('\n')}
+
+This summary will be used by an AI assistant to answer salesman questions — include specific facts, numbers, and policies. Write in plain English. Return ONLY the summary text, no JSON.`
 
     const text = await callGeminiLarge(systemPrompt, userPrompt)
 
     const { error: updateErr } = await sb
       .from('tools')
-      .update({ knowledge_summary: text, updated_at: new Date().toISOString() })
+      .update({
+        knowledge_summary: text,
+        knowledge_summary_source: 'auto',
+        knowledge_summary_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', toolId)
 
     if (updateErr) throw updateErr
@@ -879,5 +915,37 @@ This summary is for internal AI context only — not customer-facing. Cover key 
     return { data: text }
   } catch (error: unknown) {
     return { error: (error as Error).message || 'Failed to refresh knowledge' }
+  }
+}
+
+// ── Manual knowledge summary update ──────────────────────────────────────
+// Called from the Tool Tree UI when admin manually edits the summary text.
+
+export async function updateToolKnowledgeSummary(
+  toolId: string,
+  summary: string
+): Promise<ActionResult<string>> {
+  try {
+    await requireAdmin()
+    const sb = getServiceClient()
+
+    const { error } = await sb
+      .from('tools')
+      .update({
+        knowledge_summary: summary.trim(),
+        knowledge_summary_source: 'manual',
+        knowledge_summary_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', toolId)
+
+    if (error) throw error
+
+    revalidatePath(`/admin/tools/${toolId}/tree`)
+    revalidatePath('/admin/tools')
+
+    return { data: 'saved' }
+  } catch (error: unknown) {
+    return { error: (error as Error).message || 'Failed to save knowledge summary' }
   }
 }
