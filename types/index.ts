@@ -214,6 +214,7 @@ export interface Objection {
   alternative_response: string | null
   do_not_say: string | null
   do_not_say_translated?: string | null
+  category?: string | null
   related_product: string | null
   related_lesson_id: string | null
   difficulty: Difficulty | null

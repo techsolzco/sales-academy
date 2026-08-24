@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText, BarChart2, Trash2
+  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, Mic, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText, BarChart2, Trash2, Brain
 } from 'lucide-react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
@@ -62,6 +62,7 @@ export default async function AdminLayout({
     { label: 'Tools',       href: '/admin/tools',        icon: <Wrench className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Appearance',  href: '/admin/settings/appearance', icon: <Paintbrush className="w-4 h-4 flex-shrink-0" /> },
     { label: 'AI Training', href: '/admin/settings/ai-training', icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'AI Memory',   href: '/admin/settings/ai-memory',   icon: <Brain className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Settings',    href: '/admin/settings',     icon: <Settings className="w-4 h-4 flex-shrink-0" /> },
     { label: 'My Profile',  href: '/admin/profile',      icon: <User className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Policies',    href: '/admin/policies',     icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },

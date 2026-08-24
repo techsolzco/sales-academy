@@ -351,7 +351,8 @@ export async function testAiSettings(question: string): Promise<ActionResult<str
       throw new Error('AI Training Settings not configured.')
     }
     
-    const systemPrompt = buildSystemPrompt(settings)
+    const toolContext = await fetchToolKnowledge(question)
+    const systemPrompt = buildSystemPrompt(settings, toolContext)
     
     const userPrompt = `A salesman is asking for help with this customer situation:
 ${question}

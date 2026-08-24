@@ -29,7 +29,7 @@ function buildKnowledgeSummary(
   tool: { name: string; description?: string | null; pricing?: string | null; best_for?: string | null; features?: string[] | null },
   faqs: Array<{ question: string; short_answer: string }>,
   scripts: Array<{ title: string; content: string }>,
-  objections: Array<{ objection_text: string; recommended_response: string }>,
+  objections: Array<{ objection_text: string; recommended_response: string; meaning?: string | null; do_not_say?: string | null }>,
   voiceNotes: Array<{ title: string; transcript: string | null }>
 ): string {
   const parts: string[] = []
@@ -52,7 +52,13 @@ function buildKnowledgeSummary(
   if (objections.length > 0) {
     parts.push('')
     parts.push('Common Objections & Responses:')
-    objections.forEach(o => parts.push(`Objection: ${o.objection_text}\nResponse: ${o.recommended_response}`))
+    objections.forEach(o => {
+      let objStr = `Objection: ${o.objection_text}`
+      if (o.meaning) objStr += ` (Meaning: ${o.meaning})`
+      objStr += `\nRecommended Response: ${o.recommended_response}`
+      if (o.do_not_say) objStr += `\nDO NOT SAY: ${o.do_not_say} (Strict Rule)`
+      parts.push(objStr)
+    })
   }
 
   // Scripts (truncated to keep summary manageable)
@@ -109,7 +115,7 @@ export async function syncToolKnowledge(toolId: string | null | undefined) {
     const [faqsRes, scriptsRes, objectionsRes, voiceNotesRes] = await Promise.all([
       sb.from('faqs').select('question, short_answer').eq('tool_id', toolId).is('deleted_at', null),
       sb.from('scripts').select('title, content').eq('tool_id', toolId).is('deleted_at', null),
-      sb.from('objections').select('objection_text, recommended_response').eq('tool_id', toolId).is('deleted_at', null),
+      sb.from('objections').select('objection_text, recommended_response, meaning, do_not_say').eq('tool_id', toolId).is('deleted_at', null),
       sb.from('voice_notes').select('title, transcript').eq('tool_id', toolId).is('deleted_at', null),
     ])
 

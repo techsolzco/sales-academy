@@ -21,6 +21,7 @@ export interface ObjectionInput {
   recommended_response: string
   alternative_response?: string
   do_not_say?: string
+  category?: string
   related_product?: string
   related_lesson_id?: string
   difficulty?: Difficulty

@@ -13,6 +13,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
   const [objections, setObjections] = useState(initialObjections)
   const [search, setSearch] = useState('')
   const [filterToolId, setFilterToolId] = useState(initialToolId || '')
+  const [filterCategory, setFilterCategory] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [selectedObjection, setSelectedObjection] = useState<Objection | null>(null)
@@ -30,7 +31,8 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
       o.recommended_response.toLowerCase().includes(q) ||
       (o.meaning && o.meaning.toLowerCase().includes(q))
     const matchesTool = !filterToolId || o.tool_id === filterToolId
-    return matchesSearch && matchesTool
+    const matchesCategory = !filterCategory || o.category === filterCategory
+    return matchesSearch && matchesTool && matchesCategory
   })
 
   const grouped = useMemo(() => {
@@ -139,6 +141,11 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
                       {o.related_product}
                     </span>
                   )}
+                  {o.category && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-purple-50 font-medium text-purple-700">
+                      {o.category}
+                    </span>
+                  )}
                   {toggleButton}
                 </div>
                 <h3 className="font-bold text-gray-900 text-base">&ldquo;{o.objection_text}&rdquo;</h3>
@@ -205,6 +212,28 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
           >
             <option value="">All Tools</option>
             {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          <select
+            value={filterCategory}
+            onChange={e => setFilterCategory(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          >
+            <option value="">All Categories</option>
+            <option value="General">General</option>
+            <option value="Pricing">Pricing</option>
+            <option value="Product">Product</option>
+            <option value="Warranty">Warranty</option>
+            <option value="Technical">Technical</option>
+            <option value="Comparison">Comparison</option>
+            <option value="Payment">Payment</option>
+            <option value="Privacy">Privacy</option>
+            <option value="Delivery">Delivery</option>
+            <option value="Features">Features</option>
+            <option value="Policy">Policy</option>
+            <option value="Usage">Usage</option>
+            <option value="Support">Support</option>
+            <option value="Audience">Audience</option>
+            <option value="Guideline">Guideline</option>
           </select>
         </div>
 
