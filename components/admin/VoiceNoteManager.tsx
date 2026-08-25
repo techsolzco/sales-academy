@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import {   useState, useTransition, useMemo , memo , useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, Mic, ChevronDown, ChevronRight, LayoutList, FolderTree, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { VoiceNoteFormModal } from '@/components/admin/VoiceNoteFormModal'
@@ -11,7 +11,70 @@ import { toggleAdminAudioVisibility } from '@/lib/actions/voice-recordings'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { VoiceNote } from '@/types'
 
+
+const renderNoteCardComponent = memo(({ note, isSelected, onToggle, onEdit, onDelete, isPending }: { note: VoiceNote, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (note: VoiceNote) => void, onDelete: (id: string) => void, isPending: boolean }) => {
+    return (
+      <TranslateContextWrapper
+        key={note.id}
+        table="voice_notes"
+        recordId={note.id}
+        fieldsToTranslate={{
+          transcript_translated: note.transcript || ''
+        }}
+        initialTranslations={{
+          transcript_translated: note.transcript_translated
+        }}
+      >
+        {({ displayTexts, toggleButton }) => (
+          <div className="relative group">
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
+              {toggleButton}
+              <StatusBadge status={note.status} />
+              <button
+                onClick={() => handleToggleVisibility(note.id, note.admin_audio_visible !== false)}
+                disabled={isPending}
+                className={`p-1.5 rounded-lg bg-white/90 border border-gray-200 transition disabled:opacity-40 ${note.admin_audio_visible !== false ? 'text-gray-600 hover:text-brand-600' : 'text-amber-500 hover:text-amber-600'}`}
+                title={note.admin_audio_visible !== false ? "Hide Official Audio" : "Show Official Audio"}
+              >
+                {note.admin_audio_visible !== false ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => onEdit(note)}
+                className="p-1.5 rounded-lg bg-white/90 border border-gray-200 text-gray-600 hover:text-brand-600 transition"
+                title="Edit Voice Note"
+              >
+                <Edit className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onDelete(note.id)}
+                disabled={isPending}
+                className="p-1.5 rounded-lg bg-white/90 border border-gray-200 text-gray-600 hover:text-red-600 transition disabled:opacity-40"
+                title="Delete Voice Note"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <AudioPlayer
+              title={note.title}
+              audioUrl={note.audio_url}
+              transcript={displayTexts.transcript_translated}
+              durationSeconds={note.duration_seconds}
+              purpose={note.purpose}
+              whenToSend={note.when_to_send}
+              keyPoints={note.key_points}
+            />
+          </div>
+        )}
+      </TranslateContextWrapper>
+    )
+})
+renderNoteCardComponent.displayName = 'renderNoteCard'
+
 export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' }: { initialNotes: VoiceNote[], tools?: { id: string; name: string }[], initialToolId?: string }) {
+  const handleToggle = useCallback((id: string, checked: boolean) => {
+    setSelectedIds(prev => { const next = new Set(prev); checked ? next.add(id) : next.delete(id); return next; })
+  }, [])
+
   const [notes, setNotes] = useState(initialNotes)
   const [search, setSearch] = useState('')
   const [filterToolId, setFilterToolId] = useState(initialToolId)
@@ -60,11 +123,11 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
     setIsModalOpen(true)
   }
 
-  function handleEdit(note: VoiceNote) {
+  const handleEdit = useCallback((note: VoiceNote) => {
     setAiDraft(null)
     setSelectedNote(note)
     setIsModalOpen(true)
-  }
+  }, [])
 
   function handleQuickCreate(data: Record<string, unknown>) {
     setAiDraft({ ...data, status: 'draft' })
@@ -77,7 +140,7 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
     setAiDraft(null)
   }
 
-  function handleDelete(id: string) {
+  const handleDelete = useCallback((id: string) => {
     if (!confirm('Are you sure you want to delete this voice note?')) return
     startTransition(async () => {
       const res = await deleteVoiceNote(id)
@@ -86,7 +149,7 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
         setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
       }
     })
-  }
+  }, [])
 
   function toggleSelect(id: string) {
     setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
@@ -124,64 +187,7 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
     })
   }
 
-  function renderNoteCard(note: VoiceNote) {
     return (
-      <TranslateContextWrapper
-        key={note.id}
-        table="voice_notes"
-        recordId={note.id}
-        fieldsToTranslate={{
-          transcript_translated: note.transcript || ''
-        }}
-        initialTranslations={{
-          transcript_translated: note.transcript_translated
-        }}
-      >
-        {({ displayTexts, toggleButton }) => (
-          <div className="relative group">
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
-              {toggleButton}
-              <StatusBadge status={note.status} />
-              <button
-                onClick={() => handleToggleVisibility(note.id, note.admin_audio_visible !== false)}
-                disabled={isPending}
-                className={`p-1.5 rounded-lg bg-white/90 border border-gray-200 transition disabled:opacity-40 ${note.admin_audio_visible !== false ? 'text-gray-600 hover:text-brand-600' : 'text-amber-500 hover:text-amber-600'}`}
-                title={note.admin_audio_visible !== false ? "Hide Official Audio" : "Show Official Audio"}
-              >
-                {note.admin_audio_visible !== false ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-              </button>
-              <button
-                onClick={() => handleEdit(note)}
-                className="p-1.5 rounded-lg bg-white/90 border border-gray-200 text-gray-600 hover:text-brand-600 transition"
-                title="Edit Voice Note"
-              >
-                <Edit className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => handleDelete(note.id)}
-                disabled={isPending}
-                className="p-1.5 rounded-lg bg-white/90 border border-gray-200 text-gray-600 hover:text-red-600 transition disabled:opacity-40"
-                title="Delete Voice Note"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <AudioPlayer
-              title={note.title}
-              audioUrl={note.audio_url}
-              transcript={displayTexts.transcript_translated}
-              durationSeconds={note.duration_seconds}
-              purpose={note.purpose}
-              whenToSend={note.when_to_send}
-              keyPoints={note.key_points}
-            />
-          </div>
-        )}
-      </TranslateContextWrapper>
-    )
-  }
-
-  return (
     <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">

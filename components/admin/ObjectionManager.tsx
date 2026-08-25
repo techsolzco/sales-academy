@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import {   useState, useTransition, useMemo , memo , useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, AlertCircle, ChevronDown, ChevronRight, LayoutList, FolderTree, Loader2 } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
@@ -9,7 +9,99 @@ import { deleteObjection, bulkSoftDeleteObjections, bulkPublishObjections } from
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { Objection } from '@/types'
 
+
+const renderObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, onDelete, isPending }: { o: Objection, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (o: Objection) => void, onDelete: (id: string) => void, isPending: boolean }) => {
+    return (
+      <TranslateContextWrapper
+        key={o.id}
+        table="objections"
+        recordId={o.id}
+        fieldsToTranslate={{
+          recommended_response_translated: o.recommended_response
+        }}
+        initialTranslations={{
+          recommended_response_translated: o.recommended_response_translated
+        }}
+      >
+        {({ displayTexts, toggleButton }) => (
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-gray-200 transition space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleSelect(o.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="w-4 h-4 rounded border-gray-300 mt-1 flex-shrink-0 cursor-pointer"
+                />
+                <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <StatusBadge status={o.status} />
+                  {o.difficulty && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600 capitalize">
+                      {o.difficulty}
+                    </span>
+                  )}
+                  {o.related_product && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-brand-50 font-medium text-brand-700">
+                      {o.related_product}
+                    </span>
+                  )}
+                  {o.category && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-purple-50 font-medium text-purple-700">
+                      {o.category}
+                    </span>
+                  )}
+                  {toggleButton}
+                </div>
+                <h3 className="font-bold text-gray-900 text-base">&ldquo;{o.objection_text}&rdquo;</h3>
+              </div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => onEdit(o)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(o.id)}
+                  disabled={isPending}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            {o.meaning && (
+              <p className="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg">
+                🔍 <span className="font-semibold text-gray-700">Underlying Meaning:</span> {o.meaning}
+              </p>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-1">
+                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">✅ Recommended Response</p>
+                <p className="text-xs text-emerald-950 leading-relaxed font-sans">{displayTexts.recommended_response_translated}</p>
+              </div>
+              {o.do_not_say && (
+                <div className="p-3.5 rounded-xl bg-red-50/70 border border-red-100 space-y-1">
+                  <p className="text-xs font-bold text-red-800 uppercase tracking-wider">🚫 DO NOT SAY</p>
+                  <p className="text-xs text-red-950 leading-relaxed font-sans">{o.do_not_say}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </TranslateContextWrapper>
+    )
+})
+renderObjectionCardComponent.displayName = 'renderObjectionCard'
+
 export function ObjectionManager({ initialObjections, tools = [], initialToolId }: { initialObjections: Objection[], tools?: { id: string; name: string }[], initialToolId?: string }) {
+  const handleToggle = useCallback((id: string, checked: boolean) => {
+    setSelectedIds(prev => { const next = new Set(prev); checked ? next.add(id) : next.delete(id); return next; })
+  }, [])
+
   const [objections, setObjections] = useState(initialObjections)
   const [search, setSearch] = useState('')
   const [filterToolId, setFilterToolId] = useState(initialToolId || '')
@@ -60,11 +152,11 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
     setIsModalOpen(true)
   }
 
-  function handleEdit(objection: Objection) {
+  const handleEdit = useCallback((objection: Objection) => {
     setAiDraft(null)
     setSelectedObjection(objection)
     setIsModalOpen(true)
-  }
+  }, [])
 
   function handleQuickCreate(data: Record<string, unknown>) {
     setAiDraft({ ...data, status: 'draft' })
@@ -81,7 +173,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
     setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
   }
 
-  function handleDelete(id: string) {
+  const handleDelete = useCallback((id: string) => {
     if (!confirm('Are you sure you want to delete this objection response?')) return
     startTransition(async () => {
       const res = await deleteObjection(id)
@@ -90,7 +182,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
         setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
       }
     })
-  }
+  }, [])
 
   async function handleBulkDelete() {
     if (!confirm(`Delete ${selectedIds.size} selected objections?`)) return
@@ -115,93 +207,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
     }
   }
 
-  function renderObjectionCard(o: Objection) {
     return (
-      <TranslateContextWrapper
-        key={o.id}
-        table="objections"
-        recordId={o.id}
-        fieldsToTranslate={{
-          recommended_response_translated: o.recommended_response
-        }}
-        initialTranslations={{
-          recommended_response_translated: o.recommended_response_translated
-        }}
-      >
-        {({ displayTexts, toggleButton }) => (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-gray-200 transition space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(o.id)}
-                  onChange={() => toggleSelect(o.id)}
-                  onClick={e => e.stopPropagation()}
-                  className="w-4 h-4 rounded border-gray-300 mt-1 flex-shrink-0 cursor-pointer"
-                />
-                <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <StatusBadge status={o.status} />
-                  {o.difficulty && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600 capitalize">
-                      {o.difficulty}
-                    </span>
-                  )}
-                  {o.related_product && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-brand-50 font-medium text-brand-700">
-                      {o.related_product}
-                    </span>
-                  )}
-                  {o.category && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-purple-50 font-medium text-purple-700">
-                      {o.category}
-                    </span>
-                  )}
-                  {toggleButton}
-                </div>
-                <h3 className="font-bold text-gray-900 text-base">&ldquo;{o.objection_text}&rdquo;</h3>
-              </div>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  onClick={() => handleEdit(o)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(o.id)}
-                  disabled={isPending}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            {o.meaning && (
-              <p className="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg">
-                🔍 <span className="font-semibold text-gray-700">Underlying Meaning:</span> {o.meaning}
-              </p>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-1">
-                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">✅ Recommended Response</p>
-                <p className="text-xs text-emerald-950 leading-relaxed font-sans">{displayTexts.recommended_response_translated}</p>
-              </div>
-              {o.do_not_say && (
-                <div className="p-3.5 rounded-xl bg-red-50/70 border border-red-100 space-y-1">
-                  <p className="text-xs font-bold text-red-800 uppercase tracking-wider">🚫 DO NOT SAY</p>
-                  <p className="text-xs text-red-950 leading-relaxed font-sans">{o.do_not_say}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </TranslateContextWrapper>
-    )
-  }
-
-  return (
     <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">

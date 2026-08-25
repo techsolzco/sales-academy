@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import {   useState, useTransition, useMemo , memo , useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, HelpCircle, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
@@ -10,7 +10,85 @@ import { Loader2 } from 'lucide-react'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { FAQ } from '@/types'
 
+
+const renderFaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDelete, isPending }: { faq: FAQ, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (faq: FAQ) => void, onDelete: (id: string) => void, isPending: boolean }) => {
+    return (
+      <TranslateContextWrapper
+        key={faq.id}
+        table="faqs"
+        recordId={faq.id}
+        fieldsToTranslate={{
+          question_translated: faq.question,
+          short_answer_translated: faq.short_answer,
+          customer_ready_answer_translated: faq.customer_ready_answer || ''
+        }}
+        initialTranslations={{
+          question_translated: faq.question_translated,
+          short_answer_translated: faq.short_answer_translated,
+          customer_ready_answer_translated: faq.customer_ready_answer_translated
+        }}
+      >
+        {({ displayTexts, toggleButton }) => (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <input type="checkbox" checked={isSelected} onChange={e => onToggle(faq.id, e.target.checked)} className="w-4 h-4 rounded border-gray-300 mt-1 mr-2" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <StatusBadge status={faq.status} />
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600">
+                    {faq.category}
+                  </span>
+                  {faq.priority > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-amber-50 font-medium text-amber-700">
+                      Priority: {faq.priority}
+                    </span>
+                  )}
+                  {toggleButton}
+                </div>
+                <h3 className="font-semibold text-gray-900 text-base">{displayTexts.question_translated}</h3>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => onEdit(faq)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                  title="Edit FAQ"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(faq.id)}
+                  disabled={isPending}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+                  title="Delete FAQ"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div>
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">Short Answer</span>
+                <p className="text-gray-800 bg-gray-50/80 p-3 rounded-xl border border-gray-100">{displayTexts.short_answer_translated}</p>
+              </div>
+              {faq.customer_ready_answer && (
+                <div>
+                  <span className="text-xs font-semibold text-brand-600 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
+                  <p className="text-gray-800 bg-brand-50/50 p-3 rounded-xl border border-brand-100/50 font-sans">{displayTexts.customer_ready_answer_translated}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </TranslateContextWrapper>
+    )
+})
+renderFaqCardComponent.displayName = 'renderFaqCard'
+
 export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[], initialToolId?: string }) {
+  const handleToggle = useCallback((id: string, checked: boolean) => {
+    setSelectedIds(prev => { const next = new Set(prev); checked ? next.add(id) : next.delete(id); return next; })
+  }, [])
+
   const [faqs, setFaqs] = useState(initialFaqs)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
@@ -65,11 +143,11 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
     setIsModalOpen(true)
   }
 
-  function handleEdit(faq: FAQ) {
+  const handleEdit = useCallback((faq: FAQ) => {
     setAiDraft(null)
     setSelectedFaq(faq)
     setIsModalOpen(true)
-  }
+  }, [])
 
   function handleQuickCreate(data: Record<string, unknown>) {
     setAiDraft({ ...data, status: 'draft' })
@@ -104,7 +182,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
     }
   }
 
-  function handleDelete(id: string) {
+  const handleDelete = useCallback((id: string) => {
     if (!confirm('Are you sure you want to delete this FAQ?')) return
     startTransition(async () => {
       const res = await deleteFAQ(id)
@@ -112,83 +190,9 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
         setFaqs(prev => prev.filter(f => f.id !== id))
       }
     })
-  }
+  }, [])
 
-  function renderFaqCard(faq: FAQ) {
     return (
-      <TranslateContextWrapper
-        key={faq.id}
-        table="faqs"
-        recordId={faq.id}
-        fieldsToTranslate={{
-          question_translated: faq.question,
-          short_answer_translated: faq.short_answer,
-          customer_ready_answer_translated: faq.customer_ready_answer || ''
-        }}
-        initialTranslations={{
-          question_translated: faq.question_translated,
-          short_answer_translated: faq.short_answer_translated,
-          customer_ready_answer_translated: faq.customer_ready_answer_translated
-        }}
-      >
-        {({ displayTexts, toggleButton }) => (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <input type="checkbox" checked={selectedIds.has(faq.id)} onChange={e => {
-                setSelectedIds(prev => { const next = new Set(prev); e.target.checked ? next.add(faq.id) : next.delete(faq.id); return next; })
-              }} className="w-4 h-4 rounded border-gray-300 mt-1 mr-2" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <StatusBadge status={faq.status} />
-                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600">
-                    {faq.category}
-                  </span>
-                  {faq.priority > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-amber-50 font-medium text-amber-700">
-                      Priority: {faq.priority}
-                    </span>
-                  )}
-                  {toggleButton}
-                </div>
-                <h3 className="font-semibold text-gray-900 text-base">{displayTexts.question_translated}</h3>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  onClick={() => handleEdit(faq)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
-                  title="Edit FAQ"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(faq.id)}
-                  disabled={isPending}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
-                  title="Delete FAQ"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">Short Answer</span>
-                <p className="text-gray-800 bg-gray-50/80 p-3 rounded-xl border border-gray-100">{displayTexts.short_answer_translated}</p>
-              </div>
-              {faq.customer_ready_answer && (
-                <div>
-                  <span className="text-xs font-semibold text-brand-600 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
-                  <p className="text-gray-800 bg-brand-50/50 p-3 rounded-xl border border-brand-100/50 font-sans">{displayTexts.customer_ready_answer_translated}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </TranslateContextWrapper>
-    )
-  }
-
-  return (
     <div>
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">

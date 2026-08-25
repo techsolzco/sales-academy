@@ -36,6 +36,7 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
       setIsOpen(false)
       return
     }
+    setIsOpen(false) // Close mobile sidebar immediately
     setPendingHref(href)
     startTransition(() => {
       router.push(href)
@@ -83,7 +84,8 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 px-2 md:px-3 py-3 space-y-0.5 overflow-y-auto overscroll-contain">
           {navItems.map((item) => {
-            const isCurrentRoute = pathname === item.href || pathname.startsWith(item.href + '/')
+            const isRootPath = item.href === '/dashboard' || item.href === '/admin'
+            const isCurrentRoute = pathname === item.href || (!isRootPath && pathname.startsWith(item.href + '/'))
             const isPendingItem = pendingHref === item.href
             const isActive = isPendingItem || (isCurrentRoute && !pendingHref)
             return (
