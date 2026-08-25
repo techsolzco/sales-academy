@@ -124,7 +124,12 @@ export function ToolOnboardWizard() {
 
   const runStep1 = async (data: OnboardWizardData): Promise<typeof part1 | null> => {
     setSubStep1('loading')
-    const res = await generateStep1_CourseAndSummary(data)
+    let res
+    try {
+      res = await generateStep1_CourseAndSummary(data)
+    } catch (err) {
+      res = { error: 'Network error: The server took too long to respond. Please retry.' }
+    }
     if (!res || res.error || !res.data) {
       setSubStep1('error')
       setError(res?.error || 'Failed to generate course structure. Please retry.')
@@ -138,7 +143,12 @@ export function ToolOnboardWizard() {
 
   const runStep2a = async (data: OnboardWizardData): Promise<typeof part2a | null> => {
     setSubStep2a('loading')
-    const res = await generateStep2a_FAQs(data)
+    let res
+    try {
+      res = await generateStep2a_FAQs(data)
+    } catch (err) {
+      res = { error: 'Network error: The server took too long to respond. Please retry.' }
+    }
     if (!res || res.error || !res.data) {
       setSubStep2a('error')
       setError(res?.error || 'Failed to generate FAQs. Please retry.')
@@ -152,7 +162,12 @@ export function ToolOnboardWizard() {
 
   const runStep2b = async (data: OnboardWizardData): Promise<typeof part2b | null> => {
     setSubStep2b('loading')
-    const res = await generateStep2b_ObjectionsAndScripts(data)
+    let res
+    try {
+      res = await generateStep2b_ObjectionsAndScripts(data)
+    } catch (err) {
+      res = { error: 'Network error: The server took too long to respond. Please retry.' }
+    }
     if (!res || res.error || !res.data) {
       setSubStep2b('error')
       setError(res?.error || 'Failed to generate objections & scripts. Please retry.')
@@ -166,7 +181,12 @@ export function ToolOnboardWizard() {
 
   const runStep3 = async (data: OnboardWizardData): Promise<typeof part3 | null> => {
     setSubStep3('loading')
-    const res = await generateStep3_VoiceNotes(data)
+    let res
+    try {
+      res = await generateStep3_VoiceNotes(data)
+    } catch (err) {
+      res = { error: 'Network error: The server took too long to respond. Please retry.' }
+    }
     if (!res || res.error || !res.data) {
       setSubStep3('error')
       setError(res?.error || 'Failed to generate voice notes. Please retry.')

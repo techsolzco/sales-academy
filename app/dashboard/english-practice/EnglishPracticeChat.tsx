@@ -35,16 +35,22 @@ export function EnglishPracticeChat() {
     setInput('')
     setIsLoading(true)
 
-    const result = await chatWithEnglishTutor(userMsg.text, history)
+    try {
+      const result = await chatWithEnglishTutor(userMsg.text, history)
 
-    setIsLoading(false)
+      setIsLoading(false)
 
-    if (result.error) {
-      const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: `⚠️ ${result.error}` }
+      if (result.error) {
+        const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: `⚠️ ${result.error}` }
+        setMessages(prev => [...prev, errorMsg])
+      } else if (result.data) {
+        const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: result.data }
+        setMessages(prev => [...prev, aiMsg])
+      }
+    } catch (err) {
+      setIsLoading(false)
+      const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: `⚠️ Network error: The server took too long to respond. Please try again.` }
       setMessages(prev => [...prev, errorMsg])
-    } else if (result.data) {
-      const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: result.data }
-      setMessages(prev => [...prev, aiMsg])
     }
   }
 

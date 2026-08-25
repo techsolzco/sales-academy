@@ -95,7 +95,13 @@ export function AiHelpChat() {
       setTimeout(() => resolve({ error: 'Request timed out. AI is busy — please wait a few seconds and try again.' }), CLIENT_TIMEOUT_MS)
     )
 
-    const result = await Promise.race([askAi(userMsg.content), timeoutPromise])
+    let result
+    try {
+      result = await Promise.race([askAi(userMsg.content), timeoutPromise])
+    } catch (err) {
+      // Catch network-level Server Action failures (e.g. 504 Gateway Timeout from Hostinger)
+      result = { error: 'Network error: The server took too long to respond. Please try again.' }
+    }
 
     setIsLoading(false)
     setCooldown(true)
@@ -104,7 +110,7 @@ export function AiHelpChat() {
     if (result.error) {
       const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: `⚠️ ${result.error}` }
       setMessages(prev => [...prev, errorMsg].slice(-10))
-    } else if ('data' in result && result.data) {
+    } else if (result.data) {
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: result.data }
       setMessages(prev => [...prev, aiMsg].slice(-10))
     }

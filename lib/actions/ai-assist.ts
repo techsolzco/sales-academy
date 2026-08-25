@@ -80,9 +80,10 @@ async function fetchToolKnowledge(questionText: string): Promise<string> {
 const GEMINI_MODEL = 'gemini-3.5-flash'
 
 const MAX_RETRIES = 2
-// 429 = quota exceeded: must wait for the per-minute window to reset (~60s).
-// 503 = transient overload: 5s is sufficient.
-const BACKOFF_429_MS = 30000   // 30s for ask-AI (lower stakes, shorter wait)
+// 429 = quota exceeded. Free tier limit.
+// We must fail fast (5s) instead of waiting 30s, because Hostinger Nginx drops
+// the HTTP connection after 30-60s with a 504 Gateway Timeout, crashing the client.
+const BACKOFF_429_MS = 5000
 const BACKOFF_503_MS = 5000
 
 export async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {

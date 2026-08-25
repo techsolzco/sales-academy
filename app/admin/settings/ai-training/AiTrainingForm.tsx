@@ -47,12 +47,15 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
     setTestLoading(true)
     setTestError(null)
     setTestResponse(null)
-    
-    const result = await testAiSettings(testInput)
-    if (result.error) {
-      setTestError(result.error)
-    } else if (result.data) {
-      setTestResponse(result.data)
+    try {
+      const result = await testAiSettings(testInput)
+      if (result.error) {
+        setTestError(result.error)
+      } else if (result.data) {
+        setTestResponse(result.data)
+      }
+    } catch (err) {
+      setTestError('Network error: The server took too long to respond. Please try again.')
     }
     
     setTestLoading(false)
