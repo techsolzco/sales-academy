@@ -10,7 +10,7 @@ import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper
 import type { Objection } from '@/types'
 
 
-const renderObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, onDelete, isPending }: { o: Objection, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (o: Objection) => void, onDelete: (id: string) => void, isPending: boolean }) => {
+const ObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, onDelete, isPending }: { o: Objection, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (o: Objection) => void, onDelete: (id: string) => void, isPending: boolean }) => {
     return (
       <TranslateContextWrapper
         key={o.id}
@@ -30,7 +30,7 @@ const renderObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, on
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  onChange={() => toggleSelect(o.id)}
+                  onChange={e => onToggle(o.id, e.target.checked)}
                   onClick={e => e.stopPropagation()}
                   className="w-4 h-4 rounded border-gray-300 mt-1 flex-shrink-0 cursor-pointer"
                 />
@@ -95,7 +95,7 @@ const renderObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, on
       </TranslateContextWrapper>
     )
 })
-renderObjectionCardComponent.displayName = 'renderObjectionCard'
+ObjectionCardComponent.displayName = 'renderObjectionCard'
 
 export function ObjectionManager({ initialObjections, tools = [], initialToolId }: { initialObjections: Objection[], tools?: { id: string; name: string }[], initialToolId?: string }) {
   const handleToggle = useCallback((id: string, checked: boolean) => {
@@ -282,7 +282,17 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
       ) : (
         viewMode === 'list' ? (
           <div className="space-y-4">
-            {filtered.map(renderObjectionCard)}
+            {filtered.map(o => (
+          <ObjectionCardComponent
+            key={o.id}
+            o={o}
+            isSelected={selectedIds.has(o.id)}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
+        ))}
           </div>
         ) : (
           <div className="space-y-6">
@@ -305,7 +315,17 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
                   
                   {isExpanded && (
                     <div className="p-4 space-y-4 bg-white">
-                      {group.items.map(renderObjectionCard)}
+                      {group.items.map(o => (
+          <ObjectionCardComponent
+            key={o.id}
+            o={o}
+            isSelected={selectedIds.has(o.id)}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
+        ))}
                     </div>
                   )}
                 </div>

@@ -12,7 +12,7 @@ import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper
 import type { VoiceNote } from '@/types'
 
 
-const renderNoteCardComponent = memo(({ note, isSelected, onToggle, onEdit, onDelete, isPending }: { note: VoiceNote, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (note: VoiceNote) => void, onDelete: (id: string) => void, isPending: boolean }) => {
+const NoteCardComponent = memo(({ note, isSelected, onToggle, onEdit, onDelete, onToggleVisibility, isPending }: { note: VoiceNote, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (note: VoiceNote) => void, onDelete: (id: string) => void, onToggleVisibility: (id: string, current: boolean) => void, isPending: boolean }) => {
     return (
       <TranslateContextWrapper
         key={note.id}
@@ -28,10 +28,16 @@ const renderNoteCardComponent = memo(({ note, isSelected, onToggle, onEdit, onDe
         {({ displayTexts, toggleButton }) => (
           <div className="relative group">
             <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={e => onToggle(note.id, e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 mr-2 flex-shrink-0 cursor-pointer bg-white"
+              />
               {toggleButton}
               <StatusBadge status={note.status} />
               <button
-                onClick={() => handleToggleVisibility(note.id, note.admin_audio_visible !== false)}
+                onClick={() => onToggleVisibility(note.id, note.admin_audio_visible !== false)}
                 disabled={isPending}
                 className={`p-1.5 rounded-lg bg-white/90 border border-gray-200 transition disabled:opacity-40 ${note.admin_audio_visible !== false ? 'text-gray-600 hover:text-brand-600' : 'text-amber-500 hover:text-amber-600'}`}
                 title={note.admin_audio_visible !== false ? "Hide Official Audio" : "Show Official Audio"}
@@ -68,7 +74,7 @@ const renderNoteCardComponent = memo(({ note, isSelected, onToggle, onEdit, onDe
       </TranslateContextWrapper>
     )
 })
-renderNoteCardComponent.displayName = 'renderNoteCard'
+NoteCardComponent.displayName = 'renderNoteCard'
 
 export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' }: { initialNotes: VoiceNote[], tools?: { id: string; name: string }[], initialToolId?: string }) {
   const handleToggle = useCallback((id: string, checked: boolean) => {
@@ -178,14 +184,14 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
     }
   }
 
-  function handleToggleVisibility(id: string, currentVisible: boolean) {
+  const handleToggleVisibility = useCallback((id: string, currentVisible: boolean) => {
     startTransition(async () => {
       const res = await toggleAdminAudioVisibility(id, !currentVisible)
       if (!res.error) {
         setNotes(prev => prev.map(n => n.id === id ? { ...n, admin_audio_visible: !currentVisible } : n))
       }
     })
-  }
+  }, [])
 
     return (
     <div>
@@ -252,7 +258,18 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
       ) : (
         viewMode === 'list' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filtered.map(renderNoteCard)}
+            {filtered.map(note => (
+          <NoteCardComponent
+            key={note.id}
+            note={note}
+            isSelected={selectedIds.has(note.id)}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onToggleVisibility={handleToggleVisibility}
+            isPending={isPending}
+          />
+        ))}
           </div>
         ) : (
           <div className="space-y-6">
@@ -275,7 +292,18 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
                   
                   {isExpanded && (
                     <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
-                      {group.items.map(renderNoteCard)}
+                      {group.items.map(note => (
+          <NoteCardComponent
+            key={note.id}
+            note={note}
+            isSelected={selectedIds.has(note.id)}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onToggleVisibility={handleToggleVisibility}
+            isPending={isPending}
+          />
+        ))}
                     </div>
                   )}
                 </div>

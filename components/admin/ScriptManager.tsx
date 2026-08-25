@@ -9,7 +9,7 @@ import { deleteScript, bulkSoftDeleteScripts, bulkPublishScripts } from '@/lib/a
 import type { SalesScript } from '@/types'
 
 
-const renderScriptCardComponent = memo(({ script, isSelected, onToggle, onEdit, onDelete, isPending }: { script: SalesScript, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (script: SalesScript) => void, onDelete: (id: string) => void, isPending: boolean }) => {
+const ScriptCardComponent = memo(({ script, isSelected, tabLang, setTabLang, copyCounts, onToggle, onEdit, onDelete, isPending }: { script: SalesScript, isSelected: boolean, tabLang: string, setTabLang: (lang: 'en' | 'hi') => void, copyCounts: Record<string, number>, onToggle: (id: string, checked: boolean) => void, onEdit: (script: SalesScript) => void, onDelete: (id: string) => void, isPending: boolean }) => {
     const displayContent = tabLang === 'hi' && script.content_hinglish ? script.content_hinglish : script.content
     const hasHinglish = !!script.content_hinglish
 
@@ -20,7 +20,7 @@ const renderScriptCardComponent = memo(({ script, isSelected, onToggle, onEdit, 
             <input
               type="checkbox"
               checked={isSelected}
-              onChange={() => toggleSelect(script.id)}
+              onChange={e => onToggle(script.id, e.target.checked)}
               onClick={e => e.stopPropagation()}
               className="w-4 h-4 rounded border-gray-300 mt-1 flex-shrink-0 cursor-pointer"
             />
@@ -88,7 +88,7 @@ const renderScriptCardComponent = memo(({ script, isSelected, onToggle, onEdit, 
       </div>
     )
 })
-renderScriptCardComponent.displayName = 'renderScriptCard'
+ScriptCardComponent.displayName = 'renderScriptCard'
 
 export function ScriptManager({
   initialScripts,
@@ -295,7 +295,20 @@ export function ScriptManager({
       ) : (
         viewMode === 'list' ? (
           <div className="space-y-4">
-            {filtered.map(renderScriptCard)}
+            {filtered.map(script => (
+          <ScriptCardComponent
+            key={script.id}
+            script={script}
+            isSelected={selectedIds.has(script.id)}
+            tabLang={tabLang}
+            setTabLang={setTabLang}
+            copyCounts={copyCounts}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
+        ))}
           </div>
         ) : (
           <div className="space-y-6">
@@ -318,7 +331,20 @@ export function ScriptManager({
                   
                   {isExpanded && (
                     <div className="p-4 space-y-4 bg-white">
-                      {group.scripts.map(renderScriptCard)}
+                      {group.scripts.map(script => (
+          <ScriptCardComponent
+            key={script.id}
+            script={script}
+            isSelected={selectedIds.has(script.id)}
+            tabLang={tabLang}
+            setTabLang={setTabLang}
+            copyCounts={copyCounts}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
+        ))}
                     </div>
                   )}
                 </div>

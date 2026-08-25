@@ -11,7 +11,7 @@ import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper
 import type { FAQ } from '@/types'
 
 
-const renderFaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDelete, isPending }: { faq: FAQ, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (faq: FAQ) => void, onDelete: (id: string) => void, isPending: boolean }) => {
+const FaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDelete, isPending }: { faq: FAQ, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (faq: FAQ) => void, onDelete: (id: string) => void, isPending: boolean }) => {
     return (
       <TranslateContextWrapper
         key={faq.id}
@@ -82,7 +82,7 @@ const renderFaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDele
       </TranslateContextWrapper>
     )
 })
-renderFaqCardComponent.displayName = 'renderFaqCard'
+FaqCardComponent.displayName = 'renderFaqCard'
 
 export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[], initialToolId?: string }) {
   const handleToggle = useCallback((id: string, checked: boolean) => {
@@ -291,7 +291,17 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
       ) : (
         viewMode === 'list' ? (
           <div className="space-y-3">
-            {filtered.map(renderFaqCard)}
+            {filtered.map(faq => (
+          <FaqCardComponent
+            key={faq.id}
+            faq={faq}
+            isSelected={selectedIds.has(faq.id)}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
+        ))}
           </div>
         ) : (
           <div className="space-y-6">
@@ -314,7 +324,17 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
                   
                   {isExpanded && (
                     <div className="p-4 space-y-4 bg-white">
-                      {group.faqs.map(renderFaqCard)}
+                      {group.faqs.map(faq => (
+          <FaqCardComponent
+            key={faq.id}
+            faq={faq}
+            isSelected={selectedIds.has(faq.id)}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
+        ))}
                     </div>
                   )}
                 </div>
