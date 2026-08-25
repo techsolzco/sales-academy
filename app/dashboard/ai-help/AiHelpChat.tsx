@@ -113,16 +113,24 @@ export function AiHelpChat() {
     setInput('')
     setIsLoading(true)
 
-    const result = await askAi(userMsg.content)
+    // 45s client-side deadline — server has 25s/attempt × 3 attempts = max ~90s,
+    // but free-tier 429 retries with 30s backoff means it can take 60-90s total.
+    // 45s catches the common single-retry hang while being generous enough for normal use.
+    const CLIENT_TIMEOUT_MS = 45000
+    const timeoutPromise = new Promise<{ error: string }>((resolve) =>
+      setTimeout(() => resolve({ error: 'Request timed out. AI is busy — please wait a few seconds and try again.' }), CLIENT_TIMEOUT_MS)
+    )
+
+    const result = await Promise.race([askAi(userMsg.content), timeoutPromise])
 
     setIsLoading(false)
     setCooldown(true)
     setTimeout(() => setCooldown(false), 3000)
 
     if (result.error) {
-      const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: `Error: ${result.error}` }
+      const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: `⚠️ ${result.error}` }
       setMessages(prev => [...prev, errorMsg].slice(-10))
-    } else if (result.data) {
+    } else if ('data' in result && result.data) {
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: result.data }
       setMessages(prev => [...prev, aiMsg].slice(-10))
     }

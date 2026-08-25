@@ -102,11 +102,26 @@ export async function callGemini(systemPrompt: string, userPrompt: string, jsonM
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    })
+    // 25s timeout per attempt — prevents indefinite hang on network stall
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 25000)
+
+    let response: Response
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: controller.signal,
+      })
+    } catch (err: unknown) {
+      clearTimeout(timeoutId)
+      const isAbort = err instanceof Error && err.name === 'AbortError'
+      console.warn(`[callGemini] attempt=${attempt} → ${isAbort ? 'TIMEOUT (25s)' : 'NETWORK_ERROR'}: ${err instanceof Error ? err.message : err}`)
+      if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, BACKOFF_503_MS))
+      continue
+    }
+    clearTimeout(timeoutId)
 
     if (response.status === 429) {
       const errData = await response.json().catch(() => ({}))
