@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { chatWithEnglishTutor } from '@/lib/actions/english-practice'
 import { Send, Loader2, Bot, User } from 'lucide-react'
+import { AiText, CopyButton } from '@/components/ai/AiText'
 
 interface Message {
   id: string
@@ -70,14 +71,17 @@ export function EnglishPracticeChat() {
               )}
               
               <div className={`max-w-[85%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div 
-                  className={`px-5 py-3.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed
-                    ${msg.role === 'user' 
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tr-sm' 
-                      : 'bg-brand-600 text-white rounded-tl-sm shadow-md'
+                <div
+                  className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed
+                    ${msg.role === 'user'
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tr-sm whitespace-pre-wrap break-words'
+                      : 'bg-brand-600 text-white rounded-tl-sm shadow-md [&_mark]:bg-white/20 [&_mark]:text-white'
                     }`}
                 >
-                  {msg.text}
+                  {msg.role === 'user'
+                    ? msg.text
+                    : <AiText text={msg.text} showCopy copyLabel="Copy" copyVariant="dark" />
+                  }
                 </div>
               </div>
               

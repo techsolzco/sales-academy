@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { saveAiTrainingSettings, testAiSettings } from '@/lib/actions/ai-assist'
 import { AiTrainingSettings } from '@/types'
 import { Loader2, Sparkles, Save, TestTube2 } from 'lucide-react'
+import { AiText, CopyButton } from '@/components/ai/AiText'
 
 export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainingSettings | null }) {
   const [isPending, startTransition] = useTransition()
@@ -174,13 +175,16 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
 
           {testResponse && (
             <div className="bg-[#202123] rounded-xl p-5 shadow-lg border border-gray-800">
-              <div className="flex items-center gap-2 mb-3 text-brand-400">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">AI Response</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-brand-400">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">AI Response</span>
+                </div>
+                <CopyButton text={testResponse} label="Copy" variant="dark" />
               </div>
-              <p className="text-gray-100 text-sm whitespace-pre-wrap font-mono leading-relaxed">
-                {testResponse}
-              </p>
+              <div className="text-gray-100 [&_mark]:bg-amber-400/20 [&_mark]:text-amber-200">
+                <AiText text={testResponse} />
+              </div>
             </div>
           )}
         </div>

@@ -2,16 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { askAi } from '@/lib/actions/ai-assist'
-import { Send, Loader2, Copy, Bot, User, Check } from 'lucide-react'
+import { Send, Loader2, Bot, User } from 'lucide-react'
+import { AiText, CopyButton } from '@/components/ai/AiText'
 
 interface Message {
   id: string
   role: 'user' | 'ai'
   content: string
-}
-
-function stripAsterisks(text: string): string {
-  return text.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1').trim()
 }
 
 function parseAiResponse(content: string): { instructions: string; clientMessage: string } | null {
@@ -21,37 +18,19 @@ function parseAiResponse(content: string): { instructions: string; clientMessage
   const afterInstructions = content.split(instructionMarker)[1] ?? ''
   const [rawInstructions, afterClient] = afterInstructions.split(clientMarker)
   return {
-    instructions: stripAsterisks(rawInstructions ?? ''),
-    clientMessage: stripAsterisks(afterClient ?? ''),
+    instructions: rawInstructions ?? '',
+    clientMessage: afterClient ?? '',
   }
-}
-
-function CopyBtn({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false)
-  const handle = () => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-  return (
-    <button
-      onClick={handle}
-      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all active:scale-95
-        bg-white/20 hover:bg-white/30 text-white"
-    >
-      {copied ? <><Check className="w-3 h-3" /> Copied!</> : <><Copy className="w-3 h-3" /> {label}</>}
-    </button>
-  )
 }
 
 function AiMessageBubble({ content }: { content: string }) {
   const parsed = parseAiResponse(content)
 
   if (!parsed) {
-    // Fallback single bubble
+    // Fallback single bubble — no markers, show plain text with highlighting
     return (
-      <div className="bg-gradient-to-br from-brand-600 to-brand-700 text-white px-4 py-3.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed shadow-md max-w-full break-words">
-        {stripAsterisks(content)}
+      <div className="bg-gradient-to-br from-brand-600 to-brand-700 text-white px-4 py-3.5 rounded-2xl rounded-tl-sm shadow-md max-w-full break-words">
+        <AiText text={content} showCopy copyLabel="Copy" copyVariant="dark" className="text-white [&_mark]:bg-white/20 [&_mark]:text-white" />
       </div>
     )
   }
@@ -64,16 +43,11 @@ function AiMessageBubble({ content }: { content: string }) {
           <span className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
             💡 For You
           </span>
-          <button
-            onClick={() => { navigator.clipboard.writeText(parsed.instructions) }}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition flex items-center gap-1"
-          >
-            <Copy className="w-3 h-3" />
-          </button>
+          <CopyButton text={parsed.instructions} label="Copy" variant="light" />
         </div>
-        <p className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200 leading-relaxed break-words whitespace-pre-wrap">
-          {parsed.instructions}
-        </p>
+        <div className="px-4 py-3 text-gray-700 dark:text-gray-200">
+          <AiText text={parsed.instructions} />
+        </div>
       </div>
 
       {/* Client message */}
@@ -82,11 +56,11 @@ function AiMessageBubble({ content }: { content: string }) {
           <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">
             📨 Send to Client
           </span>
-          <CopyBtn text={parsed.clientMessage} label="Copy for WhatsApp" />
+          <CopyButton text={parsed.clientMessage} label="Copy for WhatsApp" variant="dark" />
         </div>
-        <p className="px-4 py-3 text-sm text-white leading-relaxed break-words whitespace-pre-wrap">
-          {parsed.clientMessage}
-        </p>
+        <div className="px-4 py-3 text-white [&_mark]:bg-white/20 [&_mark]:text-white">
+          <AiText text={parsed.clientMessage} />
+        </div>
       </div>
     </div>
   )
