@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { VoiceNoteFormModal } from '@/components/admin/VoiceNoteFormModal'
 import { AudioPlayer } from '@/components/audio/AudioPlayer'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
-import { deleteVoiceNote, bulkSoftDeleteVoiceNotes } from '@/lib/actions/voice-notes'
+import { deleteVoiceNote, bulkSoftDeleteVoiceNotes, bulkPublishVoiceNotes } from '@/lib/actions/voice-notes'
 import { toggleAdminAudioVisibility } from '@/lib/actions/voice-recordings'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { VoiceNote } from '@/types'
@@ -102,6 +102,17 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
       setSelectedIds(new Set())
     }
     setIsBulkDeleting(false)
+  }
+
+  async function handleBulkPublish() {
+    if(!confirm(`Publish ${selectedIds.size} voice notes?`)) return;
+    setIsBulkDeleting(true);
+    const res = await bulkPublishVoiceNotes(Array.from(selectedIds));
+    setIsBulkDeleting(false);
+    if (!res.error) {
+      setNotes(prev => prev.map(n => selectedIds.has(n.id) ? { ...n, status: 'published' } : n));
+      setSelectedIds(new Set());
+    }
   }
 
   function handleToggleVisibility(id: string, currentVisible: boolean) {
@@ -279,10 +290,17 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
           <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+          
+          <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
+            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            Publish Selected
+          </button>
+          
           <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
             {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            Delete {selectedIds.size} selected
+            Delete Selected
           </button>
+          
           <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
         </div>
       )}

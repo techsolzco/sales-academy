@@ -5,7 +5,7 @@ import { Plus, Edit, Trash2, Search, HelpCircle, ChevronDown, ChevronRight, Layo
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
-import { deleteFAQ, bulkSoftDeleteFAQs } from '@/lib/actions/faqs'
+import { deleteFAQ, bulkSoftDeleteFAQs, bulkPublishFAQs } from '@/lib/actions/faqs'
 import { Loader2 } from 'lucide-react'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { FAQ } from '@/types'
@@ -89,6 +89,17 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
     setIsBulkDeleting(false);
     if (!res.error) {
       setFaqs(prev => prev.filter(f => !selectedIds.has(f.id)));
+      setSelectedIds(new Set());
+    }
+  }
+
+  async function handleBulkPublish() {
+    if(!confirm(`Publish ${selectedIds.size} FAQs?`)) return;
+    setIsBulkDeleting(true);
+    const res = await bulkPublishFAQs(Array.from(selectedIds));
+    setIsBulkDeleting(false);
+    if (!res.error) {
+      setFaqs(prev => prev.map(f => selectedIds.has(f.id) ? { ...f, status: 'published' } : f));
       setSelectedIds(new Set());
     }
   }
@@ -180,15 +191,22 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
   return (
     <div>
       {selectedIds.size > 0 && (
-  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
-    <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
-    <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
-      {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-      Delete {selectedIds.size} selected
-    </button>
-    <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
-  </div>
-)}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+          
+          <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
+            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            Publish Selected
+          </button>
+          
+          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
+            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete Selected
+          </button>
+          
+          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+        </div>
+      )}
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 flex-1">

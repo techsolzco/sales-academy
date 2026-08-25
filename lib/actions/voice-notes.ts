@@ -113,3 +113,22 @@ export async function bulkSoftDeleteVoiceNotes(ids: string[]): Promise<ActionRes
     return { error: (e as Error).message }
   }
 }
+export async function bulkPublishVoiceNotes(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin();
+    const { data: existing } = await supabase.from('voice_notes').select('tool_id').in('id', ids).is('deleted_at', null);
+    const { error } = await supabase.from('voice_notes').update({ status: 'published' }).in('id', ids);
+    if (error) return { error: error.message };
+    if (existing) {
+      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)));
+      toolIds.forEach(id => {
+        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e));
+      });
+    }
+    revalidatePath('/admin/voice-notes');
+    revalidatePath('/dashboard/voice-notes');
+    return { data: undefined };
+  } catch (e: unknown) {
+    return { error: (e as Error).message };
+  }
+}

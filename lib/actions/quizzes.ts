@@ -369,3 +369,79 @@ export async function bulkSoftDeleteQuizzes(ids: string[]): Promise<ActionResult
     return { error: (e as Error).message }
   }
 }
+export async function syncQuizQuestions(quizId: string, questions: any[]): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+
+  // We will get current questions
+  const { data: currentQ } = await supabase.from('quiz_questions').select('id').eq('quiz_id', quizId)
+  const currentQIds = (currentQ || []).map(q => q.id)
+  
+  const incomingQIds = questions.filter(q => q.id && !q.id.startsWith('new-')).map(q => q.id)
+  
+  // Find which to delete
+  const toDelete = currentQIds.filter(id => !incomingQIds.includes(id))
+  
+  if (toDelete.length > 0) {
+    await supabase.from('quiz_questions').delete().in('id', toDelete)
+  }
+
+  // Upsert questions
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i]
+    let qId = q.id
+    if (qId.startsWith('new-')) {
+      const { data: insertedQ, error: iErr } = await supabase.from('quiz_questions').insert({
+        quiz_id: quizId,
+        question_text: q.question_text,
+        points: q.points || 1,
+        order_index: i
+      }).select().single()
+      if (iErr) return { error: iErr.message }
+      qId = insertedQ.id
+    } else {
+      const { error: uErr } = await supabase.from('quiz_questions').update({
+        question_text: q.question_text,
+        points: q.points || 1,
+        order_index: i
+      }).eq('id', qId)
+      if (uErr) return { error: uErr.message }
+    }
+
+    // Now options
+    const { data: currentO } = await supabase.from('quiz_options').select('id').eq('question_id', qId)
+    const currentOIds = (currentO || []).map(o => o.id)
+    const incomingOIds = q.options.filter((o: any) => o.id && !o.id.startsWith('new-')).map((o: any) => o.id)
+    
+    const toDeleteO = currentOIds.filter(id => !incomingOIds.includes(id))
+    if (toDeleteO.length > 0) {
+      await supabase.from('quiz_options').delete().in('id', toDeleteO)
+    }
+
+    for (let j = 0; j < q.options.length; j++) {
+      const o = q.options[j]
+      if (o.id.startsWith('new-')) {
+        await supabase.from('quiz_options').insert({
+          question_id: qId,
+          option_text: o.option_text,
+          is_correct: o.is_correct,
+          order_index: j
+        })
+      } else {
+        await supabase.from('quiz_options').update({
+          option_text: o.option_text,
+          is_correct: o.is_correct,
+          order_index: j
+        }).eq('id', o.id)
+      }
+    }
+  }
+
+  revalidatePath(`/admin/quizzes/${quizId}`)
+  revalidatePath('/admin/quizzes')
+  return { data: undefined }
+}

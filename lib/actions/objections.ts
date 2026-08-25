@@ -111,3 +111,22 @@ export async function bulkSoftDeleteObjections(ids: string[]): Promise<ActionRes
     return { error: (e as Error).message }
   }
 }
+export async function bulkPublishObjections(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin();
+    const { data: existing } = await supabase.from('objections').select('tool_id').in('id', ids).is('deleted_at', null);
+    const { error } = await supabase.from('objections').update({ status: 'published' }).in('id', ids);
+    if (error) return { error: error.message };
+    if (existing) {
+      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)));
+      toolIds.forEach(id => {
+        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e));
+      });
+    }
+    revalidatePath('/admin/objections');
+    revalidatePath('/dashboard/objections');
+    return { data: undefined };
+  } catch (e: unknown) {
+    return { error: (e as Error).message };
+  }
+}

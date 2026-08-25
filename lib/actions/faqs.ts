@@ -113,3 +113,23 @@ export async function bulkSoftDeleteFAQs(ids: string[]): Promise<ActionResult> {
     return { error: (e as Error).message }
   }
 }
+export async function bulkPublishFAQs(ids: string[]): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin();
+    // Get tools that need syncing
+    const { data: existing } = await supabase.from('faqs').select('tool_id').in('id', ids).is('deleted_at', null);
+    const { error } = await supabase.from('faqs').update({ status: 'published' }).in('id', ids);
+    if (error) return { error: error.message };
+    if (existing) {
+      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)));
+      toolIds.forEach(id => {
+        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e));
+      });
+    }
+    revalidatePath('/admin/faqs');
+    revalidatePath('/dashboard/faqs');
+    return { data: undefined };
+  } catch (e: unknown) {
+    return { error: (e as Error).message };
+  }
+}

@@ -15,7 +15,8 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
     persona_instructions: initialSettings?.persona_instructions || '',
     sales_style_rules: initialSettings?.sales_style_rules || '',
     locked_facts: initialSettings?.locked_facts || '',
-    tone_examples: initialSettings?.tone_examples || ''
+    tone_examples: initialSettings?.tone_examples || '',
+    student_ai_access_enabled: initialSettings?.student_ai_access_enabled ?? true
   })
 
   const [testInput, setTestInput] = useState('')
@@ -23,9 +24,14 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
   const [testLoading, setTestLoading] = useState(false)
   const [testError, setTestError] = useState<string | null>(null)
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    const { name, value, type } = e.target
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked
+      setFormData(prev => ({ ...prev, [name]: checked }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSave = () => {
@@ -51,8 +57,8 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
       const result = await testAiSettings(testInput)
       if (result.error) {
         setTestError(result.error)
-      } else if (result.data) {
-        setTestResponse(result.data)
+      } else if ('data' in result && result.data) {
+        setTestResponse(result.data as string)
       }
     } catch (err) {
       setTestError('Network error: The server took too long to respond. Please try again.')
@@ -124,6 +130,23 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500"
             placeholder="Provide sample interactions here..."
           />
+        </div>
+
+        <div className="flex items-center gap-3 pt-2">
+          <input
+            type="checkbox"
+            id="student_ai_access_enabled"
+            name="student_ai_access_enabled"
+            checked={formData.student_ai_access_enabled}
+            onChange={handleChange}
+            className="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
+          />
+          <div>
+            <label htmlFor="student_ai_access_enabled" className="text-sm font-medium text-gray-900 cursor-pointer">
+              Enable AI Features for Students
+            </label>
+            <p className="text-xs text-gray-500">If unchecked, "Ask AI" and "English Practice" will be disabled for salesmen to conserve API quota.</p>
+          </div>
         </div>
 
         <div className="flex justify-end pt-4 border-t border-gray-100">

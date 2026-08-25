@@ -579,6 +579,7 @@ export interface AiTrainingSettings {
   sales_style_rules: string
   locked_facts: string
   tone_examples: string
+  student_ai_access_enabled: boolean
   updated_at: string
   updated_by: string | null
 }

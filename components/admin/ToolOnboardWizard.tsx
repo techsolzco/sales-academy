@@ -124,7 +124,7 @@ export function ToolOnboardWizard() {
 
   const runStep1 = async (data: OnboardWizardData): Promise<typeof part1 | null> => {
     setSubStep1('loading')
-    let res
+    let res: any
     try {
       res = await generateStep1_CourseAndSummary(data)
     } catch (err) {
@@ -143,7 +143,7 @@ export function ToolOnboardWizard() {
 
   const runStep2a = async (data: OnboardWizardData): Promise<typeof part2a | null> => {
     setSubStep2a('loading')
-    let res
+    let res: any
     try {
       res = await generateStep2a_FAQs(data)
     } catch (err) {
@@ -162,7 +162,7 @@ export function ToolOnboardWizard() {
 
   const runStep2b = async (data: OnboardWizardData): Promise<typeof part2b | null> => {
     setSubStep2b('loading')
-    let res
+    let res: any
     try {
       res = await generateStep2b_ObjectionsAndScripts(data)
     } catch (err) {
@@ -181,7 +181,7 @@ export function ToolOnboardWizard() {
 
   const runStep3 = async (data: OnboardWizardData): Promise<typeof part3 | null> => {
     setSubStep3('loading')
-    let res
+    let res: any
     try {
       res = await generateStep3_VoiceNotes(data)
     } catch (err) {

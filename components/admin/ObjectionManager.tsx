@@ -5,7 +5,7 @@ import { Plus, Edit, Trash2, Search, AlertCircle, ChevronDown, ChevronRight, Lay
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
-import { deleteObjection, bulkSoftDeleteObjections } from '@/lib/actions/objections'
+import { deleteObjection, bulkSoftDeleteObjections, bulkPublishObjections } from '@/lib/actions/objections'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { Objection } from '@/types'
 
@@ -102,6 +102,17 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
       setSelectedIds(new Set())
     }
     setIsBulkDeleting(false)
+  }
+
+  async function handleBulkPublish() {
+    if(!confirm(`Publish ${selectedIds.size} objections?`)) return;
+    setIsBulkDeleting(true);
+    const res = await bulkPublishObjections(Array.from(selectedIds));
+    setIsBulkDeleting(false);
+    if (!res.error) {
+      setObjections(prev => prev.map(o => selectedIds.has(o.id) ? { ...o, status: 'published' } : o));
+      setSelectedIds(new Set());
+    }
   }
 
   function renderObjectionCard(o: Objection) {
@@ -309,10 +320,17 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
           <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
+          
+          <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
+            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            Publish Selected
+          </button>
+          
           <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
             {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            Delete {selectedIds.size} selected
+            Delete Selected
           </button>
+          
           <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
         </div>
       )}

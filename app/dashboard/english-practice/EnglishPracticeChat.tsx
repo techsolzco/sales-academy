@@ -43,8 +43,8 @@ export function EnglishPracticeChat() {
       if (result.error) {
         const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: `⚠️ ${result.error}` }
         setMessages(prev => [...prev, errorMsg])
-      } else if (result.data) {
-        const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: result.data }
+      } else if ('data' in result && result.data) {
+        const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: result.data as string }
         setMessages(prev => [...prev, aiMsg])
       }
     } catch (err) {

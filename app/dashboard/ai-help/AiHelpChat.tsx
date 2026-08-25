@@ -110,8 +110,8 @@ export function AiHelpChat() {
     if (result.error) {
       const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: `⚠️ ${result.error}` }
       setMessages(prev => [...prev, errorMsg].slice(-10))
-    } else if (result.data) {
-      const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: result.data }
+    } else if ('data' in result && result.data) {
+      const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: result.data as string }
       setMessages(prev => [...prev, aiMsg].slice(-10))
     }
   }

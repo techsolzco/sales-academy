@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createQuiz, updateQuiz } from '@/lib/actions/quizzes'
 import { Plus, Trash, CheckCircle } from 'lucide-react'
+import { QuizQuestionBuilder } from './QuizQuestionBuilder'
 
 interface Props {
   quizId: string | null
@@ -79,17 +80,7 @@ export function QuizEditor({ quizId, initialData, lessons }: Props) {
       </div>
 
       {quizId && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Questions</h2>
-            <button className="flex items-center gap-1 text-brand-600 hover:text-brand-700 font-medium text-sm">
-              <Plus className="w-4 h-4" /> Add Question
-            </button>
-          </div>
-          <div className="text-center py-8 text-gray-500 text-sm">
-            Questions builder feature is active for this quiz. Add your questions using the button above.
-          </div>
-        </div>
+        <QuizQuestionBuilder quizId={quizId} initialQuestions={initialData?.questions || []} />
       )}
     </div>
   )
