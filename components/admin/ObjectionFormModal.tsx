@@ -12,9 +12,10 @@ interface ObjectionFormModalProps {
   isOpen: boolean
   onClose: () => void
   defaultValues?: Record<string, any>
+  tools?: { id: string; name: string }[]
 }
 
-export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }: ObjectionFormModalProps) {
+export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, tools = [] }: ObjectionFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +27,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }
     alternative_response: defaultValues?.alternative_response ?? objection?.alternative_response ?? '',
     do_not_say: defaultValues?.do_not_say ?? objection?.do_not_say ?? '',
     category: defaultValues?.category ?? objection?.category ?? 'General',
-    related_product: defaultValues?.related_product ?? objection?.related_product ?? '',
+    tool_id: defaultValues?.tool_id ?? objection?.tool_id ?? '',
     difficulty: (defaultValues?.difficulty ?? objection?.difficulty ?? 'beginner') as Difficulty,
     status: (defaultValues?.status ?? objection?.status ?? 'published') as Status,
   })
@@ -40,7 +41,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }
       alternative_response: defaultValues?.alternative_response ?? objection?.alternative_response ?? '',
       do_not_say: defaultValues?.do_not_say ?? objection?.do_not_say ?? '',
       category: defaultValues?.category ?? objection?.category ?? 'General',
-      related_product: defaultValues?.related_product ?? objection?.related_product ?? '',
+      tool_id: defaultValues?.tool_id ?? objection?.tool_id ?? '',
       difficulty: (defaultValues?.difficulty ?? objection?.difficulty ?? 'beginner') as Difficulty,
       status: (defaultValues?.status ?? objection?.status ?? 'published') as Status,
     })
@@ -59,7 +60,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }
         alternative_response: form.alternative_response || undefined,
         do_not_say: form.do_not_say || undefined,
         category: form.category || 'General',
-        related_product: form.related_product || undefined,
+        tool_id: form.tool_id || null,
         difficulty: form.difficulty,
         status: form.status,
       }
@@ -211,13 +212,15 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues }
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Related Product</label>
-              <input
-                value={form.related_product}
-                onChange={e => setForm(f => ({ ...f, related_product: e.target.value }))}
-                placeholder="Google AI Pro"
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tool (linked to)</label>
+              <select
+                value={form.tool_id}
+                onChange={e => setForm(f => ({ ...f, tool_id: e.target.value }))}
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
-              />
+              >
+                <option value="">General (no specific tool)</option>
+                {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
             </div>
 
             <div>

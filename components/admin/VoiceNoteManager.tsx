@@ -273,6 +273,7 @@ export function VoiceNoteManager({ initialNotes, tools = [], initialToolId = '' 
         isOpen={isModalOpen}
         onClose={handleClose}
         defaultValues={aiDraft || undefined}
+        tools={tools}
       />
 
       {selectedIds.size > 0 && (

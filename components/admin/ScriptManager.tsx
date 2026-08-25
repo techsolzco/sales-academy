@@ -316,6 +316,7 @@ export function ScriptManager({
         isOpen={isModalOpen}
         onClose={handleClose}
         defaultValues={aiDraft || undefined}
+        tools={tools}
       />
 
       {selectedIds.size > 0 && (

@@ -13,9 +13,10 @@ interface VoiceNoteFormModalProps {
   isOpen: boolean
   onClose: () => void
   defaultValues?: Record<string, any>
+  tools?: { id: string; name: string }[]
 }
 
-export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues }: VoiceNoteFormModalProps) {
+export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues, tools = [] }: VoiceNoteFormModalProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -30,6 +31,7 @@ export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues }
     language: defaultValues?.language ?? voiceNote?.language ?? 'English',
     duration_seconds: defaultValues?.duration_seconds?.toString() ?? voiceNote?.duration_seconds?.toString() ?? '',
     key_points: (Array.isArray(defaultValues?.key_points) ? defaultValues?.key_points.join(', ') : defaultValues?.key_points) ?? voiceNote?.key_points?.join(', ') ?? '',
+    tool_id: defaultValues?.tool_id ?? voiceNote?.tool_id ?? '',
     status: (defaultValues?.status ?? voiceNote?.status ?? 'published') as Status,
   })
 
@@ -44,6 +46,7 @@ export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues }
       language: defaultValues?.language ?? voiceNote?.language ?? 'English',
       duration_seconds: defaultValues?.duration_seconds?.toString() ?? voiceNote?.duration_seconds?.toString() ?? '',
       key_points: (Array.isArray(defaultValues?.key_points) ? defaultValues?.key_points.join(', ') : defaultValues?.key_points) ?? voiceNote?.key_points?.join(', ') ?? '',
+      tool_id: defaultValues?.tool_id ?? voiceNote?.tool_id ?? '',
       status: (defaultValues?.status ?? voiceNote?.status ?? 'published') as Status,
     })
   }, [voiceNote?.id, isOpen, defaultValues])
@@ -95,6 +98,7 @@ export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues }
         language: form.language || 'English',
         duration_seconds: form.duration_seconds ? parseInt(form.duration_seconds) : undefined,
         key_points: form.key_points ? form.key_points.split(',').map((k: string) => k.trim()).filter(Boolean) : [],
+        tool_id: form.tool_id || null,
         status: form.status,
       }
 
@@ -228,6 +232,18 @@ export function VoiceNoteFormModal({ voiceNote, isOpen, onClose, defaultValues }
                 <option value="archived">Archived</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Tool (linked to)</label>
+            <select
+              value={form.tool_id}
+              onChange={e => setForm(f => ({ ...f, tool_id: e.target.value }))}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+            >
+              <option value="">General (no specific tool)</option>
+              {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

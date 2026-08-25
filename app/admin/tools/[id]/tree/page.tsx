@@ -59,6 +59,14 @@ export default async function ToolTreePage({
     quizAttempts = (attempts ?? []) as unknown as typeof quizAttempts
   }
 
+  // Fetch all tools for modal dropdowns
+  const { data: allTools } = await supabase
+    .from('tools')
+    .select('id, name').is('deleted_at', null)
+    .order('name')
+
+  const toolsList = (allTools ?? []) as { id: string; name: string }[]
+
   // Fetch additional counts not in the tree
   const { count: vnCount } = await supabase
     .from('voice_notes')
@@ -108,7 +116,7 @@ export default async function ToolTreePage({
         </div>
       </div>
 
-      <ToolTreeView data={result.data} />
+      <ToolTreeView data={result.data} tools={toolsList} />
 
       <QuizPerformancePanel
         toolId={tool.id}

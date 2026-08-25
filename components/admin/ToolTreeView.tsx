@@ -19,16 +19,23 @@ import {
   Globe,
   Pencil,
   Save,
-  X
+  X,
+  Plus,
+  Mic,
 } from 'lucide-react'
 import { ToolTreeData } from '@/types'
 import { publishToolTree, refreshToolKnowledge, updateToolKnowledgeSummary } from '@/lib/actions/tool-onboard'
+import { FAQFormModal } from '@/components/admin/FAQFormModal'
+import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
+import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
+import { VoiceNoteFormModal } from '@/components/admin/VoiceNoteFormModal'
 
 interface ToolTreeViewProps {
   data: ToolTreeData
+  tools?: { id: string; name: string }[]
 }
 
-export function ToolTreeView({ data }: ToolTreeViewProps) {
+export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
   const { tool, course, faqs, objections, scripts } = data
 
   // Default collapsed on mobile (sections open on desktop via true)
@@ -36,6 +43,12 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
   const [faqsExpanded, setFaqsExpanded] = useState(true)
   const [objectionsExpanded, setObjectionsExpanded] = useState(true)
   const [scriptsExpanded, setScriptsExpanded] = useState(true)
+
+  // Inline create modal state — tool_id pre-locked to current tool
+  const [addFaqOpen, setAddFaqOpen] = useState(false)
+  const [addObjOpen, setAddObjOpen] = useState(false)
+  const [addScriptOpen, setAddScriptOpen] = useState(false)
+  const [addVoiceOpen, setAddVoiceOpen] = useState(false)
 
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -310,16 +323,22 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
 
         {/* FAQs */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <button
-            onClick={() => setFaqsExpanded(!faqsExpanded)}
-            className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
+          <div className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+            <button
+              onClick={() => setFaqsExpanded(!faqsExpanded)}
+              className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition-opacity"
+            >
               <HelpCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm md:text-base">FAQs ({faqs.length})</h3>
-            </div>
-            {faqsExpanded ? <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" /> : <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0" />}
-          </button>
+              {faqsExpanded ? <ChevronDown className="w-4 h-4 text-gray-500 ml-1" /> : <ChevronRight className="w-4 h-4 text-gray-500 ml-1" />}
+            </button>
+            <button
+              onClick={() => setAddFaqOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-300 transition-colors ml-2 flex-shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add FAQ
+            </button>
+          </div>
 
           {faqsExpanded && (
             <div className="p-3 md:p-4 space-y-3">
@@ -344,16 +363,22 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
 
         {/* Objections */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <button
-            onClick={() => setObjectionsExpanded(!objectionsExpanded)}
-            className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
+          <div className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+            <button
+              onClick={() => setObjectionsExpanded(!objectionsExpanded)}
+              className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition-opacity"
+            >
               <Shield className="w-5 h-5 text-amber-500 flex-shrink-0" />
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm md:text-base">Objections ({objections.length})</h3>
-            </div>
-            {objectionsExpanded ? <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" /> : <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0" />}
-          </button>
+              {objectionsExpanded ? <ChevronDown className="w-4 h-4 text-gray-500 ml-1" /> : <ChevronRight className="w-4 h-4 text-gray-500 ml-1" />}
+            </button>
+            <button
+              onClick={() => setAddObjOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-300 transition-colors ml-2 flex-shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Objection
+            </button>
+          </div>
 
           {objectionsExpanded && (
             <div className="p-3 md:p-4 space-y-3">
@@ -380,16 +405,22 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
 
         {/* Scripts */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <button
-            onClick={() => setScriptsExpanded(!scriptsExpanded)}
-            className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
+          <div className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+            <button
+              onClick={() => setScriptsExpanded(!scriptsExpanded)}
+              className="flex items-center gap-2 flex-1 text-left hover:opacity-80 transition-opacity"
+            >
               <MessageSquare className="w-5 h-5 text-purple-500 flex-shrink-0" />
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm md:text-base">Scripts ({scripts.length})</h3>
-            </div>
-            {scriptsExpanded ? <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" /> : <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0" />}
-          </button>
+              {scriptsExpanded ? <ChevronDown className="w-4 h-4 text-gray-500 ml-1" /> : <ChevronRight className="w-4 h-4 text-gray-500 ml-1" />}
+            </button>
+            <button
+              onClick={() => setAddScriptOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300 transition-colors ml-2 flex-shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Script
+            </button>
+          </div>
 
           {scriptsExpanded && (
             <div className="p-3 md:p-4 space-y-3">
@@ -411,7 +442,49 @@ export function ToolTreeView({ data }: ToolTreeViewProps) {
             </div>
           )}
         </div>
+
+        {/* Voice Notes — quick add from tree */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-center gap-2">
+              <Mic className="w-5 h-5 text-rose-500 flex-shrink-0" />
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm md:text-base">Voice Notes</h3>
+            </div>
+            <button
+              onClick={() => setAddVoiceOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 dark:text-rose-300 transition-colors ml-2 flex-shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Voice Note
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Inline create modals — tool_id pre-locked to this tool */}
+      <FAQFormModal
+        isOpen={addFaqOpen}
+        onClose={() => { setAddFaqOpen(false); router.refresh() }}
+        tools={tools}
+        defaultValues={{ tool_id: tool.id }}
+      />
+      <ObjectionFormModal
+        isOpen={addObjOpen}
+        onClose={() => { setAddObjOpen(false); router.refresh() }}
+        tools={tools}
+        defaultValues={{ tool_id: tool.id }}
+      />
+      <ScriptFormModal
+        isOpen={addScriptOpen}
+        onClose={() => { setAddScriptOpen(false); router.refresh() }}
+        tools={tools}
+        defaultValues={{ tool_id: tool.id }}
+      />
+      <VoiceNoteFormModal
+        isOpen={addVoiceOpen}
+        onClose={() => { setAddVoiceOpen(false); router.refresh() }}
+        tools={tools}
+        defaultValues={{ tool_id: tool.id }}
+      />
     </div>
   )
 }
