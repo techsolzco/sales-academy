@@ -9,18 +9,15 @@ function buildCSS(theme: ThemeSettings | null) {
   const accentHex = theme?.accent_color || '#10B981'
   const primary = hexToHSL(primaryHex)
   const accent = hexToHSL(accentHex)
+  const ph = primary.h, ps = primary.s, pl = primary.l
+  const ah = accent.h, as_ = accent.s, al = accent.l
   const gradientCss = theme?.gradient_css || ''
-  const sidebarGradientCss = theme?.sidebar_gradient_css || ''
+  const nebulaCss = theme?.sidebar_gradient_css || ''
   const wallpaperUrl = theme?.wallpaper_url || ''
   const wallpaperOpacity = theme?.wallpaper_opacity ?? 0.15
   const cardOpacity = theme?.card_opacity ?? 1.0
-  const isGalaxy = theme?.theme_preset === 'galaxy'
-  const ph = primary.h
-  const ps = primary.s
-  const pl = primary.l
-  const ah = accent.h
-  const as_ = accent.s
-  const al = accent.l
+  const isCosmic = theme?.theme_preset?.startsWith('cosmic-') || theme?.theme_preset === 'galaxy'
+  const sidebarFallback = 'linear-gradient(to bottom, hsl(' + ph + ' ' + ps + '% 22%), hsl(' + ph + ' ' + ps + '% 14%))'
 
   return `
     :root {
@@ -39,7 +36,8 @@ function buildCSS(theme: ThemeSettings | null) {
       --brand-800: ${ph} ${ps}% 22%;
       --brand-900: ${ph} ${ps}% 14%;
       --page-gradient: ${gradientCss};
-      --sidebar-gradient: ${sidebarGradientCss || ('linear-gradient(to bottom, hsl(' + ph + ' ' + ps + '% 22%), hsl(' + ph + ' ' + ps + '% 14%))') };
+      --sidebar-gradient: ${isCosmic ? gradientCss : (nebulaCss || sidebarFallback)};
+      --nebula-gradient: ${nebulaCss};
       --wallpaper-url: ${wallpaperUrl ? ("url('" + wallpaperUrl + "')") : 'none'};
       --wallpaper-opacity: ${wallpaperOpacity};
       --card-opacity: ${cardOpacity};
@@ -61,19 +59,14 @@ function buildCSS(theme: ThemeSettings | null) {
       }
       body.has-wallpaper { position: relative; }
     ` : ''}
-    ${isGalaxy ? `
-      body {
-        background: linear-gradient(135deg, #0a0014 0%, #0f0a2e 30%, #0d1b4b 60%, #0a0028 100%) !important;
-        background-attachment: fixed !important;
-      }
-    ` : ''}
   `
 }
 
 export function ThemeInjector({ theme }: { theme: ThemeSettings | null }) {
   const primaryHex = theme?.primary_color || '#4F46E5'
   const accentHex = theme?.accent_color || '#10B981'
-  const isGalaxy = theme?.theme_preset === 'galaxy'
+  const isCosmic = theme?.theme_preset?.startsWith('cosmic-') || theme?.theme_preset === 'galaxy'
+  const nebulaCss = theme?.sidebar_gradient_css || ''
 
   useLayoutEffect(() => {
     const primary = hexToHSL(primaryHex)
@@ -89,12 +82,11 @@ export function ThemeInjector({ theme }: { theme: ThemeSettings | null }) {
       ['--brand-300', 74], ['--brand-400', 62], ['--brand-500', 50],
       ['--brand-600', 40], ['--brand-700', 32], ['--brand-800', 22], ['--brand-900', 14],
     ]
-    shades.forEach(([varName, lightness]) => {
-      root.style.setProperty(varName, ph + ' ' + ps + '% ' + lightness + '%')
-    })
+    shades.forEach(([v, l]) => root.style.setProperty(v, ph + ' ' + ps + '% ' + l + '%'))
 
     const sidebarFallback = 'linear-gradient(to bottom, hsl(' + ph + ' ' + ps + '% 22%), hsl(' + ph + ' ' + ps + '% 14%))'
-    root.style.setProperty('--sidebar-gradient', theme?.sidebar_gradient_css || (theme?.gradient_css || sidebarFallback))
+    root.style.setProperty('--sidebar-gradient', isCosmic ? (theme?.gradient_css || '') : (nebulaCss || sidebarFallback))
+    root.style.setProperty('--nebula-gradient', nebulaCss)
     root.style.setProperty('--card-opacity', String(theme?.card_opacity ?? 1.0))
     root.style.setProperty('--wallpaper-opacity', String(theme?.wallpaper_opacity ?? 0.15))
 
@@ -104,12 +96,12 @@ export function ThemeInjector({ theme }: { theme: ThemeSettings | null }) {
       document.body.classList.remove('has-wallpaper')
     }
 
-    if (isGalaxy) {
+    if (isCosmic) {
       root.classList.add('galaxy-theme')
     } else {
       root.classList.remove('galaxy-theme')
     }
-  }, [primaryHex, accentHex, theme?.gradient_css, theme?.sidebar_gradient_css, theme?.wallpaper_url, isGalaxy, theme?.card_opacity, theme?.wallpaper_opacity])
+  }, [primaryHex, accentHex, theme?.gradient_css, theme?.sidebar_gradient_css, theme?.wallpaper_url, isCosmic, theme?.card_opacity, theme?.wallpaper_opacity])
 
   const css = buildCSS(theme)
   return <style id="theme-injector" dangerouslySetInnerHTML={{ __html: css }} />
