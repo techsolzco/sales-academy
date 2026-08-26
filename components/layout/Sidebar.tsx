@@ -56,10 +56,12 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-gradient-to-b from-brand-800 to-slate-950',
-          'border-r border-brand-800 flex flex-col transition-transform duration-300 ease-in-out',
+          'fixed md:sticky top-0 left-0 z-50 h-screen w-64 sidebar-wrapper',
+          'border-r border-brand-700/50 flex flex-col transition-transform duration-300 ease-in-out',
+          'sidebar-bg',
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
+        style={{ background: 'var(--sidebar-gradient, linear-gradient(to bottom, hsl(var(--brand-800)), hsl(var(--brand-900, var(--brand-800)))))' }}
       >
         {/* Logo header */}
         <div className="px-4 md:px-6 py-4 border-b border-brand-800 flex items-center justify-between bg-gradient-to-r from-brand-700/30 to-transparent flex-shrink-0">

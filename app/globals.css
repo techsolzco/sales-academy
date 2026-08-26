@@ -24,7 +24,7 @@
     --input: 220 13% 91%;
     --ring: 225 74% 52%;
     --radius: 0.5rem;
-    /* Brand color shades — overridden by ThemeInjector */
+    /* Brand color shades  overridden by ThemeInjector */
     --brand-50:  225 74% 97%;
     --brand-100: 225 74% 92%;
     --brand-200: 225 74% 84%;
@@ -76,7 +76,7 @@
     background: linear-gradient(135deg, var(--color-brand-500, #6366f1), var(--color-brand-700, #4338ca));
   }
 
-  /* ── Dark mode heading & text defaults ─────────────────────────── */
+  /*  Dark mode heading & text defaults  */
   .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
     color: theme('colors.gray.100');
   }
@@ -117,7 +117,7 @@
     background-color: rgb(17 24 39 / 0.9) !important;
   }
 
-  /* ── Global dark mode fix for ALL form inputs, textareas, selects ── */
+  /*  Global dark mode fix for ALL form inputs, textareas, selects  */
   /* Covers all components that use border-gray-200/300 without dark: variants */
   .dark input:not([type="range"]):not([type="color"]):not([type="checkbox"]):not([type="radio"]),
   .dark textarea,
@@ -140,3 +140,133 @@
 }
 
 
+
+/* ============================================================
+   Theme Pack  Galaxy, Wallpaper, Glass Cards (migration 023)
+   ============================================================ */
+
+/* Gradient background when a gradient theme is active */
+body.has-gradient {
+  background: var(--page-gradient, #f9fafb);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Wallpaper overlay */
+body.has-wallpaper {
+  position: relative;
+}
+body.has-wallpaper::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--wallpaper-url, none);
+  background-size: cover;
+  background-position: center;
+  opacity: var(--wallpaper-opacity, 0.15);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Semi-transparent content cards when wallpaper / gradient active */
+.glass-card {
+  background-color: rgb(255 255 255 / var(--card-opacity, 1)) !important;
+  backdrop-filter: blur(4px);
+}
+.dark .glass-card {
+  background-color: rgb(17 24 39 / var(--card-opacity, 1)) !important;
+}
+
+/* ========= Galaxy Theme ========= */
+.galaxy-theme {
+  color-scheme: dark;
+}
+.galaxy-theme body {
+  background: linear-gradient(135deg, #0a0014 0%, #0f0a2e 30%, #0d1b4b 60%, #0a0028 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+}
+
+/* Star field  two layers of randomly-sized radial-gradient dots */
+.galaxy-theme::before,
+.galaxy-theme::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.galaxy-theme::before {
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 20% 35%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 30% 5%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 55%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 25%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 10%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(2px 2px at 80% 45%, rgba(200,160,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 90%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 60%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 45% 85%, rgba(150,200,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 40%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 95%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(2px 2px at 75% 30%, rgba(200,150,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 65%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 20%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 5% 50%, rgba(150,180,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 75%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 72% 88%, rgba(255,255,255,0.8) 0%, transparent 100%);
+  animation: twinkle-stars 6s ease-in-out infinite alternate;
+}
+.galaxy-theme::after {
+  background-image:
+    radial-gradient(1px 1px at 8% 42%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 22% 78%, rgba(180,160,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 38% 18%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 48% 62%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(2px 2px at 58% 8%, rgba(160,200,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 68% 52%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 78% 72%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 88% 28%, rgba(200,180,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 98% 92%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 12% 68%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 32% 48%, rgba(150,200,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 52% 88%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 62% 38%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(2px 2px at 82% 58%, rgba(200,160,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 12%, rgba(255,255,255,0.9) 0%, transparent 100%);
+  animation: twinkle-stars 8s ease-in-out infinite alternate-reverse;
+}
+@keyframes twinkle-stars {
+  0%   { opacity: 0.4; }
+  50%  { opacity: 1.0; }
+  100% { opacity: 0.6; }
+}
+
+/* Nebula glow in galaxy mode  subtle radial blobs */
+.galaxy-theme body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(120, 60, 237, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 80% 70%, rgba(56, 189, 248, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 30% at 50% 80%, rgba(167, 100, 255, 0.08) 0%, transparent 60%);
+}
+
+/* Galaxy sidebar and content should sit above the star field */
+.galaxy-theme .sidebar-wrapper,
+.galaxy-theme main,
+.galaxy-theme header {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sidebar gradient via CSS variable */
+.sidebar-bg {
+  background: var(--sidebar-gradient, hsl(var(--brand-800)));
+}

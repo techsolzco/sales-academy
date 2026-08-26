@@ -570,6 +570,13 @@ export interface ThemeSettings {
   primary_color: string
   accent_color: string
   theme_mode: 'system' | 'light' | 'dark'
+  // Theme pack fields (added migration 023)
+  theme_preset: string | null          // e.g. 'gradient-ocean', 'galaxy', 'custom'
+  gradient_css: string | null          // CSS gradient string for page/body background
+  sidebar_gradient_css: string | null  // CSS gradient for sidebar background
+  wallpaper_url: string | null         // public URL to uploaded wallpaper image
+  wallpaper_opacity: number            // 0.0 – 1.0, default 0.15
+  card_opacity: number                 // 0.0 – 1.0, default 1.0
   updated_at: string
 }
 

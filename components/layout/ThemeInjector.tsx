@@ -4,52 +4,113 @@ import { useLayoutEffect } from 'react'
 import { ThemeSettings } from '@/types'
 import { hexToHSL } from '@/lib/utils/themeUtils'
 
-function buildCSS(primaryHex: string, accentHex: string) {
+function buildCSS(theme: ThemeSettings | null) {
+  const primaryHex = theme?.primary_color || '#4F46E5'
+  const accentHex = theme?.accent_color || '#10B981'
   const primary = hexToHSL(primaryHex)
   const accent = hexToHSL(accentHex)
+  const gradientCss = theme?.gradient_css || ''
+  const sidebarGradientCss = theme?.sidebar_gradient_css || ''
+  const wallpaperUrl = theme?.wallpaper_url || ''
+  const wallpaperOpacity = theme?.wallpaper_opacity ?? 0.15
+  const cardOpacity = theme?.card_opacity ?? 1.0
+  const isGalaxy = theme?.theme_preset === 'galaxy'
+  const ph = primary.h
+  const ps = primary.s
+  const pl = primary.l
+  const ah = accent.h
+  const as_ = accent.s
+  const al = accent.l
+
   return `
     :root {
-      --primary: ${primary.h} ${primary.s}% ${primary.l}%;
-      --ring: ${primary.h} ${primary.s}% ${primary.l}%;
-      --accent: ${accent.h} ${accent.s}% ${accent.l}%;
-      --accent-foreground: ${accent.h} ${accent.s}% 10%;
-      --brand-50:  ${primary.h} ${primary.s}% 97%;
-      --brand-100: ${primary.h} ${primary.s}% 92%;
-      --brand-200: ${primary.h} ${primary.s}% 84%;
-      --brand-300: ${primary.h} ${primary.s}% 74%;
-      --brand-400: ${primary.h} ${primary.s}% 62%;
-      --brand-500: ${primary.h} ${primary.s}% 50%;
-      --brand-600: ${primary.h} ${primary.s}% 40%;
-      --brand-700: ${primary.h} ${primary.s}% 32%;
-      --brand-800: ${primary.h} ${primary.s}% 22%;
-      --brand-900: ${primary.h} ${primary.s}% 14%;
+      --primary: ${ph} ${ps}% ${pl}%;
+      --ring: ${ph} ${ps}% ${pl}%;
+      --accent: ${ah} ${as_}% ${al}%;
+      --accent-foreground: ${ah} ${as_}% 10%;
+      --brand-50:  ${ph} ${ps}% 97%;
+      --brand-100: ${ph} ${ps}% 92%;
+      --brand-200: ${ph} ${ps}% 84%;
+      --brand-300: ${ph} ${ps}% 74%;
+      --brand-400: ${ph} ${ps}% 62%;
+      --brand-500: ${ph} ${ps}% 50%;
+      --brand-600: ${ph} ${ps}% 40%;
+      --brand-700: ${ph} ${ps}% 32%;
+      --brand-800: ${ph} ${ps}% 22%;
+      --brand-900: ${ph} ${ps}% 14%;
+      --page-gradient: ${gradientCss};
+      --sidebar-gradient: ${sidebarGradientCss || ('linear-gradient(to bottom, hsl(' + ph + ' ' + ps + '% 22%), hsl(' + ph + ' ' + ps + '% 14%))') };
+      --wallpaper-url: ${wallpaperUrl ? ("url('" + wallpaperUrl + "')") : 'none'};
+      --wallpaper-opacity: ${wallpaperOpacity};
+      --card-opacity: ${cardOpacity};
     }
+    ${gradientCss ? `
+      body { background: ${gradientCss}; background-attachment: fixed; min-height: 100vh; }
+    ` : ''}
+    ${wallpaperUrl ? `
+      body.has-wallpaper::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: url('${wallpaperUrl}');
+        background-size: cover;
+        background-position: center;
+        opacity: ${wallpaperOpacity};
+        z-index: 0;
+        pointer-events: none;
+      }
+      body.has-wallpaper { position: relative; }
+    ` : ''}
+    ${isGalaxy ? `
+      body {
+        background: linear-gradient(135deg, #0a0014 0%, #0f0a2e 30%, #0d1b4b 60%, #0a0028 100%) !important;
+        background-attachment: fixed !important;
+      }
+    ` : ''}
   `
 }
 
 export function ThemeInjector({ theme }: { theme: ThemeSettings | null }) {
   const primaryHex = theme?.primary_color || '#4F46E5'
   const accentHex = theme?.accent_color || '#10B981'
+  const isGalaxy = theme?.theme_preset === 'galaxy'
 
-  // Also apply via useLayoutEffect so theme updates client-side without a full reload
   useLayoutEffect(() => {
     const primary = hexToHSL(primaryHex)
     const accent = hexToHSL(accentHex)
     const root = document.documentElement
-    root.style.setProperty('--primary', `${primary.h} ${primary.s}% ${primary.l}%`)
-    root.style.setProperty('--ring', `${primary.h} ${primary.s}% ${primary.l}%`)
-    root.style.setProperty('--accent', `${accent.h} ${accent.s}% ${accent.l}%`)
+    const ph = primary.h, ps = primary.s, pl = primary.l
+    const ah = accent.h, as_ = accent.s, al = accent.l
+    root.style.setProperty('--primary', ph + ' ' + ps + '% ' + pl + '%')
+    root.style.setProperty('--ring', ph + ' ' + ps + '% ' + pl + '%')
+    root.style.setProperty('--accent', ah + ' ' + as_ + '% ' + al + '%')
     const shades: [string, number][] = [
       ['--brand-50', 97], ['--brand-100', 92], ['--brand-200', 84],
       ['--brand-300', 74], ['--brand-400', 62], ['--brand-500', 50],
       ['--brand-600', 40], ['--brand-700', 32], ['--brand-800', 22], ['--brand-900', 14],
     ]
     shades.forEach(([varName, lightness]) => {
-      root.style.setProperty(varName, `${primary.h} ${primary.s}% ${lightness}%`)
+      root.style.setProperty(varName, ph + ' ' + ps + '% ' + lightness + '%')
     })
-  }, [primaryHex, accentHex])
 
-  // SSR <style> tag so colors are applied on first paint (no flash)
-  const css = buildCSS(primaryHex, accentHex)
+    const sidebarFallback = 'linear-gradient(to bottom, hsl(' + ph + ' ' + ps + '% 22%), hsl(' + ph + ' ' + ps + '% 14%))'
+    root.style.setProperty('--sidebar-gradient', theme?.sidebar_gradient_css || (theme?.gradient_css || sidebarFallback))
+    root.style.setProperty('--card-opacity', String(theme?.card_opacity ?? 1.0))
+    root.style.setProperty('--wallpaper-opacity', String(theme?.wallpaper_opacity ?? 0.15))
+
+    if (theme?.wallpaper_url) {
+      document.body.classList.add('has-wallpaper')
+    } else {
+      document.body.classList.remove('has-wallpaper')
+    }
+
+    if (isGalaxy) {
+      root.classList.add('galaxy-theme')
+    } else {
+      root.classList.remove('galaxy-theme')
+    }
+  }, [primaryHex, accentHex, theme?.gradient_css, theme?.sidebar_gradient_css, theme?.wallpaper_url, isGalaxy, theme?.card_opacity, theme?.wallpaper_opacity])
+
+  const css = buildCSS(theme)
   return <style id="theme-injector" dangerouslySetInnerHTML={{ __html: css }} />
 }

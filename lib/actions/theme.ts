@@ -30,6 +30,12 @@ export async function updateThemeSettings(portal: 'admin' | 'salesman', data: Pa
         primary_color: data.primary_color,
         accent_color: data.accent_color,
         theme_mode: data.theme_mode,
+        theme_preset: data.theme_preset ?? 'custom',
+        gradient_css: data.gradient_css ?? null,
+        sidebar_gradient_css: data.sidebar_gradient_css ?? null,
+        wallpaper_url: data.wallpaper_url ?? null,
+        wallpaper_opacity: data.wallpaper_opacity ?? 0.15,
+        card_opacity: data.card_opacity ?? 1.0,
         updated_at: new Date().toISOString()
     })
     .eq('portal', portal)
@@ -41,4 +47,28 @@ export async function updateThemeSettings(portal: 'admin' | 'salesman', data: Pa
 
   revalidatePath('/', 'layout')
   return { success: true }
+}
+
+export async function uploadThemeWallpaper(formData: FormData): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient()
+
+  const file = formData.get('file') as File
+  if (!file) return { error: 'No file provided' }
+  if (!file.type.startsWith('image/')) return { error: 'File must be an image' }
+  if (file.size > 5 * 1024 * 1024) return { error: 'Image must be under 5MB' }
+
+  const ext = file.name.split('.').pop() || 'jpg'
+  const fileName = `wallpaper-${Date.now()}.${ext}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('theme-wallpapers')
+    .upload(fileName, file, { upsert: true, contentType: file.type })
+
+  if (uploadError) {
+    console.error('Wallpaper upload error:', uploadError)
+    return { error: uploadError.message }
+  }
+
+  const { data } = supabase.storage.from('theme-wallpapers').getPublicUrl(fileName)
+  return { url: data.publicUrl }
 }
