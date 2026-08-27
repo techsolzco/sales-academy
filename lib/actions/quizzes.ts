@@ -288,7 +288,7 @@ export async function submitQuizAttempt(quizId: string, answers: { questionId: s
 
   if (answersError) return { error: answersError.message }
 
-  revalidatePath(`/dashboard/quizzes/${quizId}`)
+  revalidatePath(`/dashboard/quiz/${quizId}`)
   return {
     data: {
       attemptId: attempt.id,

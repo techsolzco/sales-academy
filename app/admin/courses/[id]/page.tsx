@@ -27,40 +27,30 @@ async function deleteModuleAction(moduleId: string, courseId: string) {
   await deleteModule(moduleId, courseId)
 }
 
-export default async function CourseDetailPage({ 
+export default async function CourseDetailPage({
   params,
-  searchParams 
-}: { 
+  searchParams
+}: {
   params: { id: string },
-  searchParams: { tab?: string, lang?: string } 
+  searchParams: { tab?: string, lang?: string }
 }) {
   const supabase = await createClient()
-
-  const { data: course } = await supabase
-    .from('courses')
-    .select('*').is('deleted_at', null)
-    .eq('id', params.id)
-    .single()
-
-  if (!course) notFound()
 
   const tab = searchParams.tab || 'lessons'
   const lang = (searchParams.lang as 'en' | 'hi') || 'en'
 
-  const { data: modules } = await supabase
-    .from('modules')
-    .select('*, lessons(count)').is('deleted_at', null)
-    .eq('course_id', params.id)
-    .order('order_index', { ascending: true })
+  // Parallelize the always-needed queries
+  const [{ data: course }, { data: modules }, { count: assignmentTotal }] = await Promise.all([
+    supabase.from('courses').select('*').is('deleted_at', null).eq('id', params.id).single(),
+    supabase.from('modules').select('*, lessons(count)').is('deleted_at', null).eq('course_id', params.id).order('order_index', { ascending: true }),
+    supabase.from('course_assignments').select('id', { count: 'exact', head: true }).eq('course_id', params.id).then(r => r),
+  ])
 
-  const { count: assignmentTotal } = await supabase
-    .from('course_assignments')
-    .select('id', { count: 'exact', head: true })
-    .eq('course_id', params.id)
-    .then(r => ({ count: r.count ?? 0 }))
+  if (!course) notFound()
+
+  const showContentTabs = course.tool_id !== null
 
   let tabContent = null
-  const showContentTabs = course.tool_id !== null
 
   if (tab === 'lessons') {
     tabContent = (
@@ -101,16 +91,10 @@ export default async function CourseDetailPage({
                   <p className="text-xs text-gray-300 mt-0.5">{lessonCount} lesson{lessonCount !== 1 ? 's' : ''}</p>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <Link
-                    href={`/admin/courses/${course.id}/modules/${mod.id}`}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-brand-600 hover:bg-brand-50 transition"
-                  >
+                  <Link href={`/admin/courses/${course.id}/modules/${mod.id}`} className="px-3 py-1.5 rounded-lg text-xs font-medium text-brand-600 hover:bg-brand-50 transition">
                     Open →
                   </Link>
-                  <Link
-                    href={`/admin/courses/${course.id}/modules/${mod.id}/edit`}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
-                  >
+                  <Link href={`/admin/courses/${course.id}/modules/${mod.id}/edit`} className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition">
                     <Edit className="w-3.5 h-3.5" />
                   </Link>
                   <form action={deleteModuleAction.bind(null, mod.id, course.id)}>
@@ -133,11 +117,15 @@ export default async function CourseDetailPage({
       </div>
     )
   } else if (tab === 'scripts' && showContentTabs) {
+    // Parallelize scripts + script_copies, and filter copies to only this tool's scripts
     const { data: scripts } = await supabase.from('scripts').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false })
-    const { data: copiesRes } = await supabase.from('script_copies').select('script_id')
+    const scriptIds = (scripts || []).map(s => s.id)
     const copyCounts: Record<string, number> = {}
-    for (const row of copiesRes ?? []) {
-      copyCounts[row.script_id] = (copyCounts[row.script_id] ?? 0) + 1
+    if (scriptIds.length > 0) {
+      const { data: copiesRes } = await supabase.from('script_copies').select('script_id').in('script_id', scriptIds)
+      for (const row of copiesRes ?? []) {
+        copyCounts[row.script_id] = (copyCounts[row.script_id] ?? 0) + 1
+      }
     }
     tabContent = (
       <div className="mt-4">
@@ -152,17 +140,34 @@ export default async function CourseDetailPage({
       </div>
     )
   } else if (tab === 'assignments' && showContentTabs) {
-    const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false })
-    const { data: submissions } = await supabase.from('assignment_submissions').select('assignment_id, status')
-    
-    const stats = assignments?.map(a => {
-      const subs = submissions?.filter(s => s.assignment_id === a.id) || []
-      return {
-        ...a,
-        submissionCount: subs.length,
-        pendingCount: subs.filter(s => s.status === 'pending').length
+    const { data: assignments } = await supabase.from('assignments')
+      .select('*, course:courses(title), lesson:lessons(title)')
+      .is('deleted_at', null)
+      .eq('tool_id', course.tool_id)
+      .order('created_at', { ascending: false })
+
+    const assignmentIds = (assignments || []).map(a => a.id)
+    let submissionStats: Record<string, { total: number; pending: number }> = {}
+
+    // FIXED: Only fetch submissions for THIS course's assignments (not all submissions globally)
+    if (assignmentIds.length > 0) {
+      const { data: submissions } = await supabase
+        .from('assignment_submissions')
+        .select('assignment_id, status')
+        .in('assignment_id', assignmentIds)
+
+      for (const s of submissions || []) {
+        if (!submissionStats[s.assignment_id]) submissionStats[s.assignment_id] = { total: 0, pending: 0 }
+        submissionStats[s.assignment_id].total++
+        if (s.status === 'pending') submissionStats[s.assignment_id].pending++
       }
-    }) || []
+    }
+
+    const stats = (assignments || []).map(a => ({
+      ...a,
+      submissionCount: submissionStats[a.id]?.total || 0,
+      pendingCount: submissionStats[a.id]?.pending || 0,
+    }))
 
     tabContent = (
       <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -179,11 +184,7 @@ export default async function CourseDetailPage({
             {stats.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-5 md:p-8">
-                  <EmptyState 
-                    icon={BookOpen} 
-                    title="No assignments linked to this tool" 
-                    description="Assignments created for this tool will appear here." 
-                  />
+                  <EmptyState icon={BookOpen} title="No assignments linked to this tool" description="Assignments created for this tool will appear here." />
                 </td>
               </tr>
             ) : (
@@ -203,13 +204,9 @@ export default async function CourseDetailPage({
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-semibold">
-                        {assignment.submissionCount} total
-                      </span>
+                      <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-semibold">{assignment.submissionCount} total</span>
                       {assignment.pendingCount > 0 && (
-                        <span className="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full text-xs font-semibold">
-                          {assignment.pendingCount} pending
-                        </span>
+                        <span className="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full text-xs font-semibold">{assignment.pendingCount} pending</span>
                       )}
                     </div>
                   </td>
@@ -236,9 +233,7 @@ export default async function CourseDetailPage({
             <div className="flex items-center gap-2 mb-2">
               <StatusBadge status={course.status} />
               {course.category && <span className="text-xs text-gray-400">{course.category}</span>}
-              {course.difficulty && (
-                <span className="text-xs text-gray-400 capitalize">{course.difficulty}</span>
-              )}
+              {course.difficulty && <span className="text-xs text-gray-400 capitalize">{course.difficulty}</span>}
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">{course.title}</h1>
             {course.description && <p className="text-gray-400 text-sm">{course.description}</p>}
@@ -252,35 +247,25 @@ export default async function CourseDetailPage({
                   <Clock className="w-4 h-4" /> {course.estimated_duration_minutes} min
                 </span>
               )}
-            {assignmentTotal} salesmen assigned
+              {assignmentTotal} salesmen assigned
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Link
-              href={`/admin/courses/${course.id}/assign`}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
-            >
+            <Link href={`/admin/courses/${course.id}/assign`} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
               <UserPlus className="w-4 h-4" /> Assign
             </Link>
-            <Link
-              href={`/admin/courses/${course.id}/edit`}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
-            >
+            <Link href={`/admin/courses/${course.id}/edit`} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
               <Edit className="w-4 h-4" /> Edit
             </Link>
             {course.status === 'draft' && (
               <form action={publishAction.bind(null, course.id)}>
-                <button type="submit" className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition">
-                  Publish
-                </button>
+                <button type="submit" className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition">Publish</button>
               </form>
             )}
             {course.status === 'published' && (
               <form action={unpublishAction.bind(null, course.id)}>
-                <button type="submit" className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
-                  Unpublish
-                </button>
+                <button type="submit" className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Unpublish</button>
               </form>
             )}
           </div>
@@ -289,50 +274,17 @@ export default async function CourseDetailPage({
 
       <div className="flex items-center justify-between mb-6 border-b border-gray-200 pb-2">
         <div className="flex gap-6 overflow-x-auto">
-          <Link
-            href={`/admin/courses/${course.id}?tab=lessons&lang=${lang}`}
-            className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
-              tab === 'lessons' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Lessons
-          </Link>
-          {showContentTabs && (
-            <>
-              <Link
-                href={`/admin/courses/${course.id}?tab=faqs&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
-                  tab === 'faqs' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                FAQs
-              </Link>
-              <Link
-                href={`/admin/courses/${course.id}?tab=scripts&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
-                  tab === 'scripts' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Scripts
-              </Link>
-              <Link
-                href={`/admin/courses/${course.id}?tab=objections&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
-                  tab === 'objections' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Objections
-              </Link>
-              <Link
-                href={`/admin/courses/${course.id}?tab=assignments&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
-                  tab === 'assignments' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Assignments
-              </Link>
-            </>
-          )}
+          {['lessons', ...(showContentTabs ? ['faqs', 'scripts', 'objections', 'assignments'] : [])].map(t => (
+            <Link
+              key={t}
+              href={`/admin/courses/${course.id}?tab=${t}&lang=${lang}`}
+              className={`pb-2 text-sm font-medium transition-colors border-b-2 capitalize ${
+                tab === t ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {t}
+            </Link>
+          ))}
         </div>
         {showContentTabs && (
           <div className="ml-4">
@@ -341,10 +293,7 @@ export default async function CourseDetailPage({
         )}
       </div>
 
-      {/* Tab Content */}
-      <div className="mt-4">
-        {tabContent}
-      </div>
+      <div className="mt-4">{tabContent}</div>
     </div>
   )
 }
