@@ -327,3 +327,44 @@ export async function bulkSoftDeleteAssignments(ids: string[]): Promise<ActionRe
     return { error: (e as Error).message }
   }
 }
+
+export interface ContentItem {
+  content_type: 'faq' | 'script' | 'objection'
+  content_id: string
+  content_title: string
+}
+
+export async function saveAssignmentContentItems(
+  assignmentId: string,
+  items: ContentItem[],
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+
+  // Replace all content items for this assignment
+  await supabase.from('assignment_content_items').delete().eq('assignment_id', assignmentId)
+
+  if (items.length === 0) return { data: undefined }
+
+  const rows = items.map(i => ({ assignment_id: assignmentId, ...i }))
+  const { error } = await supabase.from('assignment_content_items').insert(rows)
+  if (error) return { error: error.message }
+  return { data: undefined }
+}
+
+export async function fetchAssignmentContentItems(
+  assignmentId: string,
+): Promise<ContentItem[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('assignment_content_items')
+    .select('content_type, content_id, content_title')
+    .eq('assignment_id', assignmentId)
+    .order('content_type')
+  if (error || !data) return []
+  return data as ContentItem[]
+}
+
