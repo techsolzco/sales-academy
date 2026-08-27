@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { ThemeSettings } from '@/types'
-import { updateThemeSettings, uploadThemeWallpaper } from '@/lib/actions/theme'
+import { updateThemeSettings} from '@/lib/actions/theme'
 import { hexToHSL } from '@/lib/utils/themeUtils'
 import {
   GRADIENT_PRESETS,
@@ -11,7 +11,7 @@ import {
   findPreset,
   ThemePreset,
 } from '@/lib/theme-presets'
-import { Upload, Trash2, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -188,98 +188,6 @@ function CosmicCard({ preset, isSelected, onClick }: {
 }
 
 // ---------------------------------------------------------------------------
-// WallpaperSection
-// ---------------------------------------------------------------------------
-function WallpaperSection({
-  wallpaperUrl, wallpaperOpacity, cardOpacity,
-  onWallpaperChange, onOpacityChange, onCardOpacityChange,
-}: {
-  wallpaperUrl: string | null
-  wallpaperOpacity: number
-  cardOpacity: number
-  onWallpaperChange: (url: string | null) => void
-  onOpacityChange: (v: number) => void
-  onCardOpacityChange: (v: number) => void
-}) {
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
-
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    setUploadError(null)
-    const fd = new FormData()
-    fd.append('file', file)
-    const result = await uploadThemeWallpaper(fd)
-    setUploading(false)
-    if ('error' in result) {
-      setUploadError(result.error)
-    } else {
-      onWallpaperChange(result.url)
-    }
-    if (fileRef.current) fileRef.current.value = ''
-  }
-
-  return (
-    <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-      <p className="text-sm font-semibold text-gray-700">Custom Wallpaper (optional)</p>
-      {wallpaperUrl ? (
-        <div className="flex items-center gap-3">
-          <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
-            <img src={wallpaperUrl} alt="Wallpaper preview" className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1 space-y-1">
-            <p className="text-xs text-gray-500">Wallpaper set</p>
-            <button onClick={() => onWallpaperChange(null)} className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700">
-              <Trash2 className="w-3 h-3" /> Remove
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div
-          onClick={() => fileRef.current?.click()}
-          className="flex flex-col items-center justify-center gap-2 h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-brand-400 cursor-pointer transition-colors"
-        >
-          {uploading ? (
-            <div className="text-xs text-gray-500 animate-pulse">Uploading...</div>
-          ) : (
-            <>
-              <Upload className="w-5 h-5 text-gray-400" />
-              <p className="text-xs text-gray-500">Click to upload wallpaper (max 5MB)</p>
-            </>
-          )}
-        </div>
-      )}
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-      {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
-      {wallpaperUrl && (
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-medium text-gray-600">Wallpaper Opacity</label>
-            <span className="text-xs text-gray-400">{Math.round(wallpaperOpacity * 100)}%</span>
-          </div>
-          <input type="range" min={0} max={1} step={0.05} value={wallpaperOpacity}
-            onChange={e => onOpacityChange(Number(e.target.value))}
-            className="w-full accent-brand-600" />
-        </div>
-      )}
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-xs font-medium text-gray-600">Content Card Opacity</label>
-          <span className="text-xs text-gray-400">{Math.round(cardOpacity * 100)}%</span>
-        </div>
-        <input type="range" min={0.3} max={1} step={0.05} value={cardOpacity}
-          onChange={e => onCardOpacityChange(Number(e.target.value))}
-          className="w-full accent-brand-600" />
-        <p className="text-[10px] text-gray-400 mt-1">Lower = more transparent cards (best with wallpaper or gradient themes)</p>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // ThemeSection
 // ---------------------------------------------------------------------------
 type TabKey = 'gradient' | 'solid' | 'cosmic' | 'custom'
@@ -425,15 +333,17 @@ function ThemeSection({ label, data, onChange }: {
           </div>
         )}
 
-        {/* Wallpaper -- always visible */}
-        <WallpaperSection
-          wallpaperUrl={data.wallpaper_url}
-          wallpaperOpacity={data.wallpaper_opacity}
-          cardOpacity={data.card_opacity}
-          onWallpaperChange={url => onChange({ wallpaper_url: url })}
-          onOpacityChange={v => onChange({ wallpaper_opacity: v })}
-          onCardOpacityChange={v => onChange({ card_opacity: v })}
-        />
+        {/* Content Card Opacity */}
+        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium text-gray-600">Content Card Opacity</label>
+            <span className="text-xs text-gray-400">{Math.round(data.card_opacity * 100)}%</span>
+          </div>
+          <input type="range" min={0.3} max={1} step={0.05} value={data.card_opacity}
+            onChange={e => onChange({ card_opacity: Number(e.target.value) })}
+            className="w-full accent-brand-600" />
+          <p className="text-[10px] text-gray-400 mt-1">Lower = more transparent cards (best with gradient or cosmic themes)</p>
+        </div>
 
         <div className="text-xs text-gray-400 pt-1">
           {(() => {

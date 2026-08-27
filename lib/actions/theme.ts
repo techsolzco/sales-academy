@@ -49,26 +49,3 @@ export async function updateThemeSettings(portal: 'admin' | 'salesman', data: Pa
   return { success: true }
 }
 
-export async function uploadThemeWallpaper(formData: FormData): Promise<{ url: string } | { error: string }> {
-  const supabase = await createClient()
-
-  const file = formData.get('file') as File
-  if (!file) return { error: 'No file provided' }
-  if (!file.type.startsWith('image/')) return { error: 'File must be an image' }
-  if (file.size > 5 * 1024 * 1024) return { error: 'Image must be under 5MB' }
-
-  const ext = file.name.split('.').pop() || 'jpg'
-  const fileName = `wallpaper-${Date.now()}.${ext}`
-
-  const { error: uploadError } = await supabase.storage
-    .from('theme-wallpapers')
-    .upload(fileName, file, { upsert: true, contentType: file.type })
-
-  if (uploadError) {
-    console.error('Wallpaper upload error:', uploadError)
-    return { error: uploadError.message }
-  }
-
-  const { data } = supabase.storage.from('theme-wallpapers').getPublicUrl(fileName)
-  return { url: data.publicUrl }
-}
