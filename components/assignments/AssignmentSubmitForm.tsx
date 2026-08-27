@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { submitAssignment } from '@/lib/actions/assignments'
-import { createClient } from '@/lib/supabase/client'
-import { UploadCloud, FileText } from 'lucide-react'
+import { CheckCircle, Type, Image, Link } from 'lucide-react'
 
 interface Props {
   assignmentId: string
@@ -12,87 +11,122 @@ interface Props {
 
 export function AssignmentSubmitForm({ assignmentId, assignmentTitle }: Props) {
   const [responseText, setResponseText] = useState('')
-  const [file, setFile] = useState<File | null>(null)
+  const [imageUrl, setImageUrl] = useState('')
+  const [mediaLink, setMediaLink] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const canSubmit = responseText.trim() || imageUrl.trim() || mediaLink.trim()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canSubmit) return
     setIsSubmitting(true)
-    
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+    setError(null)
 
-      let fileUrl = null
-      if (file) {
-        const ext = file.name.split('.').pop()
-        const path = `${user.id}/${assignmentId}/${Date.now()}.${ext}`
-        const { error: uploadError } = await supabase.storage.from('assignment-files').upload(path, file)
-        if (uploadError) throw uploadError
-        
-        // We'll just store the path
-        fileUrl = path
-      }
+    const res = await submitAssignment(
+      assignmentId,
+      responseText || undefined,
+      undefined,
+      imageUrl || undefined,
+      mediaLink || undefined,
+    )
 
-      const res = await submitAssignment(assignmentId, responseText, fileUrl || undefined)
-      if (res.error) throw new Error(res.error)
+    setIsSubmitting(false)
+    if (res.error) {
+      setError(res.error)
+    } else {
       setSuccess(true)
-    } catch (err: any) {
-      alert(err.message || 'Error submitting assignment')
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
   if (success) {
     return (
-      <div className="bg-green-50 text-green-700 p-6 rounded-2xl border border-green-100 text-center">
+      <div className="bg-green-50 text-green-700 p-8 rounded-2xl border border-green-100 text-center">
+        <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
         <h3 className="text-lg font-bold mb-2">Assignment Submitted!</h3>
-        <p className="text-sm">Your work has been submitted for review. You will be notified once it's graded.</p>
+        <p className="text-sm text-green-600">
+          Your work has been submitted for review. You will be notified once it's graded.
+        </p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Your Response</label>
-        <textarea
-          rows={6}
-          value={responseText}
-          onChange={(e) => setResponseText(e.target.value)}
-          placeholder="Type your answer here..."
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 text-sm"
-        />
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+        <h2 className="text-base font-bold text-gray-900">Submit Your Work</h2>
+        <p className="text-xs text-gray-500 mt-0.5">You can provide any combination of the options below</p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Attach File (Optional)</label>
-        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:bg-gray-50 transition-colors relative">
-          <div className="space-y-1 text-center">
-            {file ? (
-              <FileText className="mx-auto h-12 w-12 text-brand-500" />
-            ) : (
-              <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-            )}
-            <div className="flex text-sm text-gray-600 justify-center">
-              <label className="relative cursor-pointer bg-white rounded-md font-medium text-brand-600 hover:text-brand-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-500">
-                <span>{file ? file.name : 'Upload a file'}</span>
-                <input type="file" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-              </label>
-            </div>
-            {!file && <p className="text-xs text-gray-500">PDF, DOC, DOCX up to 10MB</p>}
-          </div>
+      <div className="p-6 space-y-6">
+        {/* Written response */}
+        <div>
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+            <Type className="w-4 h-4 text-brand-600" />
+            Written Response
+          </label>
+          <textarea
+            rows={5}
+            value={responseText}
+            onChange={(e) => setResponseText(e.target.value)}
+            placeholder="Type your answer, summary, or notes here..."
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm resize-none"
+          />
         </div>
+
+        {/* Image URL */}
+        <div>
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+            <Image className="w-4 h-4 text-indigo-600" />
+            Photo Proof (Image URL)
+          </label>
+          <input
+            type="url"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="Paste a link to your photo (e.g. from Google Photos, Imgur...)"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Upload your photo to Google Photos / Imgur / any image host and paste the link here
+          </p>
+        </div>
+
+        {/* Media link */}
+        <div>
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+            <Link className="w-4 h-4 text-purple-600" />
+            Video / Audio Link
+          </label>
+          <input
+            type="url"
+            value={mediaLink}
+            onChange={(e) => setMediaLink(e.target.value)}
+            placeholder="Paste a Google Drive, YouTube unlisted, or WhatsApp share link..."
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            For video/audio proof — share the file via Drive/YouTube and paste the link
+          </p>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-50 text-red-700 rounded-xl text-sm border border-red-200">
+            {error}
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-end pt-4 border-t border-gray-100">
+      <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+        <p className="text-xs text-gray-400">
+          {!canSubmit ? 'Fill in at least one field above to submit' : 'Ready to submit'}
+        </p>
         <button
           type="submit"
-          disabled={isSubmitting || (!responseText.trim() && !file)}
-          className="bg-brand-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
+          disabled={isSubmitting || !canSubmit}
+          className="bg-brand-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 text-sm"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Assignment'}
         </button>

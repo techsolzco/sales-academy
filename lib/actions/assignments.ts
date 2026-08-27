@@ -90,9 +90,15 @@ export async function unassignUser(courseId: string, userId: string): Promise<Ac
   }
 }
 
-// SCORING WEIGHTS comment: assignments don't affect leaderboard score directly
-
-export async function createAssignment(input: { title: string, instructions: string, due_date?: string, course_id?: string, lesson_id?: string }): Promise<ActionResult<Assignment>> {
+export async function createAssignment(input: {
+  title: string
+  instructions: string
+  due_date?: string
+  tool_id?: string | null
+  quiz_id?: string | null
+  course_id?: string | null
+  lesson_id?: string | null
+}): Promise<ActionResult<Assignment>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -102,7 +108,16 @@ export async function createAssignment(input: { title: string, instructions: str
 
   const { data, error } = await supabase
     .from('assignments')
-    .insert([{ ...input, created_by: user.id }])
+    .insert([{
+      title: input.title,
+      instructions: input.instructions,
+      due_date: input.due_date || null,
+      tool_id: input.tool_id || null,
+      quiz_id: input.quiz_id || null,
+      course_id: input.course_id || null,
+      lesson_id: input.lesson_id || null,
+      created_by: user.id,
+    }])
     .select()
     .single()
 
@@ -117,9 +132,10 @@ export async function fetchAssignments(): Promise<Assignment[]> {
     .from('assignments')
     .select(`
       *,
-      course:courses(id, name),
-      lesson:lessons(id, title)
+      tool:tools(id, name),
+      quiz:quizzes(id, title)
     `)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (error || !data) return []
@@ -135,10 +151,11 @@ export async function fetchMyAssignments(): Promise<(Assignment & { submission: 
     .from('assignments')
     .select(`
       *,
-      course:courses(id, name),
-      lesson:lessons(id, title),
+      tool:tools(id, name),
+      quiz:quizzes(id, title),
       assignment_submissions(*)
     `)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (error || !data) return []
@@ -154,29 +171,40 @@ export async function fetchMyAssignments(): Promise<(Assignment & { submission: 
   })
 }
 
-export async function submitAssignment(assignmentId: string, responseText?: string, fileUrl?: string): Promise<ActionResult> {
+export async function submitAssignment(
+  assignmentId: string,
+  responseText?: string,
+  fileUrl?: string,
+  imageUrl?: string,
+  mediaLink?: string,
+): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
   const { error } = await supabase
     .from('assignment_submissions')
-    .insert([{ assignment_id: assignmentId, user_id: user.id, response_text: responseText, file_url: fileUrl }])
+    .insert([{
+      assignment_id: assignmentId,
+      user_id: user.id,
+      response_text: responseText || null,
+      file_url: fileUrl || null,
+      image_url: imageUrl || null,
+      media_link: mediaLink || null,
+    }])
 
   if (error) return { error: error.message }
 
   const serviceClient = getServiceClient()
-  
   const { data: assignment } = await serviceClient.from('assignments').select('title').is('deleted_at', null).eq('id', assignmentId).single()
   const title = assignment?.title || 'Unknown Assignment'
-
   const { data: admins } = await serviceClient.from('profiles').select('id').eq('role', 'admin')
 
   if (admins && admins.length > 0) {
     const notifs = admins.map((a: any) => ({
       user_id: a.id,
       title: `New assignment submission: ${title}`,
-      body: `A new submission has been made for the assignment.`,
+      body: 'A new submission has been made for the assignment.',
       type: 'system',
       link: `/admin/assignments/${assignmentId}`,
     }))
@@ -187,7 +215,12 @@ export async function submitAssignment(assignmentId: string, responseText?: stri
   return { data: undefined }
 }
 
-export async function reviewSubmission(submissionId: string, status: 'approved' | 'rejected', feedback?: string): Promise<ActionResult> {
+export async function reviewSubmission(
+  submissionId: string,
+  status: 'approved' | 'rejected',
+  feedback?: string,
+  score?: number | null,
+): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -195,9 +228,17 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
+  const updateData: any = {
+    status,
+    feedback: feedback || null,
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: user.id,
+  }
+  if (score !== undefined && score !== null) updateData.score = score
+
   const { data: submission, error } = await supabase
     .from('assignment_submissions')
-    .update({ status, feedback, reviewed_at: new Date().toISOString(), reviewed_by: user.id })
+    .update(updateData)
     .eq('id', submissionId)
     .select('*, assignment:assignments(title)')
     .single()
@@ -210,7 +251,7 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
     title: `Your assignment was ${status}`,
     body: feedback || `Your submission for ${submission.assignment?.title} has been ${status}.`,
     type: 'system',
-    link: `/dashboard/assignments`,
+    link: '/dashboard/assignments',
   })
 
   revalidatePath(`/admin/assignments/${submission.assignment_id}`)
@@ -275,14 +316,12 @@ export async function deleteAssignment(id: string): Promise<ActionResult> {
   return { data: undefined }
 }
 
-
 export async function bulkSoftDeleteAssignments(ids: string[]): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
     const { error } = await supabase.from('assignments').update({ deleted_at: new Date().toISOString() }).in('id', ids)
     if (error) return { error: error.message }
     revalidatePath('/admin/assignments')
-    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }

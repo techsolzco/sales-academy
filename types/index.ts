@@ -457,11 +457,16 @@ export interface Assignment {
   due_date: string | null
   course_id: string | null
   lesson_id: string | null
+  tool_id: string | null
+  quiz_id: string | null
   created_by: string
   created_at: string
   updated_at: string
+  deleted_at: string | null
   course?: { id: string; name: string } | null
   lesson?: { id: string; title: string } | null
+  tool?: { id: string; name: string } | null
+  quiz?: { id: string; title: string } | null
 }
 
 export interface AssignmentSubmission {
@@ -470,6 +475,9 @@ export interface AssignmentSubmission {
   user_id: string
   response_text: string | null
   file_url: string | null
+  image_url: string | null
+  media_link: string | null
+  score: number | null
   status: 'pending' | 'approved' | 'rejected'
   feedback: string | null
   submitted_at: string

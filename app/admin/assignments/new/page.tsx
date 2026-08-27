@@ -9,8 +9,16 @@ export default async function NewAssignmentPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: courses } = await supabase.from('courses').select('id, title').is('deleted_at', null).order('title')
-  const { data: lessons } = await supabase.from('lessons').select('id, title, module_id').is('deleted_at', null).order('order_index')
+  const { data: tools } = await supabase
+    .from('tools').select('id, name').is('deleted_at', null).order('name')
 
-  return <AssignmentEditor courses={courses || []} lessons={lessons || []} />
+  const { data: quizzes } = await supabase
+    .from('quizzes').select('id, title, tool_id').is('deleted_at', null).order('title')
+
+  return (
+    <AssignmentEditor
+      tools={tools || []}
+      quizzes={(quizzes || []) as any}
+    />
+  )
 }

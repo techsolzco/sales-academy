@@ -443,6 +443,35 @@ export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
           )}
         </div>
 
+
+        {/* ─── Unified Quick-Add Bar ─────────────────────────────────────── */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Quick Add</p>
+            <p className="text-xs text-gray-400 mt-0.5">Add a new FAQ, Script, or Objection to this tool from one place</p>
+          </div>
+          <div className="p-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => setAddFaqOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-300 transition-colors"
+            >
+              ❓ Add FAQ
+            </button>
+            <button
+              onClick={() => setAddScriptOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-violet-50 hover:bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 dark:text-violet-300 transition-colors"
+            >
+              💬 Add Script
+            </button>
+            <button
+              onClick={() => setAddObjOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-300 transition-colors"
+            >
+              🛡️ Add Objection
+            </button>
+          </div>
+        </div>
+
       </div>
 
       {/* Inline create modals — tool_id pre-locked to this tool */}
