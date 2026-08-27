@@ -445,3 +445,129 @@ export async function syncQuizQuestions(quizId: string, questions: any[]): Promi
   revalidatePath('/admin/quizzes')
   return { data: undefined }
 }
+
+const GEMINI_MODELS_QZ = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest']
+
+function stripFences(text: string): string {
+  return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+}
+
+async function callGemini(prompt: string): Promise<string> {
+  const key = process.env.GEMINI_API_KEY!
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }], role: 'user' }],
+    generationConfig: { temperature: 0.5, maxOutputTokens: 4096, responseMimeType: 'application/json' },
+  })
+  for (const model of GEMINI_MODELS_QZ) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+    if (!res.ok) continue
+    const data = await res.json()
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (text) return text
+  }
+  throw new Error('AI unavailable — please try again')
+}
+
+export interface GeneratedQuestion {
+  id: string
+  question_text: string
+  points: number
+  explanation: string
+  options: { id: string; option_text: string; is_correct: boolean }[]
+}
+
+export async function generateQuestionsForQuiz(
+  quizId: string,
+  count: number = 8,
+): Promise<ActionResult<GeneratedQuestion[]>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+
+  const { data: quiz } = await supabase.from('quizzes').select('*, tool:tools(id, name)').is('deleted_at', null).eq('id', quizId).single()
+  if (!quiz) return { error: 'Quiz not found' }
+
+  const toolId = quiz.tool_id
+  const toolName = (quiz.tool as any)?.name || quiz.title
+
+  let contextParts: string[] = []
+
+  if (toolId) {
+    const [faqsRes, scriptsRes, objectionsRes] = await Promise.all([
+      supabase.from('faqs').select('question, short_answer').is('deleted_at', null).eq('tool_id', toolId).eq('status', 'published').limit(10),
+      supabase.from('scripts').select('title, content').is('deleted_at', null).eq('tool_id', toolId).eq('status', 'published').limit(6),
+      supabase.from('objections').select('objection_text, recommended_response').is('deleted_at', null).eq('tool_id', toolId).eq('status', 'published').limit(6),
+    ])
+    const faqs = faqsRes.data || []
+    const scripts = scriptsRes.data || []
+    const objections = objectionsRes.data || []
+
+    if (faqs.length) {
+      contextParts.push('FAQs:')
+      faqs.forEach((f: any) => contextParts.push(`Q: ${f.question}\nA: ${f.short_answer}`))
+    }
+    if (scripts.length) {
+      contextParts.push('\nScripts:')
+      scripts.forEach((s: any) => contextParts.push(`[${s.title}]: ${s.content?.slice(0, 200)}`))
+    }
+    if (objections.length) {
+      contextParts.push('\nObjection Handling:')
+      objections.forEach((o: any) => contextParts.push(`Objection: ${o.objection_text}\nResponse: ${o.recommended_response?.slice(0, 150)}`))
+    }
+  }
+
+  if (contextParts.length === 0) {
+    contextParts.push(`Quiz topic: ${quiz.title}`)
+    if (quiz.description) contextParts.push(`Description: ${quiz.description}`)
+  }
+
+  const prompt = `You are creating a sales training quiz for "${toolName}".
+
+Based on this training content:
+${contextParts.join('\n')}
+
+Generate exactly ${count} multiple-choice questions to test a salesman's knowledge.
+Each question must have exactly 4 options with exactly 1 correct answer.
+Mix difficulty: some easy recall, some applied scenario questions.
+
+Return ONLY valid JSON, no markdown, no explanation:
+{
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_index": 0,
+      "explanation": "Brief explanation of why this is correct",
+      "points": 1
+    }
+  ]
+}`
+
+  try {
+    const raw = await callGemini(prompt)
+    const clean = stripFences(raw)
+    const parsed = JSON.parse(clean)
+    if (!parsed.questions?.length) return { error: 'AI returned no questions — try again' }
+
+    const now = Date.now()
+    const questions: GeneratedQuestion[] = parsed.questions.map((q: any, i: number) => ({
+      id: `new-${now}-${i}`,
+      question_text: q.question,
+      points: q.points || 1,
+      explanation: q.explanation || '',
+      options: (q.options as string[]).map((opt: string, j: number) => ({
+        id: `new-opt-${now}-${i}-${j}`,
+        option_text: opt,
+        is_correct: j === q.correct_index,
+      })),
+    }))
+
+    return { data: questions }
+  } catch (e: any) {
+    return { error: e.message || 'AI generation failed' }
+  }
+}
+
