@@ -4,6 +4,8 @@ import { fetchToolTree } from '@/lib/actions/tool-onboard'
 import { ToolTreeView } from '@/components/admin/ToolTreeView'
 import { QuizPerformancePanel } from '@/components/admin/QuizPerformancePanel'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
+import { AssignmentRulesPanel } from '@/components/admin/AssignmentRulesPanel'
+import { fetchAssignmentRule, fetchToolExperts } from '@/lib/actions/assignment-rules'
 
 export default async function ToolTreePage({
   params,
@@ -67,6 +69,13 @@ export default async function ToolTreePage({
 
   const toolsList = (allTools ?? []) as { id: string; name: string }[]
 
+  // Fetch auto-assignment rule + experts + salesmen for the rules panel
+  const [existingRule, expertUserIds, { data: salesmen }] = await Promise.all([
+    fetchAssignmentRule(tool.id),
+    fetchToolExperts(tool.id),
+    supabase.from('profiles').select('id, full_name, email').eq('role', 'salesman').eq('status', 'active').order('full_name'),
+  ])
+
   const cards = [
     { title: 'Course', count: course ? 1 : 0, href: `/admin/courses/${course?.id}`, icon: '🎓', color: 'bg-blue-50 text-blue-700' },
     { title: 'FAQs', count: faqs.length, href: `/admin/faqs?tool=${tool.id}`, icon: '❓', color: 'bg-emerald-50 text-emerald-700' },
@@ -109,12 +118,20 @@ export default async function ToolTreePage({
         </div>
       </div>
 
-      <ToolTreeView data={result.data} tools={toolsList} />
+      <ToolTreeView data={result.data} tools={toolsList} quizzes={quizList} />
 
       <QuizPerformancePanel
         toolId={tool.id}
         quizzes={quizList}
         attempts={quizAttempts}
+      />
+
+      <AssignmentRulesPanel
+        toolId={tool.id}
+        toolName={tool.name}
+        existingRule={existingRule as any}
+        salesmen={(salesmen || []) as { id: string; full_name: string | null; email: string }[]}
+        expertUserIds={expertUserIds}
       />
     </div>
   )

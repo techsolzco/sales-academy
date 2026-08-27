@@ -21,7 +21,7 @@ function getServiceClient() {
   })
 }
 
-export async function createQuiz(input: { title: string, description?: string, lesson_id?: string, pass_score?: number }): Promise<ActionResult<Quiz>> {
+export async function createQuiz(input: { title: string, description?: string, lesson_id?: string | null, tool_id?: string | null, pass_score?: number }): Promise<ActionResult<Quiz>> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -40,7 +40,7 @@ export async function createQuiz(input: { title: string, description?: string, l
   return { data }
 }
 
-export async function updateQuiz(id: string, input: Partial<{ title: string; description: string; lesson_id: string; pass_score: number }>): Promise<ActionResult> {
+export async function updateQuiz(id: string, input: Partial<{ title: string; description: string; lesson_id: string | null; tool_id: string | null; pass_score: number }>): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }

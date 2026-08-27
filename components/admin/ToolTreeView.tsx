@@ -28,14 +28,17 @@ import { publishToolTree, refreshToolKnowledge, updateToolKnowledgeSummary } fro
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
+import { QuizCreateModal } from '@/components/admin/QuizCreateModal'
+import { AssignmentCreateModal } from '@/components/admin/AssignmentCreateModal'
 
 
 interface ToolTreeViewProps {
   data: ToolTreeData
   tools?: { id: string; name: string }[]
+  quizzes?: { id: string; title: string }[]
 }
 
-export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
+export function ToolTreeView({ data, tools = [], quizzes = [] }: ToolTreeViewProps) {
   const { tool, course, faqs, objections, scripts } = data
 
   // Default collapsed on mobile (sections open on desktop via true)
@@ -49,6 +52,8 @@ export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
   const [addObjOpen, setAddObjOpen] = useState(false)
   const [addScriptOpen, setAddScriptOpen] = useState(false)
   const [addVoiceOpen, setAddVoiceOpen] = useState(false)
+  const [addQuizOpen, setAddQuizOpen] = useState(false)
+  const [addAssignmentOpen, setAddAssignmentOpen] = useState(false)
 
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -469,6 +474,18 @@ export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
             >
               🛡️ Add Objection
             </button>
+            <button
+              onClick={() => setAddQuizOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 dark:text-rose-300 transition-colors"
+            >
+              📝 Create Quiz
+            </button>
+            <button
+              onClick={() => setAddAssignmentOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:hover:bg-brand-900/50 dark:text-brand-300 transition-colors"
+            >
+              📋 Create Assignment
+            </button>
           </div>
         </div>
 
@@ -492,6 +509,19 @@ export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
         onClose={() => { setAddScriptOpen(false); router.refresh() }}
         tools={tools}
         defaultValues={{ tool_id: tool.id }}
+      />
+      <QuizCreateModal
+        isOpen={addQuizOpen}
+        onClose={() => setAddQuizOpen(false)}
+        toolId={tool.id}
+        toolName={tool.name}
+      />
+      <AssignmentCreateModal
+        isOpen={addAssignmentOpen}
+        onClose={() => { setAddAssignmentOpen(false); router.refresh() }}
+        toolId={tool.id}
+        toolName={tool.name}
+        toolQuizzes={quizzes}
       />
     </div>
   )

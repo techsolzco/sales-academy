@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { triggerDailyAssignments } from '@/lib/actions/assignment-rules'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
