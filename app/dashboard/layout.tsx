@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, GraduationCap, HelpCircle, FileText, Mic, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video, Sparkles, Megaphone, ScrollText
+  LayoutDashboard, GraduationCap, HelpCircle, FileText, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video, Sparkles, Megaphone, ScrollText
 } from 'lucide-react'
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
@@ -31,7 +31,6 @@ const salesmanNavItems = [
   { label: 'Support',     href: '/dashboard/support',    icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'FAQs',        href: '/dashboard/faqs',       icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Scripts',     href: '/dashboard/scripts',    icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'Voice Notes', href: '/dashboard/voice-notes',icon: <Mic className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Objections',  href: '/dashboard/objections', icon: <AlertCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Assignments', href: '/dashboard/assignments', icon: <ClipboardList className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Meetings',    href: '/dashboard/meetings',   icon: <Video className="w-4 h-4 flex-shrink-0" /> },
@@ -126,7 +125,7 @@ export default async function DashboardLayout({
     <LanguageProvider>
       <ToastProvider>
         <SidebarProvider>
-          <div className="flex min-h-screen text-gray-900 dark:text-gray-100" style={{ background: 'transparent' }}>
+          <div className="flex h-screen overflow-hidden text-gray-900 dark:text-gray-100" style={{ background: 'transparent' }}>
       <Sidebar
         navItems={navItems}
         footer={
@@ -139,10 +138,10 @@ export default async function DashboardLayout({
           </div>
         }
       />
-      <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 w-full overflow-hidden h-full">
         {/* Banner sits in flow — pushes header down, never overlays anything */}
         {isImpersonating && <ViewAsStudentBanner />}
-        <header className="h-14 md:h-16 border-b border-gray-200/80 bg-white/80 dark:bg-gray-900/80 dark:border-gray-800 backdrop-blur-md px-3 md:px-8 flex items-center justify-between sticky top-0 z-30">
+        <header className="h-14 md:h-16 border-b border-gray-200/80 bg-white/80 dark:bg-gray-900/80 dark:border-gray-800 backdrop-blur-md px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 flex-shrink-0">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <SidebarMobileToggle />
             <GlobalSearchBar />

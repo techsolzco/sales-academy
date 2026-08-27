@@ -28,7 +28,7 @@ import { publishToolTree, refreshToolKnowledge, updateToolKnowledgeSummary } fro
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
-import { VoiceNoteFormModal } from '@/components/admin/VoiceNoteFormModal'
+
 
 interface ToolTreeViewProps {
   data: ToolTreeData
@@ -443,21 +443,6 @@ export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
           )}
         </div>
 
-        {/* Voice Notes — quick add from tree */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="w-full min-h-[52px] flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
-            <div className="flex items-center gap-2">
-              <Mic className="w-5 h-5 text-rose-500 flex-shrink-0" />
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm md:text-base">Voice Notes</h3>
-            </div>
-            <button
-              onClick={() => setAddVoiceOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 dark:text-rose-300 transition-colors ml-2 flex-shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Voice Note
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Inline create modals — tool_id pre-locked to this tool */}
@@ -476,12 +461,6 @@ export function ToolTreeView({ data, tools = [] }: ToolTreeViewProps) {
       <ScriptFormModal
         isOpen={addScriptOpen}
         onClose={() => { setAddScriptOpen(false); router.refresh() }}
-        tools={tools}
-        defaultValues={{ tool_id: tool.id }}
-      />
-      <VoiceNoteFormModal
-        isOpen={addVoiceOpen}
-        onClose={() => { setAddVoiceOpen(false); router.refresh() }}
         tools={tools}
         defaultValues={{ tool_id: tool.id }}
       />

@@ -67,19 +67,12 @@ export default async function ToolTreePage({
 
   const toolsList = (allTools ?? []) as { id: string; name: string }[]
 
-  // Fetch additional counts not in the tree
-  const { count: vnCount } = await supabase
-    .from('voice_notes')
-    .select('id', { count: 'exact', head: true }).is('deleted_at', null)
-    .eq('tool_id', tool.id)
-
   const cards = [
     { title: 'Course', count: course ? 1 : 0, href: `/admin/courses/${course?.id}`, icon: '🎓', color: 'bg-blue-50 text-blue-700' },
     { title: 'FAQs', count: faqs.length, href: `/admin/faqs?tool=${tool.id}`, icon: '❓', color: 'bg-emerald-50 text-emerald-700' },
     { title: 'Scripts', count: scripts.length, href: `/admin/scripts?tool=${tool.id}`, icon: '💬', color: 'bg-violet-50 text-violet-700' },
     { title: 'Objections', count: objections.length, href: `/admin/objections?tool=${tool.id}`, icon: '🛡️', color: 'bg-amber-50 text-amber-700' },
     { title: 'Quizzes', count: quizList.length, href: `/admin/quizzes?tool=${tool.id}`, icon: '📝', color: 'bg-rose-50 text-rose-700' },
-    { title: 'Voice Notes', count: vnCount ?? 0, href: `/admin/voice-notes?tool=${tool.id}`, icon: '🎙️', color: 'bg-cyan-50 text-cyan-700' },
   ]
 
   return (

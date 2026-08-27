@@ -7,7 +7,7 @@ import { ReviewButton } from './ReviewButton'
 import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
 import { SalesmanScriptViewer } from '@/components/training/SalesmanScriptViewer'
 import { SalesmanObjectionViewer } from '@/components/training/SalesmanObjectionViewer'
-import { SalesmanVoiceNoteViewer } from '@/components/training/SalesmanVoiceNoteViewer'
+
 import { TabLangToggle } from '@/components/ui/TabLangToggle'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -71,30 +71,25 @@ export default async function TrainingCoursePage({
   let faqs = null
   let scripts = null
   let objections = null
-  let voiceNotes = null
   
   if (course.tool_id) {
     const [
       faqsRes,
       scriptsRes,
       objectionsRes,
-      voiceNotesRes
     ] = await Promise.all([
       supabase.from('faqs').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
       supabase.from('scripts').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
       supabase.from('objections').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('voice_notes').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published')
     ])
     
     faqs = faqsRes.data
     scripts = scriptsRes.data
     objections = objectionsRes.data
-    voiceNotes = voiceNotesRes.data
 
     if (faqs) requiredReads.push(...faqs.map(f => ({ id: f.id, title: f.question, type: 'faq' })))
     if (scripts) requiredReads.push(...scripts.map(s => ({ id: s.id, title: s.title, type: 'script' })))
     if (objections) requiredReads.push(...objections.map(o => ({ id: o.id, title: o.objection_text, type: 'objection' })))
-    if (voiceNotes) requiredReads.push(...voiceNotes.map(v => ({ id: v.id, title: v.title, type: 'voice_note' })))
   }
 
   const { data: reviews } = requiredReads.length > 0 
@@ -237,12 +232,6 @@ export default async function TrainingCoursePage({
         <SalesmanObjectionViewer objections={objections ?? []} initialReviewed={reviewedIdsArray} initialToolId={course.tool_id!} />
       </div>
     )
-  } else if (tab === 'voice-notes' && showContentTabs) {
-    tabContent = (
-      <div className="mt-6">
-        <SalesmanVoiceNoteViewer notes={voiceNotes ?? []} currentUserId={userId} initialToolId={course.tool_id!} />
-      </div>
-    )
   } else if (tab === 'assignments' && showContentTabs) {
     const stats = assignments?.map(a => {
       const sub = submissions?.find(s => s.assignment_id === a.id)
@@ -367,14 +356,6 @@ export default async function TrainingCoursePage({
                 }`}
               >
                 Objections
-              </Link>
-              <Link
-                href={`/dashboard/training/${course.id}?tab=voice-notes&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
-                  tab === 'voice-notes' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Voice Notes
               </Link>
               <Link
                 href={`/dashboard/training/${course.id}?tab=assignments&lang=${lang}`}

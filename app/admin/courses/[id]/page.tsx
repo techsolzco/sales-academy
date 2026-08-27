@@ -10,7 +10,7 @@ import { deleteModule } from '@/lib/actions/modules'
 import { FAQManager } from '@/components/admin/FAQManager'
 import { ScriptManager } from '@/components/admin/ScriptManager'
 import { ObjectionManager } from '@/components/admin/ObjectionManager'
-import { VoiceNoteManager } from '@/components/admin/VoiceNoteManager'
+
 import { TabLangToggle } from '@/components/ui/TabLangToggle'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -149,13 +149,6 @@ export default async function CourseDetailPage({
     tabContent = (
       <div className="mt-4">
         <ObjectionManager initialObjections={objections ?? []} initialToolId={course.tool_id} />
-      </div>
-    )
-  } else if (tab === 'voice-notes' && showContentTabs) {
-    const { data: voiceNotes } = await supabase.from('voice_notes').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false })
-    tabContent = (
-      <div className="mt-4">
-        <VoiceNoteManager initialNotes={voiceNotes ?? []} initialToolId={course.tool_id} />
       </div>
     )
   } else if (tab === 'assignments' && showContentTabs) {
@@ -329,14 +322,6 @@ export default async function CourseDetailPage({
                 }`}
               >
                 Objections
-              </Link>
-              <Link
-                href={`/admin/courses/${course.id}?tab=voice-notes&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
-                  tab === 'voice-notes' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Voice Notes
               </Link>
               <Link
                 href={`/admin/courses/${course.id}?tab=assignments&lang=${lang}`}

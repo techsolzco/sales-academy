@@ -10,7 +10,7 @@ export async function globalSearch(query: string): Promise<{ data: SearchResultI
   const supabase = await createClient()
 
   // Run search queries in parallel across all published entities
-  const [faqsRes, scriptsRes, voiceNotesRes, objectionsRes, toolsRes, lessonsRes] = await Promise.all([
+  const [faqsRes, scriptsRes, objectionsRes, toolsRes, lessonsRes] = await Promise.all([
     supabase
       .from('faqs')
       .select('id, question, short_answer, category, tags').is('deleted_at', null)
@@ -23,13 +23,6 @@ export async function globalSearch(query: string): Promise<{ data: SearchResultI
       .select('id, title, content, script_type, language').is('deleted_at', null)
       .eq('status', 'published')
       .or(`title.ilike.%${q}%,content.ilike.%${q}%,when_to_use.ilike.%${q}%,script_type.ilike.%${q}%`)
-      .limit(5),
-
-    supabase
-      .from('voice_notes')
-      .select('id, title, transcript, purpose').is('deleted_at', null)
-      .eq('status', 'published')
-      .or(`title.ilike.%${q}%,transcript.ilike.%${q}%,purpose.ilike.%${q}%`)
       .limit(5),
 
     supabase
@@ -78,17 +71,6 @@ export async function globalSearch(query: string): Promise<{ data: SearchResultI
       description: item.content.slice(0, 120) + '…',
       url: `/dashboard/scripts#script-${item.id}`,
       category: item.script_type.replace(/_/g, ' '),
-    })
-  }
-
-  // Voice Notes
-  for (const item of voiceNotesRes.data ?? []) {
-    results.push({
-      id: item.id,
-      type: 'voice_note',
-      title: item.title,
-      description: item.purpose || item.transcript?.slice(0, 120) || null,
-      url: `/dashboard/voice-notes#vn-${item.id}`,
     })
   }
 
