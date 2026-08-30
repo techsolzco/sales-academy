@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { SITE_NAME } from '@/lib/config/site'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { createClient } from '@/lib/supabase/server'
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Sales Academy',
+  title: SITE_NAME,
   description: 'Empower your sales team with structured learning.',
 }
 

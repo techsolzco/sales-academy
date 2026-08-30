@@ -1,9 +1,13 @@
 'use client'
 
+import { getWhatsAppUrl, SITE_NAME } from '@/lib/config/site'
+
 export function WhatsAppButton() {
+  const href = getWhatsAppUrl(`Hi, I need help with the ${SITE_NAME} platform.`)
+
   return (
     <a
-      href="https://wa.me/923107902212?text=Hi%2C+I+need+help+with+the+Sales+Academy+platform."
+      href={href}
       target="_blank"
       rel="noreferrer"
       title="Chat with us on WhatsApp"

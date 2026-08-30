@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { SITE_NAME } from '@/lib/config/site'
 import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
 import { fetchLeaderboard } from '@/lib/actions/leaderboard'
 

@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
+import { SITE_NAME, SITE_TAGLINE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
-  title: 'Sign In | Sales Academy',
-  description: 'Sign in to your Sales Academy account.',
+  title: `Sign In | ${SITE_NAME}`,
+  description: `Sign in to your ${SITE_NAME} account.`,
 }
 
 export default function AuthLayout({
@@ -36,10 +37,10 @@ export default function AuthLayout({
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            Sales Academy
+            {SITE_NAME}
           </h1>
           <p className="text-brand-200 text-sm mt-2 font-medium">
-            Elevate your sales performance
+            {SITE_TAGLINE}
           </p>
         </div>
 
@@ -50,7 +51,8 @@ export default function AuthLayout({
 
         {/* Footer */}
         <p className="text-center text-brand-300/60 text-xs mt-6">
-          © {new Date().getFullYear()} Sales Academy. All rights reserved.
+          © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+
         </p>
       </div>
     </div>

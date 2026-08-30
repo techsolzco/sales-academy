@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import { SITE_NAME } from '@/lib/config/site'
 import Link from 'next/link'
 import { PlusCircle, Clock, Search } from 'lucide-react'
 import { fetchMyTickets } from '@/lib/actions/tickets'
 
 export const metadata = {
-  title: 'Support | Sales Academy',
+  title: `Support | ${SITE_NAME}`,
 }
 
 const statusColors = {

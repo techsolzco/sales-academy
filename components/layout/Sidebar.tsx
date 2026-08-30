@@ -1,4 +1,5 @@
-'use client'
+﻿'use client'
+import { SITE_NAME } from '@/lib/config/site'
 
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -45,7 +46,7 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay — tap to close */}
+      {/* Mobile overlay â€” tap to close */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -71,9 +72,9 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-white font-semibold text-sm tracking-tight">Sales Academy</span>
+            <span className="text-white font-semibold text-sm tracking-tight">{SITE_NAME}</span>
           </div>
-          {/* Close button — mobile only */}
+          {/* Close button â€” mobile only */}
           <button
             onClick={() => setIsOpen(false)}
             className="md:hidden w-9 h-9 flex items-center justify-center text-brand-300 hover:text-white hover:bg-brand-700 rounded-lg transition-colors"
@@ -128,3 +129,4 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
     </>
   )
 }
+

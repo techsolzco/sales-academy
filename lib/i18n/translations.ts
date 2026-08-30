@@ -1,3 +1,5 @@
+import { SITE_NAME } from '@/lib/config/site'
+
 type TranslationKey = string
 type Language = 'en' | 'hi'
 
@@ -37,7 +39,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'common.adminPortal': 'Admin Portal',
     'common.salesPortal': 'Sales Portal',
     // Registration
-    'register.title': 'Join Sales Academy',
+    'register.title': `Join ${SITE_NAME}`,
     'register.subtitle': 'Apply to start your sales training journey',
     'register.fullName': 'Full Name',
     'register.email': 'Email Address',
@@ -45,7 +47,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'register.password': 'Password',
     'register.knowledgeLevel': 'Sales Knowledge Level',
     'register.desiredCourse': 'Which course are you interested in?',
-    'register.reason': 'Why do you want to join Sales Academy?',
+    'register.reason': `Why do you want to join ${SITE_NAME}?`,
     'register.priorExperience': 'Prior Sales Experience',
     'register.submit': 'Submit Application',
     'register.pending.title': 'Application Under Review',
@@ -110,7 +112,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'common.adminPortal': 'Admin Portal',
     'common.salesPortal': 'Sales Portal',
     // Registration
-    'register.title': 'Sales Academy Join Karein',
+    'register.title': `${SITE_NAME} Join Karein`,
     'register.subtitle': 'Apni sales training shuru karne ke liye apply karein',
     'register.fullName': 'Poora Naam',
     'register.email': 'Email Address',
@@ -118,7 +120,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'register.password': 'Password',
     'register.knowledgeLevel': 'Sales ka Knowledge Level',
     'register.desiredCourse': 'Aap kaun sa course karna chahte hain?',
-    'register.reason': 'Aap Sales Academy kyun join karna chahte hain?',
+    'register.reason': `Aap ${SITE_NAME} kyun join karna chahte hain?`,
     'register.priorExperience': 'Pehle ka Sales Experience',
     'register.submit': 'Application Submit Karein',
     'register.pending.title': 'Application Review Mein Hai',

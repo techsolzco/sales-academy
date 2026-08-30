@@ -1,4 +1,5 @@
-'use server'
+﻿'use server'
+import { SITE_NAME } from '@/lib/config/site'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -7,7 +8,7 @@ export async function getAppSettings() {
   const supabase = await createClient()
   const { data, error } = await supabase.from('app_settings').select('*').limit(1).single()
   if (error) {
-    return { welcome_message_template: 'Welcome {name}! We are excited to have you join the Sales Academy.' }
+    return { welcome_message_template: `Welcome {name}! We are excited to have you join the ${SITE_NAME}.` }
   }
   return data
 }
@@ -40,3 +41,4 @@ export async function markWelcomeSeen() {
   await supabase.from('profiles').update({ has_seen_welcome: true }).eq('id', user.id)
   revalidatePath('/dashboard')
 }
+

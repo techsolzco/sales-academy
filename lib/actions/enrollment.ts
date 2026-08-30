@@ -1,4 +1,5 @@
-'use server'
+﻿'use server'
+import { SITE_NAME } from '@/lib/config/site'
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
@@ -34,7 +35,7 @@ export async function submitEnrollmentApplication(
 ): Promise<ActionResult> {
   const supabase = await createClient()
 
-  // Insert application (public — no auth required)
+  // Insert application (public â€” no auth required)
   const { data: app, error: appErr } = await supabase
     .from('enrollment_applications')
     .insert({
@@ -68,7 +69,7 @@ export async function submitEnrollmentApplication(
     const notifs = admins.map((a) => ({
       user_id: a.id,
       title: `New enrollment application from ${input.full_name}`,
-      body: `${input.email} wants to join Sales Academy.`,
+      body: `${input.email} wants to join ${SITE_NAME}.`,
       type: 'enrollment',
       link: '/admin/enrollments',
     }))
@@ -130,7 +131,7 @@ export async function approveApplication(id: string): Promise<ActionResult> {
     newUserId = authData.user.id
   }
 
-  // Create profile — carry over avatar + social from application
+  // Create profile â€” carry over avatar + social from application
   const { error: profileErr } = await serviceClient.from('profiles').upsert({
     id: newUserId,
     full_name: app.full_name,
@@ -155,8 +156,8 @@ export async function approveApplication(id: string): Promise<ActionResult> {
   // Notify the new user
   await serviceClient.from('notifications').insert({
     user_id: newUserId,
-    title: '🎉 Your application has been approved!',
-    body: `Welcome to Sales Academy, ${app.full_name}! Your login email is ${app.email} and your temporary password is: ${tempPassword}. Please change it after first login.`,
+    title: 'ðŸŽ‰ Your application has been approved!',
+    body: `Welcome to ${SITE_NAME}, ${app.full_name}! Your login email is ${app.email} and your temporary password is: ${tempPassword}. Please change it after first login.`,
     type: 'enrollment',
     link: '/dashboard',
   })
@@ -213,3 +214,4 @@ export async function fetchEnrollmentApplications(
   const { data } = await query
   return data ?? []
 }
+
