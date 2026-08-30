@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { triggerDailyAssignments } from '@/lib/actions/assignment-rules'
 import { getAiTrainingSettings } from '@/lib/actions/ai-assist'
+import { SITE_NAME } from '@/lib/config/site'
+
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
@@ -182,7 +184,8 @@ export default async function DashboardLayout({
       <TranslatorFab />
       {!isImpersonating && (
         <WelcomeModal
-          template={appSettings?.welcome_message_template || 'Welcome {name}! We are excited to have you join the Sales Academy.'}
+          template={appSettings?.welcome_message_template || `Welcome {name}! We are excited to have you join the ${SITE_NAME}.`}
+
           name={profile?.full_name || 'Student'}
           shouldShow={profile?.has_seen_welcome === false}
         />

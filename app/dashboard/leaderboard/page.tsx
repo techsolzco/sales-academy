@@ -4,7 +4,7 @@ import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable'
 import { fetchLeaderboard } from '@/lib/actions/leaderboard'
 
 export const metadata = {
-  title: 'Leaderboard 🏆 | Sales Academy',
+  title: `Leaderboard 🏆 | ${SITE_NAME}`,
 }
 
 export default async function DashboardLeaderboardPage() {

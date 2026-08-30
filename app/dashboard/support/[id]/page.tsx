@@ -4,10 +4,12 @@ import { TicketThread } from '@/components/tickets/TicketThread'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronRight, ArrowLeft } from 'lucide-react'
+import { SITE_NAME } from '@/lib/config/site'
 
 export const metadata = {
-  title: 'Ticket Details | Sales Academy',
+  title: `Ticket Details | ${SITE_NAME}`,
 }
+
 
 export default async function TicketDetailsPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
