@@ -132,6 +132,8 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
           />
         </div>
 
+
+
         <div className="flex items-center gap-3 pt-2">
           <input
             type="checkbox"

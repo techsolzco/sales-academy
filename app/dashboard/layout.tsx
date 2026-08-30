@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { triggerDailyAssignments } from '@/lib/actions/assignment-rules'
+import { getAiTrainingSettings } from '@/lib/actions/ai-assist'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
@@ -24,7 +25,6 @@ import { BottomTabBar } from '@/components/layout/BottomTabBar'
 const salesmanNavItems = [
   { label: 'Dashboard',   href: '/dashboard',            icon: <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Ask AI',      href: '/dashboard/ai-help',    icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
-  { label: 'English Practice', href: '/dashboard/english-practice', icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
   { label: 'My Training', href: '/dashboard/training',   icon: <GraduationCap className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Leaderboard', href: '/dashboard/leaderboard',icon: <Trophy className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Community',   href: '/dashboard/community',  icon: <MessageSquare className="w-4 h-4 flex-shrink-0" /> },
@@ -68,6 +68,14 @@ export default async function DashboardLayout({
   } catch (e) {
     // Ignore if table missing
   }
+
+  let aiSettings = null
+  try {
+    aiSettings = await getAiTrainingSettings()
+  } catch (e) {
+    // Ignore
+  }
+  const studentAiEnabled = aiSettings?.student_ai_access_enabled ?? true
 
   // Check for admin "view as student" impersonation cookie
   const cookieStore = await cookies()
@@ -113,14 +121,18 @@ export default async function DashboardLayout({
 
   const countByType = (type: string) => notifCounts?.filter(n => n.type === type).length ?? 0
 
+
   const navItems = [
-    ...salesmanNavItems.map(item => {
-      if (item.label === 'Assignments') return { ...item, badge: countByType('assignment') > 0 ? countByType('assignment') : (countByType('badge') > 0 ? countByType('badge') : undefined) }
-      if (item.label === 'Community') return { ...item, badge: countByType('community') > 0 ? countByType('community') : undefined }
-      return item
-    }),
+    ...salesmanNavItems
+      .filter(item => !(item.label === 'Ask AI' && !studentAiEnabled))
+      .map(item => {
+        if (item.label === 'Assignments') return { ...item, badge: countByType('assignment') > 0 ? countByType('assignment') : (countByType('badge') > 0 ? countByType('badge') : undefined) }
+        if (item.label === 'Community') return { ...item, badge: countByType('community') > 0 ? countByType('community') : undefined }
+        return item
+      }),
     ...(profile?.is_reseller ? [{ label: 'Sales Partner', href: '/dashboard/reseller', icon: <BadgeCheck className="w-4 h-4 flex-shrink-0" /> }] : [])
   ]
+
 
   return (
     <LanguageProvider>

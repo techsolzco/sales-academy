@@ -1,4 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
+
+const SCRIPT_TYPE_ORDER: Record<string, number> = {
+  greeting: 1,
+  upsell: 2,
+  voice_note_script: 3,
+  warranty_explanation: 4,
+  payment: 5,
+  after_sales: 6,
+  objection_response: 7,
+  follow_up: 8,
+  closing: 9,
+  cross_sell: 10,
+  review_request: 11,
+  whatsapp: 12,
+}
+function scriptTypePriority(type: string): number {
+  return SCRIPT_TYPE_ORDER[type] ?? 99
+}
+
 import { redirect } from 'next/navigation'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { SalesmanScriptViewer } from '@/components/training/SalesmanScriptViewer'
@@ -24,7 +43,10 @@ export default async function SalesmanScriptsPage({
       .eq('status', 'published')
       .order('name')
   ])
-  const scripts = scriptsRes.data ?? []
+  const scripts = (scriptsRes.data ?? []).sort((a, b) =>
+    scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) ||
+    a.title.localeCompare(b.title)
+  )
   const tools = toolsRes.data ?? []
 
   const reviewedItems = await getReviewedKbItems('script')

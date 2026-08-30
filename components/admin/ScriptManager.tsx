@@ -1,5 +1,12 @@
 'use client'
 
+const SCRIPT_TYPE_ORDER: Record<string, number> = {
+  greeting: 1, upsell: 2, voice_note_script: 3, warranty_explanation: 4,
+  payment: 5, after_sales: 6, objection_response: 7, follow_up: 8,
+  closing: 9, cross_sell: 10, review_request: 11, whatsapp: 12,
+}
+function scriptTypePriority(type: string): number { return SCRIPT_TYPE_ORDER[type] ?? 99 }
+
 import {   useState, useTransition, useMemo , memo , useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, FileText, ChevronDown, ChevronRight, LayoutList, FolderTree, Loader2 } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
@@ -145,6 +152,7 @@ export function ScriptManager({
     
     return Array.from(map.entries())
       .filter(([_, v]) => v.scripts.length > 0)
+      .map(([k, v]) => [k, { ...v, scripts: [...v.scripts].sort((a: any, b: any) => scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) || a.title.localeCompare(b.title)) }] as const)
       .sort((a, b) => b[1].scripts.length - a[1].scripts.length || a[1].name.localeCompare(b[1].name))
   }, [filtered, tools])
 

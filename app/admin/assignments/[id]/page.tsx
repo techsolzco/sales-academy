@@ -4,6 +4,7 @@ import { SubmissionReviewer } from '@/components/admin/SubmissionReviewer'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Trophy, ClipboardList } from 'lucide-react'
 import AssignmentPublish from './AssignmentPublish'
+import { AssignmentDetailDeleteButton } from './AssignmentDetailDeleteButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,9 +77,12 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto">
-      <Link href="/admin/assignments" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 mb-6 font-medium transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to Assignments
-      </Link>
+      <div className="flex items-center justify-between mb-6">
+        <Link href="/admin/assignments" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 font-medium transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Back to Assignments
+        </Link>
+        <AssignmentDetailDeleteButton assignmentId={params.id} />
+      </div>
 
       {/* Assignment header */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-6">

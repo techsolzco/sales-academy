@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Brain } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { QuizDeleteButton } from './QuizDeleteButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,8 +26,8 @@ export default async function QuizzesAdminPage({
     <div className="px-4 py-5 md:p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quizzes</h1>
-          <p className="text-gray-500 mt-1">Manage quizzes and view attempts.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Quizzes</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage quizzes and view attempts.</p>
         </div>
         <Link
           href="/admin/quizzes/new"
@@ -37,49 +38,55 @@ export default async function QuizzesAdminPage({
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/50">
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quiz</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lesson</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pass Score</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {(!quizzes || quizzes.length === 0) ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-5 md:p-8">
-                  <EmptyState 
-                    icon={Brain} 
-                    title="No quizzes created yet" 
-                    description="Create quizzes to test your team's knowledge." 
-                  />
-                </td>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quiz</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lesson</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pass Score</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-16"></th>
               </tr>
-            ) : (
-              quizzes.map((quiz: any) => (
-                <tr key={quiz.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
-                  <td className="px-6 py-4">
-                    <Link href={`/admin/quizzes/${quiz.id}`} className="font-medium text-gray-900 block hover:text-brand-600">
-                      {quiz.title}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {quiz.lesson?.title || '—'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {quiz.pass_score}%
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(quiz.created_at).toLocaleDateString()}
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {(!quizzes || quizzes.length === 0) ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-5 md:p-8">
+                    <EmptyState
+                      icon={Brain}
+                      title="No quizzes created yet"
+                      description="Create quizzes to test your team's knowledge."
+                    />
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                quizzes.map((quiz: any) => (
+                  <tr key={quiz.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link href={`/admin/quizzes/${quiz.id}`} className="font-medium text-gray-900 dark:text-gray-100 block hover:text-brand-600">
+                        {quiz.title}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {quiz.lesson?.title || '—'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {quiz.pass_score}%
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {new Date(quiz.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <QuizDeleteButton quizId={quiz.id} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

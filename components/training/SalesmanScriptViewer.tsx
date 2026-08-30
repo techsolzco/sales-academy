@@ -9,6 +9,24 @@ import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import { RichText } from '@/components/ui/RichText'
 
+const SCRIPT_TYPE_ORDER: Record<string, number> = {
+  greeting: 1,
+  upsell: 2,
+  voice_note_script: 3,
+  warranty_explanation: 4,
+  payment: 5,
+  after_sales: 6,
+  objection_response: 7,
+  follow_up: 8,
+  closing: 9,
+  cross_sell: 10,
+  review_request: 11,
+  whatsapp: 12,
+}
+function scriptTypePriority(type: string): number {
+  return SCRIPT_TYPE_ORDER[type] ?? 99
+}
+
 export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { scripts: SalesScript[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
   const [activeType, setActiveType] = useState<string>('All')
@@ -40,14 +58,21 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
     const map = new Map<string, { name: string; items: SalesScript[] }>()
     map.set('uncategorized', { name: 'Uncategorized', items: [] })
     tools.forEach(t => map.set(t.id, { name: t.name, items: [] }))
-    
+
     filtered.forEach(s => {
       const key = s.tool_id && map.has(s.tool_id) ? s.tool_id : 'uncategorized'
       map.get(key)!.items.push(s)
     })
-    
+
     return Array.from(map.entries())
       .filter(([_, v]) => v.items.length > 0)
+      .map(([k, v]) => [k, {
+        ...v,
+        items: [...v.items].sort((a, b) =>
+          scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) ||
+          a.title.localeCompare(b.title)
+        )
+      }] as const)
       .sort((a, b) => b[1].items.length - a[1].items.length || a[1].name.localeCompare(b[1].name))
   }, [filtered, tools])
 
@@ -59,8 +84,6 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
     navigator.clipboard.writeText(language === 'hi' && script.content_hinglish ? script.content_hinglish : script.content)
     setCopiedId(script.id)
     setTimeout(() => setCopiedId(null), 2000)
-
-    // Log copy event to DB silently
     await logScriptCopy(script.id)
   }
 
@@ -99,7 +122,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
         {({ displayTexts, toggleButton }) => (
           <div
             id={`script-${script.id}`}
-            className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -107,12 +130,12 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                   <span className="text-xs px-2.5 py-0.5 rounded-md bg-blue-50 font-bold text-blue-700 uppercase">
                     {script.script_type.replace(/_/g, ' ')}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600">
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
                     🌐 {script.language}
                   </span>
                   {toggleButton}
                 </div>
-                <h3 className="font-bold text-gray-900 text-base">
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
                   {script.title}
                   {language === 'hi' && !script.content_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
                 </h3>
@@ -122,7 +145,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                   onClick={() => handleToggleReview(script.id)}
                   disabled={isPending}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
-                    reviewedIds.has(script.id) 
+                    reviewedIds.has(script.id)
                       ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
                       : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                   }`}
@@ -147,7 +170,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                 💡 When to send: {language === 'hi' ? '(EN) ' : ''}{displayTexts.when_to_use_translated}
               </p>
             )}
-            <p className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed select-all">
+            <p className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed select-all">
               <RichText text={displayTexts.content_translated || ''} />
             </p>
           </div>
@@ -168,30 +191,30 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
               placeholder="Search scripts by title or keyword…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
           <select
             value={filterToolId}
             onChange={e => setFilterToolId(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="">All Tools</option>
             {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </div>
 
-        <div className="flex bg-gray-100 p-1 rounded-xl">
-          <button 
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+          <button
             onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'}`}
             title="List View"
           >
             <LayoutList className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('grouped')}
-            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'}`}
             title="Grouped by Tool"
           >
             <FolderTree className="w-4 h-4" />
@@ -207,7 +230,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
             className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition flex-shrink-0 ${
               activeType === st
                 ? 'bg-brand-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             {st.replace(/_/g, ' ')}
@@ -217,36 +240,39 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
 
       {/* Cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-400 text-sm">
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-gray-400 text-sm">
           <FileText className="w-10 h-10 mx-auto mb-2 text-gray-300" />
           No published sales scripts found.
         </div>
       ) : (
         viewMode === 'list' ? (
           <div className="space-y-4">
-            {filtered.map(renderScriptCard)}
+            {filtered
+              .slice()
+              .sort((a, b) => scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) || a.title.localeCompare(b.title))
+              .map(renderScriptCard)}
           </div>
         ) : (
           <div className="space-y-6">
             {grouped.map(([key, group]) => {
               const isExpanded = expandedGroups[key] !== false
               return (
-                <div key={key} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                  <button 
+                <div key={key} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+                  <button
                     onClick={() => toggleGroup(key)}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition text-left"
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
                   >
                     <div className="flex items-center gap-2">
                       {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
-                      <span className="font-bold text-gray-900">{group.name}</span>
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{group.name}</span>
+                      <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">
                         {group.items.length}
                       </span>
                     </div>
                   </button>
-                  
+
                   {isExpanded && (
-                    <div className="p-4 space-y-4 bg-white">
+                    <div className="p-4 space-y-4 bg-white dark:bg-gray-900">
                       {group.items.map(renderScriptCard)}
                     </div>
                   )}

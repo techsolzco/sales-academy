@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { QuizEditor } from '@/components/admin/QuizEditor'
+import { QuizDetailDeleteButton } from './QuizDetailDeleteButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,9 +52,12 @@ export default async function QuizDetailPage({ params }: { params: { id: string 
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto">
-      <Link href="/admin/quizzes" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 mb-6 font-medium transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to Quizzes
-      </Link>
+      <div className="flex items-center justify-between mb-6">
+        <Link href="/admin/quizzes" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 font-medium transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Back to Quizzes
+        </Link>
+        <QuizDetailDeleteButton quizId={params.id} />
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -80,32 +84,34 @@ export default async function QuizDetailPage({ params }: { params: { id: string 
       <div className="mt-10">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Recent Attempts</h2>
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                {['Student', 'Score', 'Status', 'Date'].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {attempts?.map((attempt: any) => (
-                <tr key={attempt.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                  <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-gray-100 text-sm">{attempt.profile?.full_name}</td>
-                  <td className="px-5 py-3.5 text-sm text-gray-600 dark:text-gray-300">{attempt.score}/{attempt.max_score} ({Math.round(attempt.percentage)}%)</td>
-                  <td className="px-5 py-3.5">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${attempt.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {attempt.passed ? 'Passed' : 'Failed'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-gray-500 dark:text-gray-400">{new Date(attempt.completed_at).toLocaleString()}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                  {['Student', 'Score', 'Status', 'Date'].map(h => (
+                    <th key={h} className="px-5 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
+                  ))}
                 </tr>
-              ))}
-              {(!attempts || attempts.length === 0) && (
-                <tr><td colSpan={4} className="px-5 py-8 text-center text-gray-500 text-sm">No attempts yet.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {attempts?.map((attempt: any) => (
+                  <tr key={attempt.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                    <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-gray-100 text-sm">{attempt.profile?.full_name}</td>
+                    <td className="px-5 py-3.5 text-sm text-gray-600 dark:text-gray-300">{attempt.score}/{attempt.max_score} ({Math.round(attempt.percentage)}%)</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${attempt.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {attempt.passed ? 'Passed' : 'Failed'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-gray-500 dark:text-gray-400">{new Date(attempt.completed_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+                {(!attempts || attempts.length === 0) && (
+                  <tr><td colSpan={4} className="px-5 py-8 text-center text-gray-500 text-sm">No attempts yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
