@@ -16,7 +16,13 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const urlError = searchParams.get('error')
+  const [error, setError] = useState<string | null>(
+    urlError === 'invalid_reset_link'
+      ? 'Your password reset link has expired or is invalid. Please request a new one.'
+      : null
+  )
+
 
   const supabase = createClient()
 
