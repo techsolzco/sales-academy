@@ -33,8 +33,8 @@ export default async function SalesmanFAQsPage({
   return (
     <div className="px-4 py-5 md:p-8 max-w-4xl animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Knowledge Base — FAQs</h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Knowledge Base — FAQs</h1>
+        <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
           Quickly find answers to common customer questions. Use &ldquo;Copy Answer&rdquo; to send responses directly to clients.
         </p>
       </div>

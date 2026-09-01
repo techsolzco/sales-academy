@@ -94,22 +94,22 @@ export default async function DailyReportPage({
     ].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
 
     if (allActivities.length === 0) {
-      content = <div className="text-gray-500 py-10 text-center bg-white rounded-xl shadow-sm border border-gray-100">No activity recorded for this date.</div>
+      content = <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500 py-10 text-center bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">No activity recorded for this date.</div>
     } else {
       content = (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Activity Timeline</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">Activity Timeline</h3>
           <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
             {allActivities.map((act, i) => (
               <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                 <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-brand-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10" />
-                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-gray-900">{act.type}</span>
+                    <span className="font-bold text-gray-900 dark:text-gray-100">{act.type}</span>
                     <time className="text-xs font-medium text-brand-600">{new Date(act.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
                   </div>
-                  <div className="text-sm text-gray-600">{act.title}</div>
-                  {act.details && <div className="text-xs text-gray-500 mt-2 font-medium">{act.details}</div>}
+                  <div className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{act.title}</div>
+                  {act.details && <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-2 font-medium">{act.details}</div>}
                 </div>
               </div>
             ))}
@@ -129,12 +129,12 @@ export default async function DailyReportPage({
     }).filter(s => s.sLessons > 0 || s.sScripts > 0 || s.sQuizzes > 0 || s.sAssignments > 0 || s.sKb > 0)
 
     if (summary.length === 0) {
-      content = <div className="text-gray-500 py-10 text-center bg-white rounded-xl shadow-sm border border-gray-100">No activity recorded for this date.</div>
+      content = <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500 py-10 text-center bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">No activity recorded for this date.</div>
     } else {
       content = (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="bg-gray-50 border-b border-gray-100 text-gray-700 font-medium">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
               <tr>
                 <th className="px-6 py-4">Student</th>
                 <th className="px-6 py-4 text-center">Lessons Done</th>
@@ -145,10 +145,10 @@ export default async function DailyReportPage({
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {summary.map(s => (
-                <tr key={s.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{s.full_name}</td>
+                <tr key={s.id} className="hover:bg-gray-50 dark:bg-gray-900/50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{s.full_name}</td>
                   <td className="px-6 py-4 text-center">{s.sLessons}</td>
                   <td className="px-6 py-4 text-center">{s.sKb}</td>
                   <td className="px-6 py-4 text-center">{s.sScripts}</td>
@@ -171,8 +171,8 @@ export default async function DailyReportPage({
   return (
     <div className="px-4 py-5 md:p-8 max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Daily Activity Report</h1>
-        <p className="text-sm text-gray-500 mt-1">Track student progress, completions, and activity on a daily basis.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Daily Activity Report</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Track student progress, completions, and activity on a daily basis.</p>
       </div>
 
       <DailyReportFilters salesmen={salesmen} />

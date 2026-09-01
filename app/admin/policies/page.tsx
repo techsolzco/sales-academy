@@ -11,7 +11,7 @@ export default async function AdminPoliciesPage() {
       <Breadcrumb crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Company Policies' }]} />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Company Policies</h1>
-        <p className="text-sm text-gray-400 mt-1">Create and publish policy documents for all salesmen.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Create and publish policy documents for all salesmen.</p>
       </div>
       <PolicyManager initialPolicies={policies} />
     </div>

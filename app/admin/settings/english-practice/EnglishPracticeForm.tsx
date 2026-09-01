@@ -25,7 +25,7 @@ export function EnglishPracticeForm({ initialSettings }: { initialSettings: any 
   }
 
   return (
-    <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+    <div className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
       {success && (
         <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200 flex items-center">
           ✅ Settings saved successfully!
@@ -38,7 +38,7 @@ export function EnglishPracticeForm({ initialSettings }: { initialSettings: any 
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">English Tutor Persona Instructions</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">English Tutor Persona Instructions</label>
         <textarea
           value={personaInstructions}
           onChange={(e) => setPersonaInstructions(e.target.value)}
@@ -48,7 +48,7 @@ export function EnglishPracticeForm({ initialSettings }: { initialSettings: any 
         />
       </div>
 
-      <div className="flex justify-end pt-4 border-t border-gray-100">
+      <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
         <button
           onClick={handleSave}
           disabled={isPending}

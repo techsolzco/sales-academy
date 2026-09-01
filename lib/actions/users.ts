@@ -1,4 +1,5 @@
-'use server'
+﻿'use server'
+import { revalidatePath } from 'next/cache'
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
@@ -85,3 +86,33 @@ export async function createUser(data: {
 
   return { data: { id: authData.user.id } }
 }
+
+// â”€â”€â”€ Deactivate / reactivate a salesman â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Uses profiles.status (check: 'active' | 'inactive' | 'suspended').
+// Middleware already redirects non-active users to /auth/pending â€” no migration needed.
+
+export async function deactivateUser(targetId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  if (user.id === targetId) return { error: 'You cannot deactivate your own account.' }
+  const { data: adminProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (adminProfile?.role !== 'admin') return { error: 'Not authorized' }
+  const { error } = await supabase.from('profiles').update({ status: 'inactive' }).eq('id', targetId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/salesmen')
+  return {}
+}
+
+export async function reactivateUser(targetId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  const { data: adminProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (adminProfile?.role !== 'admin') return { error: 'Not authorized' }
+  const { error } = await supabase.from('profiles').update({ status: 'active' }).eq('id', targetId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/salesmen')
+  return {}
+}
+

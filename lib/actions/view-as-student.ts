@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import type { ActionResult } from '@/types'
 
 function getServiceClient() {
@@ -71,7 +72,7 @@ export async function startViewAsStudent(targetUserId: string): Promise<ActionRe
       path: '/',
     })
 
-    return { data: undefined }
+    redirect('/dashboard')
   } catch (e: any) {
     return { error: e.message }
   }

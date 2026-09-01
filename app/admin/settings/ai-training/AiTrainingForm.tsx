@@ -70,7 +70,7 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
   return (
     <div className="space-y-12">
       {/* Form Section */}
-      <div className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <div className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
         {success && (
           <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200 flex items-center">
             ✅ Settings saved successfully!
@@ -83,7 +83,7 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Persona Instructions</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Persona Instructions</label>
           <textarea
             name="persona_instructions"
             value={formData.persona_instructions}
@@ -95,7 +95,7 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Sales Style Rules</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sales Style Rules</label>
           <textarea
             name="sales_style_rules"
             value={formData.sales_style_rules}
@@ -115,13 +115,13 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
             value={formData.locked_facts}
             onChange={handleChange}
             rows={8}
-            className="w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:border-amber-500 focus:ring-amber-500 bg-white"
+            className="w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:border-amber-500 focus:ring-amber-500 bg-white dark:bg-gray-800"
             placeholder="e.g. We do not offer refunds after 30 days. Our office is in Mumbai."
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tone & Style Examples</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tone & Style Examples</label>
           <textarea
             name="tone_examples"
             value={formData.tone_examples}
@@ -144,14 +144,14 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
             className="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500 cursor-pointer"
           />
           <div>
-            <label htmlFor="student_ai_access_enabled" className="text-sm font-medium text-gray-900 cursor-pointer">
+            <label htmlFor="student_ai_access_enabled" className="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
               Enable AI Features for Students
             </label>
-            <p className="text-xs text-gray-500">If unchecked, "Ask AI" and "English Practice" will be disabled for salesmen to conserve API quota.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">If unchecked, "Ask AI" and "English Practice" will be disabled for salesmen to conserve API quota.</p>
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-gray-100">
+        <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
           <button
             onClick={handleSave}
             disabled={isPending}
@@ -164,7 +164,7 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
       </div>
 
       {/* Test Section */}
-      <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden">
         <div className="bg-gradient-to-r from-brand-600 to-indigo-600 p-6 text-white">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <TestTube2 className="w-5 h-5" /> 🧪 Test my AI
@@ -173,14 +173,14 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
             Test how the AI responds to customer questions using your current saved settings.
           </p>
         </div>
-        <div className="p-6 bg-gray-50">
+        <div className="p-6 bg-gray-50 dark:bg-gray-900">
           <div className="flex gap-3 mb-6">
             <input
               type="text"
               value={testInput}
               onChange={(e) => setTestInput(e.target.value)}
               placeholder="Type a sample customer question..."
-              className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 shadow-inner bg-white"
+              className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 shadow-inner bg-white dark:bg-gray-800"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleTest()
               }}

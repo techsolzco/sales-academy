@@ -39,23 +39,23 @@ export default async function ModuleDetailPage({
       ]} />
 
       {/* Module header */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <StatusBadge status={module.status} />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">{module.title}</h1>
-            {module.description && <p className="text-gray-400 text-sm mt-1">{module.description}</p>}
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{module.title}</h1>
+            {module.description && <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">{module.description}</p>}
             {module.duration_minutes && (
-              <p className="flex items-center gap-1 text-xs text-gray-400 mt-2">
+              <p className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-2">
                 <Clock className="w-3.5 h-3.5" /> {module.duration_minutes} min
               </p>
             )}
           </div>
           <Link
             href={`/admin/courses/${course.id}/modules/${module.id}/edit`}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 dark:text-gray-500 text-sm font-medium hover:bg-gray-50 dark:bg-gray-900 transition"
           >
             <Edit className="w-4 h-4" /> Edit Module
           </Link>
@@ -64,7 +64,7 @@ export default async function ModuleDetailPage({
 
       {/* Lessons section */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Lessons ({lessons?.length ?? 0})
         </h2>
         <Link
@@ -76,14 +76,14 @@ export default async function ModuleDetailPage({
       </div>
 
       {(!lessons || lessons.length === 0) && (
-        <div className="text-center py-12 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
+        <div className="text-center py-12 rounded-xl border border-dashed border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 text-sm">
           No lessons yet. Add your first lesson to start building content.
         </div>
       )}
 
       <div className="space-y-2">
         {lessons?.map((lesson, index) => (
-          <div key={lesson.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 p-4 hover:border-gray-200 transition">
+          <div key={lesson.id} className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 hover:border-gray-200 dark:border-gray-600 transition">
             <div className="text-gray-200 flex-shrink-0 cursor-grab">
               <GripVertical className="w-4 h-4" />
             </div>
@@ -92,13 +92,13 @@ export default async function ModuleDetailPage({
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="font-medium text-gray-900 text-sm">{lesson.title}</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{lesson.title}</p>
                 <StatusBadge status={lesson.status} />
                 {!lesson.is_required && (
-                  <span className="text-xs text-gray-300 bg-gray-50 px-1.5 py-0.5 rounded">Optional</span>
+                  <span className="text-xs text-gray-300 bg-gray-50 dark:bg-gray-900 px-1.5 py-0.5 rounded">Optional</span>
                 )}
               </div>
-              {lesson.subtitle && <p className="text-xs text-gray-400 mt-0.5">{lesson.subtitle}</p>}
+              {lesson.subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{lesson.subtitle}</p>}
               <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-300">
                 {lesson.duration_minutes && <span>{lesson.duration_minutes} min</span>}
                 {lesson.difficulty && <span className="capitalize">{lesson.difficulty}</span>}
@@ -112,7 +112,7 @@ export default async function ModuleDetailPage({
                 Edit Content →
               </Link>
               <form action={deleteLessonAction.bind(null, lesson.id, module.id, course.id)}>
-                <button type="submit" className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
+                <button type="submit" className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 transition">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </form>

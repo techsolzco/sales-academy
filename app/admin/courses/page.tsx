@@ -36,8 +36,8 @@ export default async function AdminCoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Courses</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Courses</h1>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
             {courses?.length ?? 0} total · {published} published · {drafts} draft
           </p>
         </div>
