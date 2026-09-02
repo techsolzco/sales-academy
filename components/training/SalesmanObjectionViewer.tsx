@@ -101,24 +101,24 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
               {({ displayTexts, toggleButton }) => (
                 <div
                   id={`obj-${o.id}`}
-                  className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
+                  className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm hover:border-brand-200 dark:hover:border-brand-700 transition space-y-4"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         {o.difficulty && (
-                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 font-semibold text-gray-600 capitalize">
+                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 font-semibold text-gray-600 dark:text-gray-300 capitalize">
                             {o.difficulty}
                           </span>
                         )}
                         {o.related_product && (
-                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 font-semibold text-brand-700">
+                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300">
                             Product: {o.related_product}
                           </span>
                         )}
                         {toggleButton}
                       </div>
-                      <h3 className="font-bold text-gray-900 text-lg">
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">
                         &ldquo;{o.objection_text}&rdquo;
                         {language === 'hi' && !o.recommended_response_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
                       </h3>
@@ -127,9 +127,9 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                       onClick={() => handleToggleReview(o.id)}
                       disabled={isPending}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
-                        reviewedIds.has(o.id) 
-                          ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                          : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                        reviewedIds.has(o.id)
+                          ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
+                          : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                     >
                       {reviewedIds.has(o.id) ? (
@@ -140,36 +140,37 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                     </button>
                   </div>
                   {o.meaning && (
-                    <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs text-blue-900">
+                    <div className="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-900/25 border border-blue-100 dark:border-blue-800/50 text-xs text-blue-900 dark:text-blue-200">
                       💡 <span className="font-bold">Behind the objection:</span> <RichText text={displayTexts.meaning_translated || ''} />
                     </div>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                        <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-900/25 border border-emerald-100 dark:border-emerald-800/50 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+                        <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                         Recommended Response Strategy
                       </div>
-                      <p className="text-sm text-emerald-950 leading-relaxed">
+                      <p className="text-sm text-emerald-950 dark:text-emerald-100 leading-relaxed">
                         <RichText text={displayTexts.recommended_response_translated || ''} />
                       </p>
                     </div>
                     {o.do_not_say && (
-                      <div className="p-4 rounded-xl bg-red-50/70 border border-red-100 space-y-2">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-red-800 uppercase tracking-wider">
-                          <XCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                      <div className="p-4 rounded-xl bg-red-50/70 dark:bg-red-900/25 border border-red-100 dark:border-red-800/50 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-red-800 dark:text-red-300 uppercase tracking-wider">
+                          <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
                           DO NOT SAY
                         </div>
-                        <p className="text-sm text-red-950 leading-relaxed"><RichText text={displayTexts.do_not_say_translated || ''} /></p>
+                        <p className="text-sm text-red-950 dark:text-red-100 leading-relaxed"><RichText text={displayTexts.do_not_say_translated || ''} /></p>
                       </div>
                     )}
                   </div>
                   {o.alternative_response && (
-                    <div className="pt-2 border-t border-gray-100">
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Alternative Response Option</p>
-                      <p className="text-xs text-gray-700 leading-relaxed italic bg-gray-50 p-3 rounded-xl"><RichText text={o.alternative_response || ''} /></p>
+                    <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                      <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Alternative Response Option</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed italic bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl"><RichText text={o.alternative_response || ''} /></p>
                     </div>
                   )}
+
                 </div>
               )}
             </TranslateContextWrapper>

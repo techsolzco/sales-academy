@@ -127,7 +127,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xs px-2.5 py-0.5 rounded-md bg-blue-50 font-bold text-blue-700 uppercase">
+                  <span className="text-xs px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 font-bold text-blue-700 dark:text-blue-300 uppercase">
                     {script.script_type.replace(/_/g, ' ')}
                   </span>
                   <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
@@ -146,8 +146,8 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                   disabled={isPending}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
                     reviewedIds.has(script.id)
-                      ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                      ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {reviewedIds.has(script.id) ? (
@@ -158,9 +158,9 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                 </button>
                 <button
                   onClick={() => handleCopy(script)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 text-brand-600 hover:bg-brand-50 font-semibold text-xs transition flex-shrink-0 shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold text-xs transition flex-shrink-0 shadow-sm"
                 >
-                  {copiedId === script.id ? <Check className="w-4 h-4 text-brand-600" /> : <Copy className="w-4 h-4" />}
+                  {copiedId === script.id ? <Check className="w-4 h-4 text-brand-600 dark:text-brand-400" /> : <Copy className="w-4 h-4" />}
                   {copiedId === script.id ? 'Copied!' : 'Copy Script'}
                 </button>
               </div>

@@ -18,7 +18,7 @@ function TextBlock({ content }: { content: Record<string, unknown> }) {
       {parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <mark key={i} className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-semibold">
+            <mark key={i} className="bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 px-1 py-0.5 rounded font-semibold">
               {part.slice(2, -2)}
             </mark>
           )
@@ -125,10 +125,10 @@ function QuoteBlock({ content }: { content: Record<string, unknown> }) {
 }
 
 const calloutStyles: Record<string, { bg: string; border: string; icon: string }> = {
-  info:    { bg: 'bg-blue-50',   border: 'border-blue-200',  icon: 'ℹ️' },
-  warning: { bg: 'bg-amber-50',  border: 'border-amber-200', icon: '⚠️' },
-  tip:     { bg: 'bg-green-50',  border: 'border-green-200', icon: '💡' },
-  danger:  { bg: 'bg-red-50',    border: 'border-red-200',   icon: '🚨' },
+  info:    { bg: 'bg-blue-50 dark:bg-blue-900/25',   border: 'border-blue-200 dark:border-blue-800/50',  icon: 'ℹ️' },
+  warning: { bg: 'bg-amber-50 dark:bg-amber-900/25', border: 'border-amber-200 dark:border-amber-800/50', icon: '⚠️' },
+  tip:     { bg: 'bg-green-50 dark:bg-green-900/25', border: 'border-green-200 dark:border-green-800/50', icon: '💡' },
+  danger:  { bg: 'bg-red-50 dark:bg-red-900/25',    border: 'border-red-200 dark:border-red-800/50',   icon: '🚨' },
 }
 
 function CalloutBlock({ content }: { content: Record<string, unknown> }) {
@@ -140,8 +140,8 @@ function CalloutBlock({ content }: { content: Record<string, unknown> }) {
     <div className={`flex gap-3 p-4 rounded-xl border ${style.bg} ${style.border}`}>
       <span className="text-xl flex-shrink-0">{style.icon}</span>
       <div>
-        {title && <p className="text-sm font-semibold text-gray-800 mb-0.5">{title}</p>}
-        <p className="text-sm text-gray-700 leading-relaxed">{body}</p>
+        {title && <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-0.5">{title}</p>}
+        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{body}</p>
       </div>
     </div>
   )

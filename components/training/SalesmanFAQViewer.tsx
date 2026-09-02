@@ -103,15 +103,15 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
         {({ displayTexts, toggleButton }) => (
           <div
             id={`faq-${faq.id}`}
-            className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm hover:border-brand-200 dark:hover:border-brand-700 transition space-y-4"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 font-semibold text-brand-700 mb-2 inline-block">
+                <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300 mb-2 inline-block">
                   {faq.category}
                 </span>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-gray-900 text-base leading-snug">
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base leading-snug">
                     {displayTexts.question_translated}
                     {language === 'hi' && !faq.question_hinglish && <span className="text-xs text-gray-400 ml-1">(EN only)</span>}
                   </h3>
@@ -123,9 +123,9 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
                   onClick={() => handleToggleReview(faq.id)}
                   disabled={isPending}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
-                    reviewedIds.has(faq.id) 
-                      ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                    reviewedIds.has(faq.id)
+                      ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {reviewedIds.has(faq.id) ? (
@@ -136,10 +136,10 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
                 </button>
                 <button
                   onClick={() => handleCopy(faq)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 text-brand-600 hover:bg-brand-50 font-semibold text-xs transition flex-shrink-0 shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold text-xs transition flex-shrink-0 shadow-sm"
                   title="Copy customer-ready answer"
                 >
-                  {copiedId === faq.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedId === faq.id ? <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
                   {copiedId === faq.id ? 'Copied!' : 'Copy Answer'}
                 </button>
               </div>
@@ -147,27 +147,28 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
             {/* Answers */}
             <div className="space-y-3 pt-1">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Quick Answer</p>
-                <p className="text-sm text-gray-700 leading-relaxed bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Quick Answer</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50/80 dark:bg-gray-700/50 p-3 rounded-xl border border-gray-100 dark:border-gray-600">
                   <RichText text={displayTexts.short_answer_translated || ''} />
                 </p>
               </div>
               {faq.customer_ready_answer && (
                 <div>
-                  <p className="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-1">Client-Ready Response</p>
-                  <p className="text-sm text-gray-800 leading-relaxed bg-brand-50/40 p-3.5 rounded-xl border border-brand-100/60 font-sans">
+                  <p className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-1">Client-Ready Response</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed bg-brand-50/40 dark:bg-brand-900/20 p-3.5 rounded-xl border border-brand-100/60 dark:border-brand-800/40 font-sans">
                     <RichText text={displayTexts.customer_ready_answer_translated || ''} />
                   </p>
                 </div>
               )}
               {faq.detailed_answer && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Internal Details</p>
-                  <p className="text-xs text-gray-600 leading-relaxed italic"><RichText text={faq.detailed_answer || ''} /></p>
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Internal Details</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic"><RichText text={faq.detailed_answer || ''} /></p>
                 </div>
               )}
             </div>
           </div>
+
         )}
       </TranslateContextWrapper>
     )
