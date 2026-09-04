@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --background: 0 0% 100%;
     --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
@@ -38,6 +39,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
     --card: 224 71.4% 4.1%;
@@ -118,23 +120,25 @@
   }
 
   /*  Global dark mode fix for ALL form inputs, textareas, selects  */
-  /* Covers all components that use border-gray-200/300 without dark: variants */
+  /* Covers all components that use border-gray-200/300 without dark: variants.
+     NO !important — components with explicit dark:bg-* classes (e.g. dark:bg-emerald-950/30)
+     override this fallback naturally since Tailwind utilities layer beats base layer. */
   .dark input:not([type="range"]):not([type="color"]):not([type="checkbox"]):not([type="radio"]),
   .dark textarea,
   .dark select {
-    background-color: theme('colors.gray.700') !important;
-    color: theme('colors.gray.100') !important;
-    border-color: theme('colors.gray.600') !important;
+    background-color: theme('colors.gray.700');
+    color: theme('colors.gray.100');
+    border-color: theme('colors.gray.600');
   }
   .dark input::placeholder,
   .dark textarea::placeholder {
-    color: theme('colors.gray.400') !important;
+    color: theme('colors.gray.400');
   }
   /* Focus ring stays brand color in dark mode */
   .dark input:focus,
   .dark textarea:focus,
   .dark select:focus {
-    border-color: theme('colors.brand.500') !important;
+    border-color: theme('colors.brand.500');
     outline: none;
   }
 }

@@ -19,6 +19,7 @@ export interface ObjectionInput {
   objection_text: string
   meaning?: string
   recommended_response: string
+  recommended_response_hinglish?: string
   alternative_response?: string
   do_not_say?: string
   category?: string
@@ -42,9 +43,9 @@ export async function createObjection(input: ObjectionInput): Promise<ActionResu
       .select()
       .single()
     if (error) return { error: error.message }
-    
+
     syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
-    
+
     revalidatePath('/admin/objections')
     revalidatePath('/dashboard/objections')
     return { data }
@@ -63,9 +64,9 @@ export async function updateObjection(id: string, input: Partial<ObjectionInput>
       .select()
       .single()
     if (error) return { error: error.message }
-    
+
     syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
-    
+
     revalidatePath('/admin/objections')
     revalidatePath('/dashboard/objections')
     return { data }
@@ -74,26 +75,52 @@ export async function updateObjection(id: string, input: Partial<ObjectionInput>
   }
 }
 
-export async function deleteObjection(id: string): Promise<ActionResult> {
+export async function deleteObjection(id: string): Promise<ActionResult<null>> {
   try {
     const { supabase } = await requireAdmin()
-    
     const { data: existing } = await supabase
+      .from('objections').select('tool_id').eq('id', id).single()
+
+    const { error } = await supabase
       .from('objections')
-      .select('tool_id').is('deleted_at', null)
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
-      .single()
-      
-    const { error } = await supabase.from('objections').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
-    
+
     if (existing?.tool_id) {
       syncToolKnowledge(existing.tool_id).catch(e => console.warn('Knowledge sync error:', e))
     }
-    
+
     revalidatePath('/admin/objections')
     revalidatePath('/dashboard/objections')
-    return { data: undefined }
+    return { data: null }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function restoreObjection(id: string): Promise<ActionResult<null>> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase
+      .from('objections')
+      .update({ deleted_at: null })
+      .eq('id', id)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/objections')
+    return { data: null }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function hardDeleteObjection(id: string): Promise<ActionResult<null>> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase.from('objections').delete().eq('id', id)
+    if (error) return { error: error.message }
+    revalidatePath('/admin/objections')
+    return { data: null }
   } catch (e: unknown) {
     return { error: (e as Error).message }
   }
@@ -102,31 +129,37 @@ export async function deleteObjection(id: string): Promise<ActionResult> {
 export async function bulkSoftDeleteObjections(ids: string[]): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    const { error } = await supabase.from('objections').update({ deleted_at: new Date().toISOString() }).in('id', ids)
+    const { error } = await supabase
+      .from('objections')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids)
     if (error) return { error: error.message }
     revalidatePath('/admin/objections')
-    
+    revalidatePath('/dashboard/objections')
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }
   }
 }
+
 export async function bulkPublishObjections(ids: string[]): Promise<ActionResult> {
   try {
-    const { supabase } = await requireAdmin();
-    const { data: existing } = await supabase.from('objections').select('tool_id').in('id', ids).is('deleted_at', null);
-    const { error } = await supabase.from('objections').update({ status: 'published' }).in('id', ids);
-    if (error) return { error: error.message };
+    const { supabase } = await requireAdmin()
+    const { data: existing } = await supabase
+      .from('objections').select('tool_id').in('id', ids).is('deleted_at', null)
+    const { error } = await supabase
+      .from('objections').update({ status: 'published' }).in('id', ids)
+    if (error) return { error: error.message }
     if (existing) {
-      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)));
+      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)))
       toolIds.forEach(id => {
-        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e));
-      });
+        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e))
+      })
     }
-    revalidatePath('/admin/objections');
-    revalidatePath('/dashboard/objections');
-    return { data: undefined };
+    revalidatePath('/admin/objections')
+    revalidatePath('/dashboard/objections')
+    return { data: undefined }
   } catch (e: unknown) {
-    return { error: (e as Error).message };
+    return { error: (e as Error).message }
   }
 }

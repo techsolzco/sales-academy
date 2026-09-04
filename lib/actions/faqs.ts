@@ -17,9 +17,12 @@ async function requireAdmin() {
 
 export interface FAQInput {
   question: string
+  question_hinglish?: string
   short_answer: string
+  short_answer_hinglish?: string
   detailed_answer?: string
   customer_ready_answer?: string
+  customer_ready_answer_hinglish?: string
   category?: string
   tags?: string[]
   priority?: number
@@ -43,9 +46,9 @@ export async function createFAQ(input: FAQInput): Promise<ActionResult<FAQ>> {
       .select()
       .single()
     if (error) return { error: error.message }
-    
+
     syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
-    
+
     revalidatePath('/admin/faqs')
     revalidatePath('/dashboard/faqs')
     return { data }
@@ -64,9 +67,9 @@ export async function updateFAQ(id: string, input: Partial<FAQInput>): Promise<A
       .select()
       .single()
     if (error) return { error: error.message }
-    
+
     syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
-    
+
     revalidatePath('/admin/faqs')
     revalidatePath('/dashboard/faqs')
     return { data }
@@ -78,21 +81,21 @@ export async function updateFAQ(id: string, input: Partial<FAQInput>): Promise<A
 export async function deleteFAQ(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    
+
     // Fetch tool_id before deleting
     const { data: existing } = await supabase
       .from('faqs')
       .select('tool_id').is('deleted_at', null)
       .eq('id', id)
       .single()
-      
+
     const { error } = await supabase.from('faqs').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
-    
+
     if (existing?.tool_id) {
       syncToolKnowledge(existing.tool_id).catch(e => console.warn('Knowledge sync error:', e))
     }
-    
+
     revalidatePath('/admin/faqs')
     revalidatePath('/dashboard/faqs')
     return { data: undefined }
@@ -107,29 +110,29 @@ export async function bulkSoftDeleteFAQs(ids: string[]): Promise<ActionResult> {
     const { error } = await supabase.from('faqs').update({ deleted_at: new Date().toISOString() }).in('id', ids)
     if (error) return { error: error.message }
     revalidatePath('/admin/faqs')
-    revalidatePath('/dashboard/faqs');
+    revalidatePath('/dashboard/faqs')
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }
   }
 }
+
 export async function bulkPublishFAQs(ids: string[]): Promise<ActionResult> {
   try {
-    const { supabase } = await requireAdmin();
-    // Get tools that need syncing
-    const { data: existing } = await supabase.from('faqs').select('tool_id').in('id', ids).is('deleted_at', null);
-    const { error } = await supabase.from('faqs').update({ status: 'published' }).in('id', ids);
-    if (error) return { error: error.message };
+    const { supabase } = await requireAdmin()
+    const { data: existing } = await supabase.from('faqs').select('tool_id').in('id', ids).is('deleted_at', null)
+    const { error } = await supabase.from('faqs').update({ status: 'published' }).in('id', ids)
+    if (error) return { error: error.message }
     if (existing) {
-      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)));
+      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)))
       toolIds.forEach(id => {
-        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e));
-      });
+        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e))
+      })
     }
-    revalidatePath('/admin/faqs');
-    revalidatePath('/dashboard/faqs');
-    return { data: undefined };
+    revalidatePath('/admin/faqs')
+    revalidatePath('/dashboard/faqs')
+    return { data: undefined }
   } catch (e: unknown) {
-    return { error: (e as Error).message };
+    return { error: (e as Error).message }
   }
 }

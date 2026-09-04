@@ -39,7 +39,10 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
     title: defaultValues?.title ?? script?.title ?? '',
     script_type: (defaultValues?.script_type ?? script?.script_type ?? 'whatsapp') as ScriptType,
     language: defaultValues?.language ?? script?.language ?? 'English',
+    // English content
     content: defaultValues?.content ?? script?.content ?? '',
+    // Hinglish content — the primary authored language for Urdu/Hinglish scripts
+    content_hinglish: defaultValues?.content_hinglish ?? script?.content_hinglish ?? '',
     when_to_use: defaultValues?.when_to_use ?? script?.when_to_use ?? '',
     tool_id: defaultValues?.tool_id ?? script?.tool_id ?? '',
     related_objection: defaultValues?.related_objection ?? script?.related_objection ?? '',
@@ -54,6 +57,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
       script_type: (defaultValues?.script_type ?? script?.script_type ?? 'whatsapp') as ScriptType,
       language: defaultValues?.language ?? script?.language ?? 'English',
       content: defaultValues?.content ?? script?.content ?? '',
+      content_hinglish: defaultValues?.content_hinglish ?? script?.content_hinglish ?? '',
       when_to_use: defaultValues?.when_to_use ?? script?.when_to_use ?? '',
       tool_id: defaultValues?.tool_id ?? script?.tool_id ?? '',
       related_objection: defaultValues?.related_objection ?? script?.related_objection ?? '',
@@ -73,6 +77,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
         script_type: form.script_type,
         language: form.language || 'English',
         content: form.content,
+        content_hinglish: form.content_hinglish || undefined,
         when_to_use: form.when_to_use || undefined,
         tool_id: form.tool_id || null,
         related_objection: form.related_objection || undefined,
@@ -106,7 +111,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -149,9 +154,29 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
             </div>
           </div>
 
+          {/* Hinglish content — shown when present (primary authored language) */}
+          {(form.content_hinglish !== '' || script?.content_hinglish) && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-brand-700 dark:text-brand-400">
+                  Script Content <span className="font-normal opacity-75">(Hinglish — original)</span>
+                </label>
+              </div>
+              <textarea
+                rows={5}
+                value={form.content_hinglish}
+                onChange={e => setForm(f => ({ ...f, content_hinglish: e.target.value }))}
+                placeholder="Hinglish script content…"
+                className="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-800 bg-brand-50/20 dark:bg-brand-950/20 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none font-mono text-xs"
+              />
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Script Content *</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Script Content{form.content_hinglish ? ' (English)' : ' *'}
+              </label>
               <AiAssistButton
                 contentType="script"
                 fieldName="content"
@@ -168,6 +193,22 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none font-mono text-xs"
             />
           </div>
+
+          {/* If no hinglish exists yet, offer a field to add it */}
+          {!form.content_hinglish && !script?.content_hinglish && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                Script Content (Hinglish — optional)
+              </label>
+              <textarea
+                rows={3}
+                value={form.content_hinglish}
+                onChange={e => setForm(f => ({ ...f, content_hinglish: e.target.value }))}
+                placeholder="Add Hinglish version if this script is delivered in Hinglish…"
+                className="w-full px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none font-mono text-xs"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">When to Use</label>

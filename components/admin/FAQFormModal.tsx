@@ -22,10 +22,16 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
+    // English fields (always preserved — English is generated translation)
     question: defaultValues?.question ?? faq?.question ?? '',
     short_answer: defaultValues?.short_answer ?? faq?.short_answer ?? '',
     detailed_answer: defaultValues?.detailed_answer ?? faq?.detailed_answer ?? '',
     customer_ready_answer: defaultValues?.customer_ready_answer ?? faq?.customer_ready_answer ?? '',
+    // Hinglish fields — the primary authored language
+    question_hinglish: defaultValues?.question_hinglish ?? faq?.question_hinglish ?? '',
+    short_answer_hinglish: defaultValues?.short_answer_hinglish ?? faq?.short_answer_hinglish ?? '',
+    customer_ready_answer_hinglish: defaultValues?.customer_ready_answer_hinglish ?? faq?.customer_ready_answer_hinglish ?? '',
+    // Meta
     category: defaultValues?.category ?? faq?.category ?? 'General',
     tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? faq?.tags?.join(', ') ?? '',
     priority: defaultValues?.priority?.toString() ?? faq?.priority?.toString() ?? '0',
@@ -40,6 +46,9 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
       short_answer: defaultValues?.short_answer ?? faq?.short_answer ?? '',
       detailed_answer: defaultValues?.detailed_answer ?? faq?.detailed_answer ?? '',
       customer_ready_answer: defaultValues?.customer_ready_answer ?? faq?.customer_ready_answer ?? '',
+      question_hinglish: defaultValues?.question_hinglish ?? faq?.question_hinglish ?? '',
+      short_answer_hinglish: defaultValues?.short_answer_hinglish ?? faq?.short_answer_hinglish ?? '',
+      customer_ready_answer_hinglish: defaultValues?.customer_ready_answer_hinglish ?? faq?.customer_ready_answer_hinglish ?? '',
       category: defaultValues?.category ?? faq?.category ?? 'General',
       tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? faq?.tags?.join(', ') ?? '',
       priority: defaultValues?.priority?.toString() ?? faq?.priority?.toString() ?? '0',
@@ -56,9 +65,12 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
     startTransition(async () => {
       const payload = {
         question: form.question,
+        question_hinglish: form.question_hinglish || undefined,
         short_answer: form.short_answer,
+        short_answer_hinglish: form.short_answer_hinglish || undefined,
         detailed_answer: form.detailed_answer || undefined,
         customer_ready_answer: form.customer_ready_answer || undefined,
+        customer_ready_answer_hinglish: form.customer_ready_answer_hinglish || undefined,
         category: form.category || 'General',
         tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
         priority: parseInt(form.priority) || 0,
@@ -79,6 +91,9 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
     })
   }
 
+  // Helper to tell if a record has hinglish content
+  const hasHinglish = !!(faq?.question_hinglish || faq?.short_answer_hinglish || faq?.customer_ready_answer_hinglish)
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl border-0 sm:border border-gray-100 dark:border-gray-700 shadow-2xl w-full sm:max-w-xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-6 animate-fade-in">
@@ -92,12 +107,29 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* ── Question ── */}
+          {hasHinglish && form.question_hinglish && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Question <span className="font-normal opacity-70">(Hinglish — original)</span>
+              </label>
+              <input
+                value={form.question_hinglish}
+                onChange={e => setForm(f => ({ ...f, question_hinglish: e.target.value }))}
+                placeholder="Hinglish question…"
+                className="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-800 bg-brand-50/20 dark:bg-brand-950/20 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              />
+            </div>
+          )}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Question *</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Question{hasHinglish ? ' (English)' : ' *'}
+            </label>
             <input
               required
               value={form.question}
@@ -106,10 +138,40 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
+          {!hasHinglish && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                Question (Hinglish — optional)
+              </label>
+              <input
+                value={form.question_hinglish}
+                onChange={e => setForm(f => ({ ...f, question_hinglish: e.target.value }))}
+                placeholder="Add Hinglish version if used in Hinglish conversations…"
+                className="w-full px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              />
+            </div>
+          )}
 
+          {/* ── Short Answer ── */}
+          {hasHinglish && form.short_answer_hinglish && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Short Answer <span className="font-normal opacity-70">(Hinglish — original)</span>
+              </label>
+              <textarea
+                rows={2}
+                value={form.short_answer_hinglish}
+                onChange={e => setForm(f => ({ ...f, short_answer_hinglish: e.target.value }))}
+                placeholder="Hinglish short answer…"
+                className="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-800 bg-brand-50/20 dark:bg-brand-950/20 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              />
+            </div>
+          )}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Short Answer *</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Short Answer{hasHinglish ? ' (English)' : ' *'}
+              </label>
               <AiAssistButton
                 contentType="faq"
                 fieldName="short_answer"
@@ -127,9 +189,26 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
             />
           </div>
 
+          {/* ── Customer-Ready Answer ── */}
+          {hasHinglish && form.customer_ready_answer_hinglish && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Customer-Ready Answer <span className="font-normal opacity-70">(Hinglish — original)</span>
+              </label>
+              <textarea
+                rows={3}
+                value={form.customer_ready_answer_hinglish}
+                onChange={e => setForm(f => ({ ...f, customer_ready_answer_hinglish: e.target.value }))}
+                placeholder="Hinglish customer-ready answer…"
+                className="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-800 bg-brand-50/20 dark:bg-brand-950/20 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              />
+            </div>
+          )}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Customer-Ready Answer (Copyable)</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Customer-Ready Answer{hasHinglish ? ' (English)' : ' (Copyable)'}
+              </label>
               <AiAssistButton
                 contentType="faq"
                 fieldName="customer_ready_answer"
@@ -146,6 +225,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
             />
           </div>
 
+          {/* ── Detailed Answer ── */}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Detailed Answer (Internal)</label>

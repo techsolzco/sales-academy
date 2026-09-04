@@ -23,7 +23,10 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
   const [form, setForm] = useState({
     objection_text: defaultValues?.objection_text ?? objection?.objection_text ?? '',
     meaning: defaultValues?.meaning ?? objection?.meaning ?? '',
+    // English recommended response (always preserved)
     recommended_response: defaultValues?.recommended_response ?? objection?.recommended_response ?? '',
+    // Hinglish recommended response — the primary authored content
+    recommended_response_hinglish: defaultValues?.recommended_response_hinglish ?? objection?.recommended_response_hinglish ?? '',
     alternative_response: defaultValues?.alternative_response ?? objection?.alternative_response ?? '',
     do_not_say: defaultValues?.do_not_say ?? objection?.do_not_say ?? '',
     category: defaultValues?.category ?? objection?.category ?? 'General',
@@ -38,6 +41,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
       objection_text: defaultValues?.objection_text ?? objection?.objection_text ?? '',
       meaning: defaultValues?.meaning ?? objection?.meaning ?? '',
       recommended_response: defaultValues?.recommended_response ?? objection?.recommended_response ?? '',
+      recommended_response_hinglish: defaultValues?.recommended_response_hinglish ?? objection?.recommended_response_hinglish ?? '',
       alternative_response: defaultValues?.alternative_response ?? objection?.alternative_response ?? '',
       do_not_say: defaultValues?.do_not_say ?? objection?.do_not_say ?? '',
       category: defaultValues?.category ?? objection?.category ?? 'General',
@@ -57,6 +61,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
         objection_text: form.objection_text,
         meaning: form.meaning || undefined,
         recommended_response: form.recommended_response,
+        recommended_response_hinglish: form.recommended_response_hinglish || undefined,
         alternative_response: form.alternative_response || undefined,
         do_not_say: form.do_not_say || undefined,
         category: form.category || 'General',
@@ -91,7 +96,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,9 +121,29 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
             />
           </div>
 
+          {/* Hinglish Recommended Response — the primary authored language */}
+          {(form.recommended_response_hinglish !== '' || objection?.recommended_response_hinglish) && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  ✅ Recommended Response <span className="font-normal opacity-75">(Hinglish — original)</span>
+                </label>
+              </div>
+              <textarea
+                rows={3}
+                value={form.recommended_response_hinglish}
+                onChange={e => setForm(f => ({ ...f, recommended_response_hinglish: e.target.value }))}
+                placeholder="Hinglish response script…"
+                className="w-full px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/30 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none resize-none"
+              />
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400">✅ Recommended Response *</label>
+              <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                ✅ Recommended Response{form.recommended_response_hinglish ? ' (English)' : ' *'}
+              </label>
               <AiAssistButton
                 contentType="objection"
                 fieldName="recommended_response"
@@ -135,6 +160,22 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               className="w-full px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/20 dark:bg-emerald-950/30 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none resize-none"
             />
           </div>
+
+          {/* If no hinglish exists yet, offer a field to add it */}
+          {!form.recommended_response_hinglish && !objection?.recommended_response_hinglish && (
+            <div>
+              <label className="block text-xs font-semibold text-emerald-700/70 dark:text-emerald-500/70 mb-1">
+                ✅ Recommended Response (Hinglish — optional)
+              </label>
+              <textarea
+                rows={2}
+                value={form.recommended_response_hinglish}
+                onChange={e => setForm(f => ({ ...f, recommended_response_hinglish: e.target.value }))}
+                placeholder="Hinglish version if this response will be used in Hinglish…"
+                className="w-full px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-900 bg-emerald-50/10 dark:bg-emerald-950/20 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none resize-none"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-red-700 dark:text-red-400 mb-1">🚫 DO NOT SAY</label>

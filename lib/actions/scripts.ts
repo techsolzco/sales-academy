@@ -20,6 +20,7 @@ export interface ScriptInput {
   script_type: ScriptType
   language?: string
   content: string
+  content_hinglish?: string
   when_to_use?: string
   related_product?: string
   related_objection?: string
@@ -43,9 +44,9 @@ export async function createScript(input: ScriptInput): Promise<ActionResult<Sal
       .select()
       .single()
     if (error) return { error: error.message }
-    
+
     syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
-    
+
     revalidatePath('/admin/scripts')
     revalidatePath('/dashboard/scripts')
     return { data }
@@ -64,9 +65,9 @@ export async function updateScript(id: string, input: Partial<ScriptInput>): Pro
       .select()
       .single()
     if (error) return { error: error.message }
-    
+
     syncToolKnowledge(data.tool_id).catch(e => console.warn('Knowledge sync error:', e))
-    
+
     revalidatePath('/admin/scripts')
     revalidatePath('/dashboard/scripts')
     return { data }
@@ -78,20 +79,20 @@ export async function updateScript(id: string, input: Partial<ScriptInput>): Pro
 export async function deleteScript(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    
+
     const { data: existing } = await supabase
       .from('scripts')
       .select('tool_id').is('deleted_at', null)
       .eq('id', id)
       .single()
-      
+
     const { error } = await supabase.from('scripts').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
-    
+
     if (existing?.tool_id) {
       syncToolKnowledge(existing.tool_id).catch(e => console.warn('Knowledge sync error:', e))
     }
-    
+
     revalidatePath('/admin/scripts')
     revalidatePath('/dashboard/scripts')
     return { data: undefined }
@@ -129,28 +130,28 @@ export async function bulkSoftDeleteScripts(ids: string[]): Promise<ActionResult
     const { error } = await supabase.from('scripts').update({ deleted_at: new Date().toISOString() }).in('id', ids)
     if (error) return { error: error.message }
     revalidatePath('/admin/scripts')
-    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }
   }
 }
+
 export async function bulkPublishScripts(ids: string[]): Promise<ActionResult> {
   try {
-    const { supabase } = await requireAdmin();
-    const { data: existing } = await supabase.from('scripts').select('tool_id').in('id', ids).is('deleted_at', null);
-    const { error } = await supabase.from('scripts').update({ status: 'published' }).in('id', ids);
-    if (error) return { error: error.message };
+    const { supabase } = await requireAdmin()
+    const { data: existing } = await supabase.from('scripts').select('tool_id').in('id', ids).is('deleted_at', null)
+    const { error } = await supabase.from('scripts').update({ status: 'published' }).in('id', ids)
+    if (error) return { error: error.message }
     if (existing) {
-      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)));
+      const toolIds = Array.from(new Set(existing.map(e => e.tool_id).filter(Boolean)))
       toolIds.forEach(id => {
-        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e));
-      });
+        if (id) syncToolKnowledge(id).catch(e => console.warn('Knowledge sync error:', e))
+      })
     }
-    revalidatePath('/admin/scripts');
-    revalidatePath('/dashboard/scripts');
-    return { data: undefined };
+    revalidatePath('/admin/scripts')
+    revalidatePath('/dashboard/scripts')
+    return { data: undefined }
   } catch (e: unknown) {
-    return { error: (e as Error).message };
+    return { error: (e as Error).message }
   }
 }
