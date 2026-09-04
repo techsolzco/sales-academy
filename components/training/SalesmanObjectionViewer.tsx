@@ -50,21 +50,21 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
       {/* Search & Filter */}
       <div className="mb-6 flex flex-col md:flex-row gap-4 max-w-2xl">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search objections (e.g. price, timing, competitor)…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800"
           />
         </div>
-        
+
         {tools.length > 0 && (
           <select
             value={filterToolId}
             onChange={e => setFilterToolId(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 min-w-[200px]"
+            className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-brand-400 min-w-[200px]"
           >
             <option value="">All Tools</option>
             {tools.map(t => (
@@ -76,8 +76,8 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
 
       {/* Cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-400 text-sm">
-          <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-sm">
+          <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
           No published objection guides found.
         </div>
       ) : (

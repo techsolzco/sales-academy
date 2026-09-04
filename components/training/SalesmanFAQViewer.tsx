@@ -180,36 +180,36 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3 flex-1">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search FAQs by keyword or question…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800"
             />
           </div>
           <select
             value={filterToolId}
             onChange={e => setFilterToolId(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="">All Tools</option>
             {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </div>
 
-        <div className="flex bg-gray-100 p-1 rounded-xl">
-          <button 
+        <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
+          <button
             onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm text-brand-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
             title="List View"
           >
             <LayoutList className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('grouped')}
-            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900'}`}
+            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white dark:bg-gray-600 shadow-sm text-brand-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
             title="Grouped by Tool"
           >
             <FolderTree className="w-4 h-4" />
@@ -225,7 +225,7 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex-shrink-0 ${
               activeCategory === cat
                 ? 'bg-brand-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             {cat}
@@ -235,8 +235,8 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
 
       {/* Cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-400 text-sm">
-          <HelpCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-sm">
+          <HelpCircle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
           No published FAQs found.
         </div>
       ) : (
@@ -249,22 +249,22 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
             {grouped.map(([key, group]) => {
               const isExpanded = expandedGroups[key] !== false
               return (
-                <div key={key} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                  <button 
+                <div key={key} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+                  <button
                     onClick={() => toggleGroup(key)}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition text-left"
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/60 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left"
                   >
                     <div className="flex items-center gap-2">
-                      {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
-                      <span className="font-bold text-gray-900">{group.name}</span>
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                      {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{group.name}</span>
+                      <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">
                         {group.items.length}
                       </span>
                     </div>
                   </button>
-                  
+
                   {isExpanded && (
-                    <div className="p-4 space-y-4 bg-white">
+                    <div className="p-4 space-y-4 bg-white dark:bg-gray-800">
                       {group.items.map(renderFaqCard)}
                     </div>
                   )}
@@ -275,5 +275,6 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
         )
       )}
     </div>
+
   )
 }
