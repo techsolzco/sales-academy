@@ -166,7 +166,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
               </div>
             </div>
             {script.when_to_use && (
-              <p className="text-xs text-brand-700 font-medium bg-brand-50/80 px-3 py-1.5 rounded-lg border border-brand-100/50">
+              <p className="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50/80 dark:bg-brand-950/40 px-3 py-1.5 rounded-lg border border-brand-100/50 dark:border-brand-800/60">
                 💡 When to send: {language === 'hi' ? '(EN) ' : ''}{displayTexts.when_to_use_translated}
               </p>
             )}
@@ -197,10 +197,10 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
           <select
             value={filterToolId}
             onChange={e => setFilterToolId(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 [&>option]:text-gray-900 dark:[&>option]:text-gray-100"
           >
-            <option value="">All Tools</option>
-            {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            <option value="" className="text-gray-900 dark:text-gray-100">All Tools</option>
+            {tools.map(t => <option key={t.id} value={t.id} className="text-gray-900 dark:text-gray-100">{t.name}</option>)}
           </select>
         </div>
 
