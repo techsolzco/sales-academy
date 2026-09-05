@@ -1,4 +1,10 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
 import { SITE_NAME } from '@/lib/config/site'
 import { Inter } from 'next/font/google'
 import './globals.css'

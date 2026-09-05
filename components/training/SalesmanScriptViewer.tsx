@@ -123,29 +123,22 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
         {({ displayTexts, toggleButton }) => (
           <div
             id={`script-${script.id}`}
-            className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm hover:border-brand-200 transition space-y-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 sm:p-6 shadow-sm hover:border-brand-200 transition space-y-3"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xs px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 font-bold text-blue-700 dark:text-blue-300 uppercase">
-                    {script.script_type.replace(/_/g, ' ')}
-                  </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
-                    🌐 {script.language}
-                  </span>
-                  {toggleButton}
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
-                  {script.title}
-                  {language === 'hi' && !script.content_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
+            {/* Top meta row: type badge + language + toggleButton + action buttons — flex-wrap for mobile */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 font-bold text-blue-700 dark:text-blue-300 uppercase">
+                {script.script_type.replace(/_/g, ' ')}
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
+                🌐 {script.language}
+              </span>
+              {toggleButton}
+              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => handleToggleReview(script.id)}
                   disabled={isPending}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition shadow-sm ${
                     reviewedIds.has(script.id)
                       ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
                       : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -159,13 +152,18 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                 </button>
                 <button
                   onClick={() => handleCopy(script)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold text-xs transition flex-shrink-0 shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold text-xs transition shadow-sm"
                 >
                   {copiedId === script.id ? <Check className="w-4 h-4 text-brand-600 dark:text-brand-400" /> : <Copy className="w-4 h-4" />}
                   {copiedId === script.id ? 'Copied!' : 'Copy Script'}
                 </button>
               </div>
             </div>
+            {/* Title — full card width */}
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
+              {script.title}
+              {language === 'hi' && !script.content_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
+            </h3>
             {script.when_to_use && (
               <p className="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50/80 dark:bg-brand-950/40 px-3 py-1.5 rounded-lg border border-brand-100/50 dark:border-brand-800/60">
                 💡 When to send: {language === 'hi' ? '(EN) ' : ''}{displayTexts.when_to_use_translated}
