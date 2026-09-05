@@ -11,7 +11,7 @@ export default async function SalesmanToolsPage() {
     .from('tools')
     .select('*').is('deleted_at', null)
     .eq('status', 'published')
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: true })
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-6xl animate-fade-in">

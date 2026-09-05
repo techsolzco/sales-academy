@@ -76,7 +76,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
         title: form.title,
         script_type: form.script_type,
         language: form.language || 'English',
-        content: form.content,
+        content: form.content || form.content_hinglish || '',
         content_hinglish: form.content_hinglish || undefined,
         when_to_use: form.when_to_use || undefined,
         tool_id: form.tool_id || null,
@@ -185,7 +185,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               />
             </div>
             <textarea
-              required
+              required={!form.content_hinglish}
               rows={5}
               value={form.content}
               onChange={e => setForm(f => ({ ...f, content: e.target.value }))}

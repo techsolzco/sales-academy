@@ -64,9 +64,9 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
     setError(null)
     startTransition(async () => {
       const payload = {
-        question: form.question,
+        question: form.question || form.question_hinglish || '',
         question_hinglish: form.question_hinglish || undefined,
-        short_answer: form.short_answer,
+        short_answer: form.short_answer || form.short_answer_hinglish || '',
         short_answer_hinglish: form.short_answer_hinglish || undefined,
         detailed_answer: form.detailed_answer || undefined,
         customer_ready_answer: form.customer_ready_answer || undefined,
@@ -131,7 +131,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               Question{hasHinglish ? ' (English)' : ' *'}
             </label>
             <input
-              required
+              required={!form.question_hinglish}
               value={form.question}
               onChange={e => setForm(f => ({ ...f, question: e.target.value }))}
               placeholder="e.g. What is the pricing policy for enterprise plans?"
@@ -180,7 +180,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               />
             </div>
             <textarea
-              required
+              required={!form.short_answer_hinglish}
               rows={2}
               value={form.short_answer}
               onChange={e => setForm(f => ({ ...f, short_answer: e.target.value }))}

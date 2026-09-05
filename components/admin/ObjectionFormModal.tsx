@@ -60,7 +60,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
       const payload = {
         objection_text: form.objection_text,
         meaning: form.meaning || undefined,
-        recommended_response: form.recommended_response,
+        recommended_response: form.recommended_response || form.recommended_response_hinglish || '',
         recommended_response_hinglish: form.recommended_response_hinglish || undefined,
         alternative_response: form.alternative_response || undefined,
         do_not_say: form.do_not_say || undefined,
@@ -152,7 +152,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               />
             </div>
             <textarea
-              required
+              required={!form.recommended_response_hinglish}
               rows={3}
               value={form.recommended_response}
               onChange={e => setForm(f => ({ ...f, recommended_response: e.target.value }))}

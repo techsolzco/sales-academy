@@ -87,32 +87,25 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
               {({ displayTexts, toggleButton }) => (
                 <div
                   id={`obj-${o.id}`}
-                  className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm hover:border-brand-200 dark:hover:border-brand-700 transition space-y-4"
+                  className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 sm:p-6 shadow-sm hover:border-brand-200 dark:hover:border-brand-700 transition space-y-3"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        {o.difficulty && (
-                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 font-semibold text-gray-600 dark:text-gray-300 capitalize">
-                            {o.difficulty}
-                          </span>
-                        )}
-                        {o.related_product && (
-                          <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300">
-                            Product: {o.related_product}
-                          </span>
-                        )}
-                        {toggleButton}
-                      </div>
-                      <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">
-                        &ldquo;{o.objection_text}&rdquo;
-                        {language === 'hi' && !o.recommended_response_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
-                      </h3>
-                    </div>
+                  {/* Top meta row: badges + toggleButton + Mark Reviewed — flex-wrap for mobile */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {o.difficulty && (
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 font-semibold text-gray-600 dark:text-gray-300 capitalize">
+                        {o.difficulty}
+                      </span>
+                    )}
+                    {o.related_product && (
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300">
+                        Product: {o.related_product}
+                      </span>
+                    )}
+                    {toggleButton}
                     <button
                       onClick={() => handleToggleReview(o.id)}
                       disabled={isPending}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition flex-shrink-0 shadow-sm ${
+                      className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition shadow-sm flex-shrink-0 ${
                         reviewedIds.has(o.id)
                           ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
                           : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -125,6 +118,11 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                       )}
                     </button>
                   </div>
+                  {/* Objection text — full card width */}
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base leading-snug">
+                    &ldquo;{o.objection_text}&rdquo;
+                    {language === 'hi' && !o.recommended_response_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
+                  </h3>
                   {o.meaning && (
                     <div className="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-900/25 border border-blue-100 dark:border-blue-800/50 text-xs text-blue-900 dark:text-blue-200">
                       💡 <span className="font-bold">Behind the objection:</span> <RichText text={displayTexts.meaning_translated || ''} />
