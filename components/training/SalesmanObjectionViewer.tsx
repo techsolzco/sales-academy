@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, AlertCircle, CheckCircle, XCircle, Eye, Check } from 'lucide-react'
+import { AlertCircle, CheckCircle, XCircle, Eye, Check } from 'lucide-react'
 import type { Objection } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import { RichText } from '@/components/ui/RichText'
+import { ViewerSearchBar } from '@/components/training/ViewerSearchBar'
 
 export function SalesmanObjectionViewer({ objections, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { objections: Objection[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
   const [search, setSearch] = useState('')
@@ -48,30 +49,15 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
   return (
     <div>
       {/* Search & Filter */}
-      <div className="mb-6 flex flex-col md:flex-row gap-4 max-w-2xl">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search objections (e.g. price, timing, competitor)…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800"
-          />
-        </div>
-
-        {tools.length > 0 && (
-          <select
-            value={filterToolId}
-            onChange={e => setFilterToolId(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-400 min-w-[200px] [&>option]:text-gray-900 dark:[&>option]:text-gray-100"
-          >
-            <option value="" className="text-gray-900 dark:text-gray-100">All Tools</option>
-            {tools.map(t => (
-              <option key={t.id} value={t.id} className="text-gray-900 dark:text-gray-100">{t.name}</option>
-            ))}
-          </select>
-        )}
+      <div className="mb-6">
+        <ViewerSearchBar
+          search={search}
+          onSearchChange={setSearch}
+          filterToolId={filterToolId}
+          onFilterToolChange={setFilterToolId}
+          tools={tools}
+          searchPlaceholder="Search objections (e.g. price, timing, competitor)…"
+        />
       </div>
 
       {/* Cards */}

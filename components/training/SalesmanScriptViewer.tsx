@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { Search, Copy, Check, FileText, Eye, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
+import { Copy, Check, FileText, Eye, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
 import { logScriptCopy } from '@/lib/actions/scripts'
 import type { SalesScript } from '@/types'
 import { toggleKbReview } from '@/lib/actions/kb-reviews'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import { RichText } from '@/components/ui/RichText'
+import { ViewerSearchBar } from '@/components/training/ViewerSearchBar'
 
 const SCRIPT_TYPE_ORDER: Record<string, number> = {
   greeting: 1,
@@ -170,7 +171,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                 💡 When to send: {language === 'hi' ? '(EN) ' : ''}{displayTexts.when_to_use_translated}
               </p>
             )}
-            <p className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed select-all">
+            <p className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed select-all font-[450]">
               <RichText text={displayTexts.content_translated || ''} />
             </p>
           </div>
@@ -184,24 +185,14 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search scripts by title or keyword…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            />
-          </div>
-          <select
-            value={filterToolId}
-            onChange={e => setFilterToolId(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 [&>option]:text-gray-900 dark:[&>option]:text-gray-100"
-          >
-            <option value="" className="text-gray-900 dark:text-gray-100">All Tools</option>
-            {tools.map(t => <option key={t.id} value={t.id} className="text-gray-900 dark:text-gray-100">{t.name}</option>)}
-          </select>
+          <ViewerSearchBar
+            search={search}
+            onSearchChange={setSearch}
+            filterToolId={filterToolId}
+            onFilterToolChange={setFilterToolId}
+            tools={tools}
+            searchPlaceholder="Search scripts by title or keyword…"
+          />
         </div>
 
         <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
