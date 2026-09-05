@@ -1,6 +1,6 @@
 'use client'
 
-import {   useState, useTransition, useMemo , memo , useCallback } from 'react'
+import { useState, useTransition, useMemo, memo, useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, HelpCircle, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
@@ -29,28 +29,28 @@ const FaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDelete, is
         }}
       >
         {({ displayTexts, toggleButton }) => (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 transition shadow-sm space-y-3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 hover:border-gray-200 dark:hover:border-gray-600 transition shadow-sm space-y-3">
             <div className="flex items-start justify-between gap-4">
-              <input type="checkbox" checked={isSelected} onChange={e => onToggle(faq.id, e.target.checked)} className="w-4 h-4 rounded border-gray-300 mt-1 mr-2" />
+              <input type="checkbox" checked={isSelected} onChange={e => onToggle(faq.id, e.target.checked)} className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 mt-1 mr-2" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5">
                   <StatusBadge status={faq.status} />
-                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 font-medium text-gray-600">
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
                     {faq.category}
                   </span>
                   {faq.priority > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-amber-50 font-medium text-amber-700">
+                    <span className="text-xs px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 font-medium text-amber-700 dark:text-amber-300">
                       Priority: {faq.priority}
                     </span>
                   )}
                   {toggleButton}
                 </div>
-                <h3 className="font-semibold text-gray-900 text-base">{displayTexts.question_translated}</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base">{displayTexts.question_translated}</h3>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => onEdit(faq)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                  className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition"
                   title="Edit FAQ"
                 >
                   <Edit className="w-4 h-4" />
@@ -58,7 +58,7 @@ const FaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDelete, is
                 <button
                   onClick={() => onDelete(faq.id)}
                   disabled={isPending}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+                  className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
                   title="Delete FAQ"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -67,13 +67,13 @@ const FaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDelete, is
             </div>
             <div className="space-y-2 text-sm">
               <div>
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-0.5">Short Answer</span>
-                <p className="text-gray-800 bg-gray-50/80 p-3 rounded-xl border border-gray-100">{displayTexts.short_answer_translated}</p>
+                <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-0.5">Short Answer</span>
+                <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/60 p-3 rounded-xl border border-gray-100 dark:border-gray-600">{displayTexts.short_answer_translated}</p>
               </div>
               {faq.customer_ready_answer && (
                 <div>
-                  <span className="text-xs font-semibold text-brand-600 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
-                  <p className="text-gray-800 bg-brand-50/50 p-3 rounded-xl border border-brand-100/50 font-sans">{displayTexts.customer_ready_answer_translated}</p>
+                  <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
+                  <p className="text-gray-900 dark:text-gray-100 bg-brand-50 dark:bg-brand-900/30 p-3 rounded-xl border border-brand-100 dark:border-brand-800/50 font-sans">{displayTexts.customer_ready_answer_translated}</p>
                 </div>
               )}
             </div>
@@ -100,8 +100,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
-  
-  // For expanding/collapsing groups
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
 
   const categories = ['All', ...Array.from(new Set(faqs.map(f => f.category).filter(Boolean)))]
@@ -122,12 +121,12 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
     const map = new Map<string, { name: string; faqs: FAQ[] }>()
     map.set('uncategorized', { name: 'Uncategorized', faqs: [] })
     tools.forEach(t => map.set(t.id, { name: t.name, faqs: [] }))
-    
+
     filtered.forEach(f => {
       const key = f.tool_id && map.has(f.tool_id) ? f.tool_id : 'uncategorized'
       map.get(key)!.faqs.push(f)
     })
-    
+
     return Array.from(map.entries())
       .filter(([_, v]) => v.faqs.length > 0)
       .sort((a, b) => b[1].faqs.length - a[1].faqs.length || a[1].name.localeCompare(b[1].name))
@@ -161,24 +160,24 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
   }
 
   async function handleBulkDelete() {
-    if(!confirm(`Delete ${selectedIds.size} FAQs?`)) return;
-    setIsBulkDeleting(true);
-    const res = await bulkSoftDeleteFAQs(Array.from(selectedIds));
-    setIsBulkDeleting(false);
+    if (!confirm(`Delete ${selectedIds.size} FAQs?`)) return
+    setIsBulkDeleting(true)
+    const res = await bulkSoftDeleteFAQs(Array.from(selectedIds))
+    setIsBulkDeleting(false)
     if (!res.error) {
-      setFaqs(prev => prev.filter(f => !selectedIds.has(f.id)));
-      setSelectedIds(new Set());
+      setFaqs(prev => prev.filter(f => !selectedIds.has(f.id)))
+      setSelectedIds(new Set())
     }
   }
 
   async function handleBulkPublish() {
-    if(!confirm(`Publish ${selectedIds.size} FAQs?`)) return;
-    setIsBulkDeleting(true);
-    const res = await bulkPublishFAQs(Array.from(selectedIds));
-    setIsBulkDeleting(false);
+    if (!confirm(`Publish ${selectedIds.size} FAQs?`)) return
+    setIsBulkDeleting(true)
+    const res = await bulkPublishFAQs(Array.from(selectedIds))
+    setIsBulkDeleting(false)
     if (!res.error) {
-      setFaqs(prev => prev.map(f => selectedIds.has(f.id) ? { ...f, status: 'published' } : f));
-      setSelectedIds(new Set());
+      setFaqs(prev => prev.map(f => selectedIds.has(f.id) ? { ...f, status: 'published' } : f))
+      setSelectedIds(new Set())
     }
   }
 
@@ -192,60 +191,61 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
     })
   }, [])
 
-    return (
+  return (
     <div>
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
-          
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{selectedIds.size} selected</span>
+
           <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
             {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Publish Selected
           </button>
-          
+
           <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
             {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             Delete Selected
           </button>
-          
-          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+
+          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
         </div>
       )}
+
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 flex-1">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
             <input
               type="text"
               placeholder="Search FAQs..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
           </div>
           <select
             value={filterToolId}
             onChange={e => setFilterToolId(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 [&>option]:text-gray-900 dark:[&>option]:text-gray-100"
           >
-            <option value="">All Tools</option>
-            {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            <option value="" className="text-gray-900 dark:text-gray-100">All Tools</option>
+            {tools.map(t => <option key={t.id} value={t.id} className="text-gray-900 dark:text-gray-100">{t.name}</option>)}
           </select>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex bg-gray-100 p-1 rounded-xl mr-2">
-            <button 
+          <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl mr-2">
+            <button
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900'}`}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm text-brand-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
               title="List View"
             >
               <LayoutList className="w-4 h-4" />
             </button>
-            <button 
+            <button
               onClick={() => setViewMode('grouped')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900'}`}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white dark:bg-gray-600 shadow-sm text-brand-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
               title="Grouped by Tool"
             >
               <FolderTree className="w-4 h-4" />
@@ -274,7 +274,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex-shrink-0 ${
               activeCategory === cat
                 ? 'bg-brand-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
             }`}
           >
             {cat}
@@ -284,57 +284,57 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
 
       {/* Main Content */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-400 text-sm">
-          <HelpCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-sm">
+          <HelpCircle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
           No FAQs match your search.
         </div>
       ) : (
         viewMode === 'list' ? (
           <div className="space-y-3">
             {filtered.map(faq => (
-          <FaqCardComponent
-            key={faq.id}
-            faq={faq}
-            isSelected={selectedIds.has(faq.id)}
-            onToggle={handleToggle}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            isPending={isPending}
-          />
-        ))}
+              <FaqCardComponent
+                key={faq.id}
+                faq={faq}
+                isSelected={selectedIds.has(faq.id)}
+                onToggle={handleToggle}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isPending={isPending}
+              />
+            ))}
           </div>
         ) : (
           <div className="space-y-6">
             {grouped.map(([key, group]) => {
-              const isExpanded = expandedGroups[key] !== false // true by default
+              const isExpanded = expandedGroups[key] !== false
               return (
-                <div key={key} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                  <button 
+                <div key={key} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+                  <button
                     onClick={() => toggleGroup(key)}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition text-left"
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition text-left"
                   >
                     <div className="flex items-center gap-2">
-                      {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-500" /> : <ChevronRight className="w-5 h-5 text-gray-500" />}
-                      <span className="font-bold text-gray-900">{group.name}</span>
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                      {isExpanded ? <ChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{group.name}</span>
+                      <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">
                         {group.faqs.length}
                       </span>
                     </div>
                   </button>
-                  
+
                   {isExpanded && (
-                    <div className="p-4 space-y-4 bg-white">
+                    <div className="p-4 space-y-4 bg-white dark:bg-gray-800">
                       {group.faqs.map(faq => (
-          <FaqCardComponent
-            key={faq.id}
-            faq={faq}
-            isSelected={selectedIds.has(faq.id)}
-            onToggle={handleToggle}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            isPending={isPending}
-          />
-        ))}
+                        <FaqCardComponent
+                          key={faq.id}
+                          faq={faq}
+                          isSelected={selectedIds.has(faq.id)}
+                          onToggle={handleToggle}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          isPending={isPending}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
