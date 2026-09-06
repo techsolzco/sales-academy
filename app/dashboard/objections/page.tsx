@@ -22,7 +22,7 @@ export default async function SalesmanObjectionsPage({
       .from('tools')
       .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
-      .order('name')
+      .order('display_order', { ascending: true })
   ])
   const objections = objectionsRes.data ?? []
   const tools = toolsRes.data ?? []

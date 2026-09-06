@@ -28,6 +28,7 @@ export interface ToolInput {
   tags?: string[]
   knowledge_summary?: string
   status?: Status
+  display_order?: number
 }
 
 export async function createTool(input: ToolInput): Promise<ActionResult<Tool>> {

@@ -18,7 +18,7 @@ export default async function AdminObjectionsPage({
       .from('tools')
       .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
-      .order('name')
+      .order('display_order', { ascending: true })
   ])
 
   return (

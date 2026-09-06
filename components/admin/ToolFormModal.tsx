@@ -38,6 +38,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
     youtube_tutorial_link: defaultValues?.youtube_tutorial_link ?? tool?.youtube_tutorial_link ?? '',
     tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? tool?.tags?.join(', ') ?? '',
     status: (defaultValues?.status ?? tool?.status ?? 'published') as Status,
+    display_order: defaultValues?.display_order ?? tool?.display_order ?? 0,
   })
 
   // Reset form when tool or defaultValues changes (fixes stale useState on re-open)
@@ -56,6 +57,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
       youtube_tutorial_link: defaultValues?.youtube_tutorial_link ?? tool?.youtube_tutorial_link ?? '',
       tags: (Array.isArray(defaultValues?.tags) ? defaultValues?.tags.join(', ') : defaultValues?.tags) ?? tool?.tags?.join(', ') ?? '',
       status: (defaultValues?.status ?? tool?.status ?? 'published') as Status,
+      display_order: defaultValues?.display_order ?? tool?.display_order ?? 0,
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tool?.id, isOpen])
@@ -79,6 +81,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
         youtube_tutorial_link: form.youtube_tutorial_link || undefined,
         tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
         status: form.status,
+        display_order: form.display_order,
       }
 
       const res = tool
@@ -242,7 +245,7 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value as Status }))}
@@ -252,6 +255,19 @@ export function ToolFormModal({ tool, isOpen, onClose, defaultValues }: ToolForm
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1" title="Lower = appears first for students. Use 10, 20, 30… to leave room for reordering.">
+                Display Order
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={10}
+                value={form.display_order}
+                onChange={e => setForm(f => ({ ...f, display_order: parseInt(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              />
             </div>
           </div>
 

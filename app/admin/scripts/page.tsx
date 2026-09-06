@@ -23,7 +23,7 @@ export default async function AdminScriptsPage({
       .from('tools')
       .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
-      .order('name'),
+      .order('display_order', { ascending: true }),
   ])
 
   const tools = toolsRes.data ?? []

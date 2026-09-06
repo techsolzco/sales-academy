@@ -23,7 +23,7 @@ export default async function SalesmanFAQsPage({
       .from('tools')
       .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
-      .order('name')
+      .order('display_order', { ascending: true })
   ])
   const faqs = faqsRes.data ?? []
   const tools = toolsRes.data ?? []

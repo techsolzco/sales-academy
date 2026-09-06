@@ -16,7 +16,7 @@ export default async function AiMemoryPage() {
     .from('tools')
     .select('id, name, description, pricing, status, knowledge_summary, knowledge_summary_source, knowledge_summary_updated_at')
     .is('deleted_at', null)
-    .order('name')
+    .order('display_order', { ascending: true })
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">

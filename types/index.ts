@@ -252,6 +252,7 @@ export interface Tool {
   knowledge_summary_source: 'auto' | 'manual' | null
   knowledge_summary_updated_at: string | null
   status: Status
+  display_order: number
   created_at: string
   updated_at: string
 }

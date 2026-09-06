@@ -41,7 +41,7 @@ export default async function SalesmanScriptsPage({
       .from('tools')
       .select('id, name').is('deleted_at', null)
       .eq('status', 'published')
-      .order('name')
+      .order('display_order', { ascending: true })
   ])
   const scripts = (scriptsRes.data ?? []).sort((a, b) =>
     scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) ||

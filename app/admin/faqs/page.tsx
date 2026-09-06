@@ -19,7 +19,7 @@ export default async function AdminFAQsPage({
     .from('tools')
     .select('id, name').is('deleted_at', null)
     .eq('status', 'published')
-    .order('name')
+    .order('display_order', { ascending: true })
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl animate-fade-in">

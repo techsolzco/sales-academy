@@ -11,7 +11,7 @@ export default async function NewQuizPage() {
 
   const [{ data: lessons }, { data: tools }] = await Promise.all([
     supabase.from('lessons').select('id, title').is('deleted_at', null).order('order_index'),
-    supabase.from('tools').select('id, name').is('deleted_at', null).eq('status', 'published').order('name'),
+    supabase.from('tools').select('id, name').is('deleted_at', null).eq('status', 'published').order('display_order', { ascending: true }),
   ])
 
   return <QuizEditor quizId={null} lessons={lessons || []} tools={tools || []} />

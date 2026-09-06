@@ -10,7 +10,7 @@ export default async function NewAssignmentPage() {
   if (!user) redirect('/auth/login')
 
   const { data: tools } = await supabase
-    .from('tools').select('id, name').is('deleted_at', null).order('name')
+    .from('tools').select('id, name').is('deleted_at', null).order('display_order', { ascending: true })
 
   const { data: quizzes } = await supabase
     .from('quizzes').select('id, title, tool_id').is('deleted_at', null).order('title')
