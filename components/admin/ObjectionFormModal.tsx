@@ -107,7 +107,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               value={form.objection_text}
               onChange={e => setForm(f => ({ ...f, objection_text: e.target.value }))}
               placeholder='e.g. "Your price is way too expensive compared to X"'
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none font-semibold text-gray-900"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none font-semibold text-gray-900"
             />
           </div>
 
@@ -117,7 +117,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               value={form.meaning}
               onChange={e => setForm(f => ({ ...f, meaning: e.target.value }))}
               placeholder="e.g. They don't yet see enough ROI value to justify budget"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
 
@@ -203,7 +203,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               value={form.alternative_response}
               onChange={e => setForm(f => ({ ...f, alternative_response: e.target.value }))}
               placeholder="Secondary approach if customer remains hesitant…"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
@@ -221,7 +221,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
                         if (e.target.value === '__custom__') setForm(f => ({ ...f, category: '' }))
                         else setForm(f => ({ ...f, category: e.target.value }))
                       }}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
                     >
                       {PRESETS.map(p => <option key={p} value={p}>{p}</option>)}
                       <option value="__custom__">+ Custom…</option>
@@ -244,7 +244,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               <select
                 value={form.difficulty}
                 onChange={e => setForm(f => ({ ...f, difficulty: e.target.value as Difficulty }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
@@ -257,7 +257,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               <select
                 value={form.tool_id}
                 onChange={e => setForm(f => ({ ...f, tool_id: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="">General (no specific tool)</option>
                 {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -269,7 +269,7 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value as Status }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -300,3 +300,4 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
     </div>
   )
 }
+

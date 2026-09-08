@@ -135,7 +135,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               value={form.question}
               onChange={e => setForm(f => ({ ...f, question: e.target.value }))}
               placeholder="e.g. What is the pricing policy for enterprise plans?"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
           {!hasHinglish && (
@@ -185,7 +185,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               value={form.short_answer}
               onChange={e => setForm(f => ({ ...f, short_answer: e.target.value }))}
               placeholder="Concise quick summary answer"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
@@ -221,7 +221,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               value={form.customer_ready_answer}
               onChange={e => setForm(f => ({ ...f, customer_ready_answer: e.target.value }))}
               placeholder="Polished text salesmen can copy & send directly to clients"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
@@ -241,7 +241,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               value={form.detailed_answer}
               onChange={e => setForm(f => ({ ...f, detailed_answer: e.target.value }))}
               placeholder="In-depth background details for internal rep understanding"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none"
             />
           </div>
 
@@ -251,7 +251,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               <select
                 value={form.category}
                 onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 {FAQ_CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -264,7 +264,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value as Status }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -279,7 +279,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
               <select
                 value={form.tool_id}
                 onChange={e => setForm(f => ({ ...f, tool_id: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="">General (no specific tool)</option>
                 {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -294,7 +294,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
                 type="number"
                 value={form.priority}
                 onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
 
@@ -304,7 +304,7 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
                 value={form.tags}
                 onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
                 placeholder="pricing, enterprise, discount"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               />
             </div>
           </div>
@@ -331,3 +331,4 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
     </div>
   )
 }
+

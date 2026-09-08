@@ -122,7 +122,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="e.g. First Contact WhatsApp Greeting"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
 
@@ -132,7 +132,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               <select
                 value={form.script_type}
                 onChange={e => setForm(f => ({ ...f, script_type: e.target.value as ScriptType }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 {SCRIPT_TYPES.map(st => (
                   <option key={st.type} value={st.type}>{st.label}</option>
@@ -145,7 +145,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               <select
                 value={form.language}
                 onChange={e => setForm(f => ({ ...f, language: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="English">English</option>
                 <option value="Urdu">Urdu (اردو)</option>
@@ -190,7 +190,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               value={form.content}
               onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
               placeholder="The exact word-for-word message salesmen should send/say…"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none font-mono text-xs"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none resize-none font-mono text-xs"
             />
           </div>
 
@@ -216,7 +216,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               value={form.when_to_use}
               onChange={e => setForm(f => ({ ...f, when_to_use: e.target.value }))}
               placeholder="e.g. Send 24 hours after initial inquiry if no reply"
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
             />
           </div>
 
@@ -226,7 +226,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               <select
                 value={form.tool_id}
                 onChange={e => setForm(f => ({ ...f, tool_id: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="">General (no specific tool)</option>
                 {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -238,7 +238,7 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
               <select
                 value={form.status}
                 onChange={e => setForm(f => ({ ...f, status: e.target.value as Status }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -269,3 +269,4 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
     </div>
   )
 }
+
