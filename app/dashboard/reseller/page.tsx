@@ -30,7 +30,7 @@ export default async function SalesPartnerPage() {
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Sales Partner Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sales Partner Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Track your commissions and manage your sales portal.</p>
       </div>
 
@@ -55,13 +55,13 @@ export default async function SalesPartnerPage() {
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
           <Rocket className="w-12 h-12 text-brand-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Sales Portal Pending</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sales Portal Pending</h2>
           <p className="text-gray-500 max-w-md mx-auto">Your partner account is approved, but your personal sales portal link has not been assigned yet. Please contact your administrator.</p>
         </div>
       )}
 
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Commission History</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Commission History</h2>
         <CommissionLedger 
           commissions={commissions} 
           totalPaid={totalPaid} 
@@ -71,3 +71,4 @@ export default async function SalesPartnerPage() {
     </div>
   )
 }
+

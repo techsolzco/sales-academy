@@ -18,7 +18,7 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
   if (!meeting) {
     return (
       <div className="px-4 py-5 md:p-8 text-center">
-        <h2 className="text-xl font-bold text-gray-900">Meeting not found</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Meeting not found</h2>
         <Link href="/dashboard/meetings" className="text-brand-600 mt-4 inline-block hover:underline">
           Return to Meetings
         </Link>
@@ -41,7 +41,7 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
         </Link>
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{meeting.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{meeting.title}</h1>
             <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
@@ -67,7 +67,7 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex-1 overflow-hidden relative min-h-[500px]">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex-1 overflow-hidden relative min-h-[500px]">
         <JitsiEmbed url={meeting.jitsi_url} />
       </div>
       <p className="text-center text-sm text-gray-500 pb-8">
@@ -76,3 +76,4 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
     </div>
   )
 }
+

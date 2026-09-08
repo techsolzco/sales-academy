@@ -16,7 +16,7 @@ export default async function AdminDashboardPage() {
     <div className="px-4 py-5 md:p-8 animate-fade-in">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Welcome back, {profile?.full_name?.split(' ')[0] ?? 'Admin'} 👋
         </h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -61,3 +61,4 @@ export default async function AdminDashboardPage() {
     </div>
   )
 }
+

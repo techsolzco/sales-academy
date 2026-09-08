@@ -81,7 +81,7 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
 
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Course Assignment</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Course Assignment</h1>
           <div className="flex items-center gap-2">
             <p className="text-gray-500 text-sm">{course.title}</p>
             <StatusBadge status={course.status} />
@@ -94,7 +94,7 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
         <AssignmentPanel
           courseId={params.id}
           allSalesmen={allSalesmen ?? []}
@@ -104,3 +104,4 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
     </div>
   )
 }
+

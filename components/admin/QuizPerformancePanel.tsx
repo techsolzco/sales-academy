@@ -59,7 +59,7 @@ export function QuizPerformancePanel({ toolId, quizzes, attempts }: QuizPerforma
   if (quizzes.length === 0) {
     return (
       <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
           <Trophy className="w-5 h-5 text-brand-500" />
           Quizzes &amp; Salesman Performance
         </h2>
@@ -87,7 +87,7 @@ export function QuizPerformancePanel({ toolId, quizzes, attempts }: QuizPerforma
         className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition"
         onClick={() => setExpanded(v => !v)}
       >
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <Trophy className="w-5 h-5 text-brand-500" />
           Quizzes &amp; Salesman Performance
           <span className="text-xs font-medium text-gray-400 ml-1">({quizzes.length} quiz{quizzes.length !== 1 ? 'zes' : ''}, {attempts.length} attempt{attempts.length !== 1 ? 's' : ''})</span>
@@ -194,3 +194,4 @@ export function QuizPerformancePanel({ toolId, quizzes, attempts }: QuizPerforma
     </div>
   )
 }
+

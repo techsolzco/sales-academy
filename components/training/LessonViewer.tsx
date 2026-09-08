@@ -32,7 +32,7 @@ function TextBlock({ content }: { content: Record<string, unknown> }) {
 function HeadingBlock({ content }: { content: Record<string, unknown> }) {
   const level = Number(content.level ?? 2)
   const text = String(content.text ?? '')
-  if (level === 1) return <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-2">{text}</h1>
+  if (level === 1) return <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-6 mb-2">{text}</h1>
   if (level === 2) return <h2 className="text-xl font-bold text-gray-800 mt-5 mb-2">{text}</h2>
   return <h3 className="text-lg font-semibold text-gray-800 mt-4 mb-1">{text}</h3>
 }
@@ -218,3 +218,4 @@ export function LessonViewer({ lessonId, courseId, blocks, isCompleted }: Lesson
     </div>
   )
 }
+

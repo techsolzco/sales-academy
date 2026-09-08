@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { requestResellerUpgrade } from '@/lib/actions/reseller'
@@ -39,7 +39,7 @@ export function ResellerApplicationForm() {
     <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
       <div className="mb-8 text-center">
         <Rocket className="w-12 h-12 text-brand-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900">Become a Sales Partner</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Become a Sales Partner</h2>
         <p className="text-gray-500 mt-2">Complete this application to unlock your sales portal.</p>
       </div>
 
@@ -120,4 +120,5 @@ export function ResellerApplicationForm() {
     </div>
   )
 }
+
 

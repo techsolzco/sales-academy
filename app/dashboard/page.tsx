@@ -15,7 +15,7 @@ export default async function SalesmanDashboardPage() {
     <div className="px-4 py-5 md:p-8 animate-fade-in">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {greeting}, {firstName} 👋
         </h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -60,3 +60,4 @@ export default async function SalesmanDashboardPage() {
     </div>
   )
 }
+

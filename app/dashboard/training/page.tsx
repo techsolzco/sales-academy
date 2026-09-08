@@ -35,7 +35,7 @@ export default async function TrainingPage() {
     return (
       <div className="px-4 py-5 md:p-8 animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
           </h1>
           <p className="text-gray-400 text-sm mt-1">Your assigned training courses will appear here.</p>
@@ -61,7 +61,7 @@ export default async function TrainingPage() {
     return (
       <div className="px-4 py-5 md:p-8 animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
           </h1>
         </div>
@@ -139,7 +139,7 @@ export default async function TrainingPage() {
   return (
     <div className="px-4 py-5 md:p-8 animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
         </h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -199,3 +199,4 @@ export default async function TrainingPage() {
     </div>
   )
 }
+

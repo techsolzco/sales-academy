@@ -23,13 +23,14 @@ export default async function NewLessonPage({
         { label: module.title, href: `/admin/courses/${course.id}/modules/${module.id}` },
         { label: 'New Lesson' },
       ]} />
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Add Lesson</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add Lesson</h1>
       <p className="text-gray-400 text-sm mb-8">
         After saving, you can add content blocks (text, video, images, etc.) to this lesson.
       </p>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
         <LessonForm moduleId={module.id} courseId={course.id} />
       </div>
     </div>
   )
 }
+

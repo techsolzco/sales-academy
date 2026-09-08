@@ -23,10 +23,11 @@ export default async function EditModulePage({
         { label: module.title, href: `/admin/courses/${course.id}/modules/${module.id}` },
         { label: 'Edit' },
       ]} />
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Edit Module</h1>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Module</h1>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mt-6">
         <ModuleForm courseId={course.id} module={module} />
       </div>
     </div>
   )
 }
+

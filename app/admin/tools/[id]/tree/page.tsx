@@ -111,7 +111,7 @@ export default async function ToolTreePage({
               <div className={`w-10 h-10 flex items-center justify-center rounded-full text-lg mb-2 ${c.color}`}>
                 {c.icon}
               </div>
-              <span className="text-xl font-bold text-gray-900">{c.count}</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">{c.count}</span>
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wide mt-1">{c.title}</span>
             </a>
           ))}
@@ -136,3 +136,4 @@ export default async function ToolTreePage({
     </div>
   )
 }
+

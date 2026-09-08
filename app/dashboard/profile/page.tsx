@@ -47,7 +47,7 @@ export default async function ProfilePage() {
             <AvatarUpload userId={user.id} currentAvatarUrl={profile?.avatar_url} initials={initials} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{profile?.full_name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile?.full_name}</h1>
             <div className="mt-4 flex flex-col gap-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Mail className="w-4 h-4" /> {profile?.email}
@@ -93,9 +93,10 @@ export default async function ProfilePage() {
       <ProfileEditForm initialData={{ full_name: profile?.full_name, bio: profile?.bio, phone: profile?.phone }} />
 
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">My Badges</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">My Badges</h2>
         <BadgeGrid badges={userBadges || []} />
       </div>
     </div>
   )
 }
+

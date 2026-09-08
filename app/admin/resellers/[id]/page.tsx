@@ -60,7 +60,7 @@ export default async function ResellerDetailsPage(
             {profile.full_name?.charAt(0) || 'U'}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{profile.full_name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.full_name}</h1>
             <p className="text-sm text-gray-500">{profile.email}</p>
           </div>
         </div>
@@ -97,3 +97,4 @@ export default async function ResellerDetailsPage(
     </div>
   )
 }
+

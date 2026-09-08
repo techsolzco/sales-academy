@@ -32,7 +32,7 @@ export default async function LessonEditorPage({
       ]} />
 
       {/* Lesson metadata */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <StatusBadge status={lesson.status} />
           {!lesson.is_required && (
@@ -47,7 +47,7 @@ export default async function LessonEditorPage({
             </span>
           )}
         </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-1">{lesson.title}</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{lesson.title}</h1>
         {lesson.subtitle && <p className="text-brand-500 text-sm font-medium mb-1">{lesson.subtitle}</p>}
         {lesson.description && <p className="text-gray-400 text-sm">{lesson.description}</p>}
 
@@ -63,7 +63,7 @@ export default async function LessonEditorPage({
       </div>
 
       {/* Content blocks */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Content Blocks</h2>
@@ -84,3 +84,4 @@ export default async function LessonEditorPage({
     </div>
   )
 }
+

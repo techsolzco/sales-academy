@@ -226,7 +226,7 @@ function ThemeSection({ label, data, onChange }: {
   ]
 
   return (
-    <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <section className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-gray-100">
         <h2 className="text-base font-semibold text-gray-900">{label}</h2>
       </div>
@@ -419,3 +419,4 @@ export function AppearanceForm({
     </div>
   )
 }
+

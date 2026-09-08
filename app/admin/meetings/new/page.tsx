@@ -25,7 +25,7 @@ export default async function NewMeetingPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Meetings
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Schedule New Meeting</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Schedule New Meeting</h1>
         <p className="text-gray-500 mt-1">Create a Jitsi video meeting and invite your sales team.</p>
       </div>
 
@@ -33,3 +33,4 @@ export default async function NewMeetingPage() {
     </div>
   )
 }
+

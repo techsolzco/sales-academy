@@ -314,7 +314,7 @@ export default async function TrainingCoursePage({
     }) || []
 
     tabContent = (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mt-6">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/50">
@@ -370,9 +370,9 @@ export default async function TrainingCoursePage({
       </Link>
 
       {/* Course header */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-6">
         {course.category && <p className="text-xs text-brand-500 font-medium mb-1">{course.category}</p>}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{course.title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{course.title}</h1>
         {course.description && <p className="text-gray-400 text-sm mb-4">{course.description}</p>}
 
         {/* Progress bar */}
@@ -462,3 +462,4 @@ export default async function TrainingCoursePage({
     </div>
   )
 }
+

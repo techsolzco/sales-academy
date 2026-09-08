@@ -79,7 +79,7 @@ export default async function LessonViewerPage({
             <span className="bg-gray-50 text-gray-400 px-1.5 py-0.5 rounded">Optional</span>
           )}
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">{lesson.title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{lesson.title}</h1>
         {lesson.subtitle && (
           <p className="text-brand-500 text-sm font-medium">{lesson.subtitle}</p>
         )}
@@ -89,7 +89,7 @@ export default async function LessonViewerPage({
       </div>
 
       {/* Lesson content */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
         <LessonViewer
           lessonId={lesson.id}
           courseId={params.courseId}
@@ -100,7 +100,7 @@ export default async function LessonViewerPage({
         {quiz && (
           <div className="mt-12 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
             <Brain className="w-10 h-10 text-brand-600 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-gray-900">Lesson Quiz</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Lesson Quiz</h3>
             <p className="text-gray-500 mb-6">{quiz.title} · Pass score: {quiz.pass_score}%</p>
             <Link href={`/dashboard/quiz/${quiz.id}`} className="inline-block bg-brand-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-brand-700 transition-colors">
               Take Quiz
@@ -111,3 +111,4 @@ export default async function LessonViewerPage({
     </div>
   )
 }
+

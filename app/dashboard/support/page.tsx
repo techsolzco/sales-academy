@@ -26,7 +26,7 @@ export default async function SupportPage() {
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Support Tickets</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Tickets</h1>
           <p className="text-gray-500 mt-1 text-sm">Manage your support requests and track their status.</p>
         </div>
         <Link 
@@ -90,3 +90,4 @@ export default async function SupportPage() {
     </div>
   )
 }
+

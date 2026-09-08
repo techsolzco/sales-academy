@@ -16,7 +16,7 @@ export default async function SalesmanToolsPage() {
   return (
     <div className="px-4 py-5 md:p-8 max-w-6xl animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Sales & AI Tools Library</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sales & AI Tools Library</h1>
         <p className="text-gray-400 text-sm mt-1">
           Explore recommended AI, video, design, and automation tools to supercharge your sales workflow.
         </p>
@@ -26,3 +26,4 @@ export default async function SalesmanToolsPage() {
     </div>
   )
 }
+
