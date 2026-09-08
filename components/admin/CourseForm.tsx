@@ -87,7 +87,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
           value={form.title}
           onChange={e => update('title', e.target.value)}
           placeholder="e.g. Google AI Pro Sales Training"
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
         />
       </div>
 
@@ -99,7 +99,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
           value={form.description}
           onChange={e => update('description', e.target.value)}
           placeholder="What will salesmen learn in this course?"
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
+          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
         />
       </div>
 
@@ -123,7 +123,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
           <select
             value={form.tool_id}
             onChange={e => update('tool_id', e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="">No specific tool</option>
             {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -143,7 +143,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
           <select
             value={form.category}
             onChange={e => update('category', e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="">Select category</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -154,7 +154,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
           <select
             value={form.difficulty}
             onChange={e => update('difficulty', e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="">Select difficulty</option>
             <option value="beginner">Beginner</option>
@@ -174,7 +174,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
             value={form.estimated_duration_minutes}
             onChange={e => update('estimated_duration_minutes', e.target.value)}
             placeholder="60"
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         </div>
         <div>
@@ -182,7 +182,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
           <select
             value={form.status}
             onChange={e => update('status', e.target.value as Status)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           >
             <option value="draft">Draft</option>
             <option value="published">Published</option>
@@ -197,7 +197,7 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
         <select
           value={form.visibility}
           onChange={e => update('visibility', e.target.value as Visibility)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
         >
           <option value="all">All Salesmen</option>
           <option value="selected">Selected Salesmen Only</option>
@@ -216,3 +216,4 @@ export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
     </form>
   )
 }
+

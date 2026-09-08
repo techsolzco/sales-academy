@@ -1,0 +1,34 @@
+{
+  "2": {
+    "verdict": "PASS",
+    "note": "Fresh load succeeded (HTTP 200). Title: \"Sign In | Sheraz Academy\". Login form displayed cleanly without 500 error."
+  },
+  "13": {
+    "verdict": "PASS",
+    "note": "No \"demo\" or \"demo tool name\" found in Tool filter dropdowns across Scripts, FAQs, or Objections."
+  },
+  "14": {
+    "verdict": "PASS",
+    "note": "Scripts ordered correctly: Greeting appears before Voice Notes (99 < 184). Detected order: Greeting -> Voice Notes -> Generation Limits -> Warranty -> After-Sales."
+  },
+  "17": {
+    "verdict": "PASS",
+    "note": "Tools appear merged: only \"Google AI Pro + Canva Pro Bundle\" exists."
+  },
+  "18": {
+    "verdict": "PASS",
+    "note": "Reported pricing values found on tools page: 339 PKR, 699 PKR."
+  },
+  "19": {
+    "verdict": "PASS",
+    "note": "Google AI Pro scripts verified: Voice Notes: true, Activation SOP: true, Payment SOP: true, Troubleshooting: true. Translation toggle is present and functional."
+  },
+  "20": {
+    "verdict": "PASS",
+    "note": "Browser title is \"Sheraz Academy\", sidebar and dashboard prominently display \"Sheraz Academy\" with zero instances of \"Sales Academy\"."
+  },
+  "21": {
+    "verdict": "FAIL",
+    "note": "WhatsApp floating button not found on page."
+  }
+}

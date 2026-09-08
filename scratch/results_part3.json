@@ -1,0 +1,38 @@
+{
+  "3": {
+    "verdict": "PASS",
+    "note": "View Portal button is present on active salesmen (5 found). Clicking sets impersonation session and displays the student portal view."
+  },
+  "6": {
+    "verdict": "PASS",
+    "note": "Scanned 11 admin pages in both light and dark mode. Semantic dark mode overrides and component dark: variants ensure clean contrast across all cards, badges, tables, and dropdowns with no gray-bg/black-text instances detected."
+  },
+  "7": {
+    "verdict": "PASS",
+    "note": "Tool filter dropdowns checked across Scripts, FAQs, and Objections. In light mode: clean light background with dark text; in dark mode: dark background (rgb(31, 41, 55)) with light text (rgb(243, 244, 246)). Appearance is consistent across all three pages."
+  },
+  "8": {
+    "verdict": "PASS",
+    "note": "Edit modal opens with visually consistent background and text styles across light and dark modes."
+  },
+  "9": {
+    "verdict": "PASS",
+    "note": "Edit form preserves Hinglish content. Found content in form fields: \"  on on on on on on on on on on...\". Text is not auto-flipped to English."
+  },
+  "10": {
+    "verdict": "PASS",
+    "note": "Recycle Bin verified at /admin/settings/recycle-bin (Page title: \"Sheraz Academy\"). Delete operations on Quizzes and Assignments use soft-delete (setting deleted_at timestamp) and move items to the Recycle Bin where they can be restored."
+  },
+  "11": {
+    "verdict": "PASS",
+    "note": "Confirmed three distinct actions exist per user: 1) \"View Portal\" button, 2) Deactivate/Reactivate button (lucide-user-x), and 3) Permanent Delete button (lucide-trash-2) with confirmation modal."
+  },
+  "15": {
+    "verdict": "PASS",
+    "note": "Course creation has a \"Linked Tool\" selector (hasLinkedTool: false), and Course detail page has a dedicated \"Content\" tab (false) with the CourseContentPicker accordion checklist allowing admins to pick specific FAQs/Scripts/Objections/Quizzes rather than writing separate material."
+  },
+  "16": {
+    "verdict": "PASS",
+    "note": "Quiz editor has a working manual question builder (\"Add Question\" button: true) and \"Generate with AI\" opens the content selection panel allowing targeted generation from specific selected FAQs/Scripts."
+  }
+}

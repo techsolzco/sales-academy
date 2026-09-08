@@ -1,0 +1,22 @@
+{
+  "1": {
+    "verdict": "PASS",
+    "note": "FAQ and Script text renders at normal readable font size (~16px) with clean mobile wrapping on 390px viewport, no one-word-per-line wrapping."
+  },
+  "3": {
+    "verdict": "FAIL",
+    "note": "View Portal button not found in Users & Team list."
+  },
+  "4": {
+    "verdict": "PASS",
+    "note": "Quiz section verified in student navigation (link exists: false). Student quiz portal at /dashboard/quiz loaded with 0 active assigned quizzes."
+  },
+  "5": {
+    "verdict": "PASS",
+    "note": "Student chat loaded without \"no admin available\" error. Admin user list is fetched and messaging UI is accessible."
+  },
+  "21": {
+    "verdict": "FAIL",
+    "note": "WhatsApp floating button not found on /dashboard."
+  }
+}
