@@ -31,7 +31,7 @@ export function LeaderboardTable({ entries, currentUserId }: Props) {
   }
 
   const Row = ({ entry, isCurrentUser }: { entry: LeaderboardEntry, isCurrentUser: boolean }) => (
-    <div className={`flex items-center p-4 rounded-xl transition-all duration-200 hover:shadow-md ${isCurrentUser ? 'bg-gradient-to-r from-brand-50 to-white border border-brand-500 shadow-sm' : 'bg-white border border-gray-100 hover:border-brand-200'}`}>
+    <div className={`flex items-center p-4 rounded-xl transition-all duration-200 hover:shadow-md ${isCurrentUser ? 'bg-gradient-to-r from-brand-50 dark:from-brand-900/30 to-white dark:to-gray-800 border border-brand-500 shadow-sm' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-brand-200 dark:hover:border-brand-600'}`}>
       <div className="w-12 flex justify-center items-center mr-4">
         {getRankMedal(entry.rank!)}
       </div>
@@ -44,18 +44,18 @@ export function LeaderboardTable({ entries, currentUserId }: Props) {
             className={`rounded-full object-cover shadow-sm border-2 ${entry.rank! <= 3 ? 'w-14 h-14 border-amber-400' : 'w-10 h-10 border-transparent'}`}
           />
         ) : (
-          <div className={`rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold shadow-sm border-2 ${entry.rank! <= 3 ? 'w-14 h-14 border-amber-400 text-xl' : 'w-10 h-10 border-transparent text-sm'}`}>
+          <div className={`rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold shadow-sm border-2 ${entry.rank! <= 3 ? 'w-14 h-14 border-amber-400 text-xl' : 'w-10 h-10 border-transparent text-sm'}`}>
             {entry.full_name.charAt(0).toUpperCase()}
           </div>
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <h4 className={`font-semibold truncate ${isCurrentUser ? 'text-brand-900' : 'text-gray-900'} ${entry.rank! <= 3 ? 'text-lg' : 'text-base'}`}>
+        <h4 className={`font-semibold truncate ${isCurrentUser ? 'text-brand-900 dark:text-brand-300' : 'text-gray-900 dark:text-gray-100'} ${entry.rank! <= 3 ? 'text-lg' : 'text-base'}`}>
           {entry.full_name}
-          {isCurrentUser && <span className="ml-2 text-[10px] uppercase tracking-wider bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-bold">You</span>}
+          {isCurrentUser && <span className="ml-2 text-[10px] uppercase tracking-wider bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full font-bold">You</span>}
         </h4>
-        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
           <span title="Courses Completed">📚 {entry.courses_completed}</span>
           <span title="Lessons Completed">📝 {entry.lessons_completed}</span>
           <span title="Scripts Copied">🎙️ {entry.scripts_copied}</span>
