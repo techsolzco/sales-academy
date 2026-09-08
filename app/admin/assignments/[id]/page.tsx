@@ -32,12 +32,18 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
     .eq('status', 'active')
     .order('full_name')
 
-  // Content items (FAQs/scripts/objections this assignment covers)
-  const { data: contentItems } = await supabase
-    .from('assignment_content_items')
-    .select('content_type, content_id, content_title')
-    .eq('assignment_id', params.id)
-    .order('content_type')
+  // Content items already saved + full library for the picker (server-side to avoid RLS)
+  const [
+    { data: contentItems },
+    { data: allFaqs },
+    { data: allScripts },
+    { data: allObjections },
+  ] = await Promise.all([
+    supabase.from('assignment_content_items').select('content_type, content_id, content_title').eq('assignment_id', params.id).order('content_type'),
+    supabase.from('faqs').select('id, question').is('deleted_at', null).eq('status', 'published').order('created_at'),
+    supabase.from('scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
+    supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('status', 'published').order('created_at'),
+  ])
 
   const groupedContent = {
     faq: (contentItems || []).filter(i => i.content_type === 'faq'),
@@ -144,6 +150,9 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
         <AssignmentContentPicker
           assignmentId={params.id}
           initialItems={contentItems || []}
+          faqs={allFaqs ?? []}
+          scripts={allScripts ?? []}
+          objections={allObjections ?? []}
         />
       </div>
 

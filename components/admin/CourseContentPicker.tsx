@@ -1,54 +1,27 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 import { saveCourseContentItems } from '@/lib/actions/courses'
 import type { CourseContentItem } from '@/lib/actions/courses'
 import { ChevronDown, ChevronUp, Check, Loader2, Save } from 'lucide-react'
 
 interface Props {
   courseId: string
-  toolId?: string | null
   initialItems: CourseContentItem[]
-}
-
-interface ContentLibrary {
   faqs: { id: string; question: string }[]
   scripts: { id: string; title: string }[]
   objections: { id: string; objection_text: string }[]
   quizzes: { id: string; title: string }[]
 }
 
-export function CourseContentPicker({ courseId, initialItems }: Props) {
+export function CourseContentPicker({ courseId, initialItems, faqs, scripts, objections, quizzes }: Props) {
   const [selectedItems, setSelectedItems] = useState<CourseContentItem[]>(initialItems)
-  const [library, setLibrary] = useState<ContentLibrary | null>(null)
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     faq: true, script: false, objection: false, quiz: false,
   })
-
-  const loadContent = useCallback(async () => {
-    setLoading(true)
-    const supabase = createClient()
-    const [faqsRes, scriptsRes, objectionsRes, quizzesRes] = await Promise.all([
-      supabase.from('faqs').select('id, question').is('deleted_at', null).eq('status', 'published').order('created_at'),
-      supabase.from('scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
-      supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('status', 'published').order('created_at'),
-      supabase.from('quizzes').select('id, title').is('deleted_at', null).order('created_at'),
-    ])
-    setLibrary({
-      faqs: faqsRes.data || [],
-      scripts: scriptsRes.data || [],
-      objections: objectionsRes.data || [],
-      quizzes: quizzesRes.data || [],
-    })
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { loadContent() }, [loadContent])
 
   const isSelected = (type: string, id: string) =>
     selectedItems.some(i => i.content_type === type && i.content_id === id)
@@ -84,10 +57,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
   }
 
   const Section = ({
-    type,
-    label,
-    emoji,
-    items,
+    type, label, emoji, items,
   }: {
     type: CourseContentItem['content_type']
     label: string
@@ -148,46 +118,34 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
     )
   }
 
-  if (loading) {
+  const totalAvailable = faqs.length + scripts.length + objections.length + quizzes.length
+
+  if (totalAvailable === 0) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-400 py-8">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        Loading content library...
+      <div className="text-sm text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-xl p-8 text-center">
+        <p className="font-medium mb-1">No published content found</p>
+        <p className="text-xs">Add and publish FAQs, Scripts, or Objections first, then come back to link them to this course.</p>
       </div>
     )
   }
-
-  const totalAvailable = library
-    ? library.faqs.length + library.scripts.length + library.objections.length + library.quizzes.length
-    : 0
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Tick the FAQs, Scripts, Objections, and Quizzes you want students to study in this course.
+          Open each section and tick the items students should study in this course.
         </p>
         <span className="text-xs text-gray-400 shrink-0 ml-4">
           {selectedItems.length} of {totalAvailable} selected
         </span>
       </div>
 
-      {totalAvailable === 0 ? (
-        <div className="text-sm text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-xl p-6 text-center">
-          No published content found. Add FAQs, Scripts, or Objections first.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {library && (
-            <>
-              <Section type="faq" label="FAQs" emoji="?" items={library.faqs.map(f => ({ id: f.id, label: f.question }))} />
-              <Section type="script" label="Scripts" emoji="??" items={library.scripts.map(s => ({ id: s.id, label: s.title }))} />
-              <Section type="objection" label="Objections" emoji="???" items={library.objections.map(o => ({ id: o.id, label: o.objection_text }))} />
-              <Section type="quiz" label="Quizzes" emoji="??" items={library.quizzes.map(q => ({ id: q.id, label: q.title }))} />
-            </>
-          )}
-        </div>
-      )}
+      <div className="space-y-2">
+        <Section type="faq" label="FAQs" emoji="?" items={faqs.map(f => ({ id: f.id, label: f.question }))} />
+        <Section type="script" label="Scripts" emoji="??" items={scripts.map(s => ({ id: s.id, label: s.title }))} />
+        <Section type="objection" label="Objections" emoji="???" items={objections.map(o => ({ id: o.id, label: o.objection_text }))} />
+        <Section type="quiz" label="Quizzes" emoji="??" items={quizzes.map(q => ({ id: q.id, label: q.title }))} />
+      </div>
 
       {error && (
         <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
@@ -213,4 +171,3 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
     </div>
   )
 }
-

@@ -220,17 +220,32 @@ export default async function CourseDetailPage({
       </div>
     )
   } else if (tab === 'content') {
-    const initialItems = await fetchCourseContentItems(course.id)
+    const [
+      initialItems,
+      { data: allFaqs },
+      { data: allScripts },
+      { data: allObjections },
+      { data: allQuizzes },
+    ] = await Promise.all([
+      fetchCourseContentItems(course.id),
+      supabase.from('faqs').select('id, question').is('deleted_at', null).eq('status', 'published').order('created_at'),
+      supabase.from('scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
+      supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('status', 'published').order('created_at'),
+      supabase.from('quizzes').select('id, title').is('deleted_at', null).order('created_at'),
+    ])
     tabContent = (
       <div className="mt-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
-        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">Course Content</h2>
+        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">📚 Course Content</h2>
         <p className="text-xs text-gray-400 dark:text-gray-500 mb-5">
-          These items are the curated study checklist shown to salesmen enrolled in this course.
-          Pick a subset — you don't need to include everything from the tool library.
+          Tick the FAQs, Scripts, Objections, and Quizzes you want students to study in this course.
         </p>
         <CourseContentPicker
           courseId={course.id}
           initialItems={initialItems}
+          faqs={allFaqs ?? []}
+          scripts={allScripts ?? []}
+          objections={allObjections ?? []}
+          quizzes={allQuizzes ?? []}
         />
       </div>
     )
