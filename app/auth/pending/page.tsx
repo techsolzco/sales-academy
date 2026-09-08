@@ -8,7 +8,7 @@ export default function PendingPage() {
         <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <Clock className="w-8 h-8 text-brand-600 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Under Review</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Application Under Review</h1>
         <p className="text-gray-500 mb-8">
           Our team will review your application within 24 hours. You will receive an email notification once your account is approved.
         </p>
@@ -19,3 +19,4 @@ export default function PendingPage() {
     </div>
   )
 }
+
