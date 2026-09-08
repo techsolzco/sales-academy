@@ -38,7 +38,7 @@ export function AssignmentContentPicker({ assignmentId, initialItems }: Props) {
     const supabase = createClient()
     const [faqsRes, scriptsRes, objectionsRes] = await Promise.all([
       supabase.from('faqs').select('id, question').is('deleted_at', null).eq('status', 'published').order('created_at'),
-      supabase.from('sales_scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
+      supabase.from('scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
       supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('status', 'published').order('created_at'),
     ])
     setLibrary({
@@ -213,3 +213,4 @@ export function AssignmentContentPicker({ assignmentId, initialItems }: Props) {
     </div>
   )
 }
+
