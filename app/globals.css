@@ -106,10 +106,20 @@
   .dark .bg-gray-100 {
     background-color: theme('colors.gray.800') !important;
   }
+  .dark .bg-gray-200 {
+    background-color: theme('colors.gray.700') !important;
+  }
+  .dark .bg-neutral-100 {
+    background-color: theme('colors.gray.800') !important;
+  }
+  .dark .bg-neutral-200 {
+    background-color: theme('colors.gray.700') !important;
+  }
 
   /* Override light borders in dark mode */
   .dark .border-gray-100 { border-color: theme('colors.gray.700') !important; }
   .dark .border-gray-200 { border-color: theme('colors.gray.700') !important; }
+  .dark .border-gray-300 { border-color: theme('colors.gray.600') !important; }
 
   /* Fix header/nav bars that use bg-white/80 */
   .dark .bg-white\/80 {

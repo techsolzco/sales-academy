@@ -54,10 +54,10 @@ export function AssignmentSubmitForm({ assignmentId, assignmentTitle }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-        <h2 className="text-base font-bold text-gray-900">Submit Your Work</h2>
-        <p className="text-xs text-gray-500 mt-0.5">You can provide any combination of the options below</p>
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+        <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">Submit Your Work</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">You can provide any combination of the options below</p>
       </div>
 
       <div className="p-6 space-y-6">

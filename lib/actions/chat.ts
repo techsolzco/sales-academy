@@ -138,13 +138,16 @@ export async function markMessagesRead(conversationId: string): Promise<ActionRe
 }
 
 export async function fetchAdminUsers(): Promise<Profile[]> {
-  const supabase = await createClient()
-  const { data } = await supabase
+  // Use service client to bypass RLS — regular client's RLS prevents salesman
+  // from seeing other users' profiles, which causes "no admin available" every time.
+  const sb = getServiceClient()
+  const { data } = await sb
     .from('profiles')
-    .select('*')
+    .select('id, full_name, email, avatar_url, role')
     .eq('role', 'admin')
+    .order('full_name')
 
-  return data || []
+  return (data || []) as Profile[]
 }
 
 export async function fetchSalesmanList(): Promise<Profile[]> {

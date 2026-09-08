@@ -55,20 +55,20 @@ export function CommunityFeed({ initialPosts, currentUser, isAdmin }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <form onSubmit={handleCreatePost}>
           <textarea
             value={newPostContent}
             onChange={e => setNewPostContent(e.target.value)}
             placeholder={t('community.placeholder')}
-            className="w-full bg-gray-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mb-3"
+            className="w-full bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mb-3"
             rows={3}
           />
           <div className="flex justify-between items-center">
             <select
               value={newPostType}
               onChange={e => setNewPostType(e.target.value)}
-              className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none"
+              className="text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none"
             >
               <option value="general">{t('community.general')}</option>
               <option value="assignment_update">{t('community.assignmentUpdate')}</option>
@@ -84,20 +84,20 @@ export function CommunityFeed({ initialPosts, currentUser, isAdmin }: Props) {
 
       <div className="space-y-4">
         {posts.map(post => (
-          <div key={post.id} className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow border border-gray-100">
+          <div key={post.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold">
                   {post.profile?.full_name?.charAt(0) || '?'}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     {post.profile?.full_name}
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 uppercase">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase">
                       {post.profile?.role}
                     </span>
                   </h4>
-                  <p className="text-xs text-gray-500">{new Date(post.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(post.created_at).toLocaleString()}</p>
                 </div>
               </div>
               <div className="flex gap-2">

@@ -74,6 +74,8 @@ export async function startViewAsStudent(targetUserId: string): Promise<ActionRe
 
     redirect('/dashboard')
   } catch (e: any) {
+    // Next.js redirect() throws a special NEXT_REDIRECT error — must re-throw it
+    if (e?.digest?.startsWith('NEXT_REDIRECT')) throw e
     return { error: e.message }
   }
 }

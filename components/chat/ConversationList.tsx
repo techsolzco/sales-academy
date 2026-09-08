@@ -31,7 +31,7 @@ interface Props {
 
 export function ConversationList({ conversations, currentUserId, selectedId, onSelect, onNewChat, isAdmin }: Props) {
   return (
-    <div className="h-full flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <h2 className="font-bold text-gray-900">Messages</h2>
         {isAdmin && onNewChat && (
