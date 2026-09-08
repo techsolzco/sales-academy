@@ -27,7 +27,7 @@ export default async function AdminCommunityPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-3xl mx-auto mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Community</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Community</h1>
       </div>
       <CommunityFeed initialPosts={posts || []} currentUser={profile} isAdmin={true} />
     </div>

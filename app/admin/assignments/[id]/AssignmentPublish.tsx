@@ -29,8 +29,8 @@ export default function AssignmentPublish({ assignmentId, users }: { assignmentI
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-      <h2 className="text-lg font-bold text-gray-900 mb-4">Publish Assignment</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-8">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Publish Assignment</h2>
       <div className="flex flex-col gap-4">
         <div>
           <button 

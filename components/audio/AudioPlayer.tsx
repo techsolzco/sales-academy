@@ -117,17 +117,17 @@ export function AudioPlayer({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 space-y-5">
       <audio ref={audioRef} src={audioUrl} preload="metadata" />
 
       {/* Header */}
       <div>
-        <h3 className="font-semibold text-gray-900 text-base mb-1">{title}</h3>
-        {purpose && <p className="text-xs text-gray-500">{purpose}</p>}
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{title}</h3>
+        {purpose && <p className="text-xs text-gray-500 dark:text-gray-400">{purpose}</p>}
       </div>
 
       {/* Player Controls */}
-      <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-3">
+      <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 space-y-3">
         <div className="flex items-center gap-4">
           <button
             onClick={togglePlay}
@@ -145,7 +145,7 @@ export function AudioPlayer({
               onChange={handleSeek}
               className="w-full accent-brand-600 cursor-pointer"
             />
-            <div className="flex justify-between text-xs text-gray-400 mt-1 font-mono">
+            <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1 font-mono">
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
@@ -153,9 +153,9 @@ export function AudioPlayer({
         </div>
 
         {/* Speed Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200/60">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200/60 dark:border-gray-700">
           <div className="flex items-center gap-1">
-            <span className="text-xs font-medium text-gray-400 mr-1.5">Speed:</span>
+            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mr-1.5">Speed:</span>
             {SPEEDS.map(s => (
               <button
                 key={s}
@@ -163,7 +163,7 @@ export function AudioPlayer({
                 className={`px-2 py-0.5 rounded text-xs font-semibold transition ${
                   speed === s
                     ? 'bg-brand-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                    : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                 }`}
               >
                 {s}x

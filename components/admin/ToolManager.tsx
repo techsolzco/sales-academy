@@ -159,7 +159,7 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
                     )}
 
                     <div>
-                      <h3 className="font-bold text-gray-900 text-base leading-snug">{tool.name}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base leading-snug">{tool.name}</h3>
                       <span className="text-xs text-brand-600 font-medium">{tool.category}</span>
                     </div>
                   </div>

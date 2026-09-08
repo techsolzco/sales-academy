@@ -40,7 +40,7 @@ export function WelcomeModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 relative"
+        className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 relative"
       >
         <div className="h-32 bg-gradient-to-br from-brand-400 to-brand-600 relative overflow-hidden flex items-center justify-center">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20" />
@@ -50,8 +50,8 @@ export function WelcomeModal({
         </div>
         
         <div className="p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome Aboard! 🚀</h2>
-          <p className="text-gray-600 mb-8 whitespace-pre-wrap leading-relaxed">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Welcome Aboard! 🚀</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 whitespace-pre-wrap leading-relaxed">
             {message}
           </p>
           <button
