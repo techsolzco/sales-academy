@@ -586,3 +586,95 @@ Return ONLY valid JSON, no markdown, no explanation:
   }
 }
 
+// Generate questions from admin-selected specific content items (not whole tool)
+export async function generateQuestionsFromContent(
+  quizId: string,
+  selectedItems: { type: 'faq' | 'script' | 'objection'; id: string }[],
+  count: number = 8,
+): Promise<ActionResult<GeneratedQuestion[]>> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+
+  const { data: quiz } = await supabase.from('quizzes').select('title, tool:tools(name)').is('deleted_at', null).eq('id', quizId).single()
+  if (!quiz) return { error: 'Quiz not found' }
+
+  const toolName = (quiz.tool as any)?.name || quiz.title
+  const contextParts: string[] = []
+
+  const faqIds = selectedItems.filter(i => i.type === 'faq').map(i => i.id)
+  const scriptIds = selectedItems.filter(i => i.type === 'script').map(i => i.id)
+  const objectionIds = selectedItems.filter(i => i.type === 'objection').map(i => i.id)
+
+  if (faqIds.length > 0) {
+    const { data: faqs } = await supabase.from('faqs').select('question, short_answer').in('id', faqIds)
+    if (faqs?.length) {
+      contextParts.push('FAQs:')
+      faqs.forEach((f: any) => contextParts.push(`Q: ${f.question}\nA: ${f.short_answer}`))
+    }
+  }
+  if (scriptIds.length > 0) {
+    const { data: scripts } = await supabase.from('scripts').select('title, content').in('id', scriptIds)
+    if (scripts?.length) {
+      contextParts.push('\nScripts:')
+      scripts.forEach((s: any) => contextParts.push(`[${s.title}]: ${s.content?.slice(0, 300)}`))
+    }
+  }
+  if (objectionIds.length > 0) {
+    const { data: objections } = await supabase.from('objections').select('objection_text, recommended_response').in('id', objectionIds)
+    if (objections?.length) {
+      contextParts.push('\nObjection Handling:')
+      objections.forEach((o: any) => contextParts.push(`Objection: ${o.objection_text}\nResponse: ${o.recommended_response?.slice(0, 200)}`))
+    }
+  }
+
+  if (contextParts.length === 0) return { error: 'No content found for selected items' }
+
+  const prompt = `You are creating a sales training quiz for "${toolName}".
+
+Based ONLY on this specific content (do not add outside knowledge):
+${contextParts.join('\n')}
+
+Generate exactly ${count} multiple-choice questions to test a salesman's knowledge of the content above.
+Each question must have exactly 4 options with exactly 1 correct answer.
+Questions must be directly grounded in the provided content — do not invent facts not present above.
+
+Return ONLY valid JSON, no markdown, no explanation:
+{
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_index": 0,
+      "explanation": "Brief explanation of why this is correct",
+      "points": 1
+    }
+  ]
+}`
+
+  try {
+    const raw = await callGemini(prompt)
+    const clean = stripFences(raw)
+    const parsed = JSON.parse(clean)
+    if (!parsed.questions?.length) return { error: 'AI returned no questions — try again' }
+
+    const now = Date.now()
+    const questions: GeneratedQuestion[] = parsed.questions.map((q: any, i: number) => ({
+      id: `new-${now}-${i}`,
+      question_text: q.question,
+      points: q.points || 1,
+      explanation: q.explanation || '',
+      options: (q.options as string[]).map((opt: string, j: number) => ({
+        id: `new-opt-${now}-${i}-${j}`,
+        option_text: opt,
+        is_correct: j === q.correct_index,
+      })),
+    }))
+
+    return { data: questions }
+  } catch (e: any) {
+    return { error: e.message || 'AI generation failed' }
+  }
+}

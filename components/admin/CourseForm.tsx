@@ -14,10 +14,13 @@ const CATEGORIES = [
 
 interface CourseFormProps {
   course?: Course
+  tools?: { id: string; name: string }[]
   onSuccess?: (id: string) => void
 }
 
-export function CourseForm({ course, onSuccess }: CourseFormProps) {
+
+
+export function CourseForm({ course, tools = [], onSuccess }: CourseFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +34,7 @@ export function CourseForm({ course, onSuccess }: CourseFormProps) {
     estimated_duration_minutes: course?.estimated_duration_minutes?.toString() ?? '',
     status: (course?.status ?? 'draft') as Status,
     visibility: (course?.visibility ?? 'all') as Visibility,
+    tool_id: (course as any)?.tool_id ?? '',
   })
 
   function update(key: keyof typeof form, value: string) {
@@ -52,6 +56,7 @@ export function CourseForm({ course, onSuccess }: CourseFormProps) {
           : undefined,
         status: form.status,
         visibility: form.visibility,
+        tool_id: form.tool_id || null,
       }
       const result = course
         ? await updateCourse(course.id, payload)
@@ -72,6 +77,7 @@ export function CourseForm({ course, onSuccess }: CourseFormProps) {
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
       )}
+
 
       {/* Title */}
       <div>
@@ -107,6 +113,28 @@ export function CourseForm({ course, onSuccess }: CourseFormProps) {
           label="Course Thumbnail"
         />
       </div>
+
+      {/* Linked Tool */}
+      {tools.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Linked Tool <span className="text-gray-400 font-normal">(optional — enables content picker)</span>
+          </label>
+          <select
+            value={form.tool_id}
+            onChange={e => update('tool_id', e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          >
+            <option value="">No specific tool</option>
+            {tools.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          {form.tool_id && (
+            <p className="text-xs text-brand-600 dark:text-brand-400 mt-1">
+              ✓ After saving, open the "Content" tab to pick specific FAQs, Scripts and Quizzes for this course.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Category + Difficulty row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

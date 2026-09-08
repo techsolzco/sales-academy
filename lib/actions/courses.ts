@@ -29,7 +29,17 @@ export interface CourseInput {
   status?: Status
   visibility?: Visibility
   qualifying_for_reseller?: boolean
+  tool_id?: string | null
 }
+
+// ─── Course content items ──────────────────────────────────────────────────
+
+export interface CourseContentItem {
+  content_type: 'faq' | 'script' | 'objection' | 'quiz'
+  content_id: string
+  content_title: string
+}
+
 
 // ─── Create ───────────────────────────────────────────────────────────────
 
@@ -110,9 +120,62 @@ export async function bulkSoftDeleteCourses(ids: string[]): Promise<ActionResult
     const { error } = await supabase.from('courses').update({ deleted_at: new Date().toISOString() }).in('id', ids)
     if (error) return { error: error.message }
     revalidatePath('/admin/courses')
-    
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }
   }
 }
+
+// ─── Course content items ──────────────────────────────────────────────────
+
+export async function saveCourseContentItems(
+  courseId: string,
+  items: CourseContentItem[],
+): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    // Full replace: delete all existing, then reinsert
+    const { error: delErr } = await supabase
+      .from('course_content_items')
+      .delete()
+      .eq('course_id', courseId)
+    if (delErr) return { error: delErr.message }
+
+    if (items.length > 0) {
+      const rows = items.map((item, i) => ({
+        course_id: courseId,
+        content_type: item.content_type,
+        content_id: item.content_id,
+        content_title: item.content_title,
+        display_order: i,
+      }))
+      const { error: insErr } = await supabase
+        .from('course_content_items')
+        .insert(rows)
+      if (insErr) return { error: insErr.message }
+    }
+
+    revalidatePath(`/admin/courses/${courseId}`)
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+export async function fetchCourseContentItems(
+  courseId: string,
+): Promise<CourseContentItem[]> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { data, error } = await supabase
+      .from('course_content_items')
+      .select('content_type, content_id, content_title, display_order')
+      .eq('course_id', courseId)
+      .order('display_order', { ascending: true })
+    if (error || !data) return []
+    return data as CourseContentItem[]
+  } catch {
+    return []
+  }
+}
+

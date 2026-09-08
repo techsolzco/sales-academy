@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Plus, Trash2, CheckCircle2, Circle, Save, Loader2, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
-import { syncQuizQuestions, generateQuestionsForQuiz } from '@/lib/actions/quizzes'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Plus, Trash2, CheckCircle2, Circle, Save, Loader2, Sparkles, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { syncQuizQuestions, generateQuestionsForQuiz, generateQuestionsFromContent } from '@/lib/actions/quizzes'
+import { createClient } from '@/lib/supabase/client'
 import type { GeneratedQuestion } from '@/lib/actions/quizzes'
 
 interface Props {
@@ -12,6 +13,12 @@ interface Props {
   toolName?: string | null
 }
 
+interface ToolItem {
+  id: string
+  label: string
+  type: 'faq' | 'script' | 'objection'
+}
+
 export function QuizQuestionBuilder({ quizId, initialQuestions = [], toolId, toolName }: Props) {
   const [questions, setQuestions] = useState<any[]>(
     initialQuestions.map(q => ({
@@ -19,6 +26,7 @@ export function QuizQuestionBuilder({ quizId, initialQuestions = [], toolId, too
       options: q.options ? [...q.options].sort((a: any, b: any) => a.order_index - b.order_index) : []
     })).sort((a: any, b: any) => a.order_index - b.order_index)
   )
+
   const [isSaving, setIsSaving] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,6 +34,40 @@ export function QuizQuestionBuilder({ quizId, initialQuestions = [], toolId, too
   const [genCount, setGenCount] = useState(8)
   const [showGenOptions, setShowGenOptions] = useState(false)
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({})
+
+  // Content picker for targeted AI generation
+  const [showContentPicker, setShowContentPicker] = useState(false)
+  const [toolItems, setToolItems] = useState<ToolItem[]>([])
+  const [selectedContentIds, setSelectedContentIds] = useState<Set<string>>(new Set())
+  const [loadingToolContent, setLoadingToolContent] = useState(false)
+
+  const loadToolContent = useCallback(async () => {
+    if (!toolId) return
+    setLoadingToolContent(true)
+    const supabase = createClient()
+    const [faqsRes, scriptsRes, objectionsRes] = await Promise.all([
+      supabase.from('faqs').select('id, question').is('deleted_at', null).eq('tool_id', toolId).eq('status', 'published').order('created_at'),
+      supabase.from('scripts').select('id, title').is('deleted_at', null).eq('tool_id', toolId).eq('status', 'published').order('title'),
+      supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('tool_id', toolId).eq('status', 'published').order('created_at'),
+    ])
+    const items: ToolItem[] = [
+      ...(faqsRes.data || []).map((f: any) => ({ id: f.id, label: f.question, type: 'faq' as const })),
+      ...(scriptsRes.data || []).map((s: any) => ({ id: s.id, label: s.title, type: 'script' as const })),
+      ...(objectionsRes.data || []).map((o: any) => ({ id: o.id, label: o.objection_text, type: 'objection' as const })),
+    ]
+    setToolItems(items)
+    setLoadingToolContent(false)
+  }, [toolId])
+
+  useEffect(() => { if (showContentPicker) loadToolContent() }, [showContentPicker, loadToolContent])
+
+  const toggleContentItem = (id: string) => {
+    setSelectedContentIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
 
   const addQuestion = () => {
     const now = Date.now()
@@ -112,16 +154,44 @@ export function QuizQuestionBuilder({ quizId, initialQuestions = [], toolId, too
     setTimeout(() => setSuccess(false), 3000)
   }
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
+    // Open content picker if tool is linked; otherwise fall back to full-tool generation
+    if (toolId) {
+      setShowContentPicker(true)
+    } else {
+      handleGenerateFull()
+    }
+  }
+
+  const handleGenerateFull = async () => {
     setIsGenerating(true)
     setError(null)
     setShowGenOptions(false)
     const res = await generateQuestionsForQuiz(quizId, genCount)
     setIsGenerating(false)
     if (res.error || !res.data) { setError(res.error || 'Generation failed'); return }
-    // Replace local questions with AI-generated ones
     setQuestions(res.data as any[])
     setSuccess(false)
+  }
+
+  const handleGenerateFromSelected = async () => {
+    setShowContentPicker(false)
+    if (selectedContentIds.size === 0) {
+      // No items selected — fall back to full tool context
+      await handleGenerateFull()
+      return
+    }
+    setIsGenerating(true)
+    setError(null)
+    const selectedItems = toolItems
+      .filter(item => selectedContentIds.has(item.id))
+      .map(item => ({ type: item.type, id: item.id }))
+    const res = await generateQuestionsFromContent(quizId, selectedItems, genCount)
+    setIsGenerating(false)
+    if (res.error || !res.data) { setError(res.error || 'Generation failed'); return }
+    setQuestions(res.data as any[])
+    setSuccess(false)
+    setSelectedContentIds(new Set())
   }
 
   const totalPoints = questions.reduce((s, q) => s + (q.points || 1), 0)
@@ -189,6 +259,76 @@ export function QuizQuestionBuilder({ quizId, initialQuestions = [], toolId, too
           </button>
         </div>
       </div>
+
+      {/* Content picker panel for AI generation */}
+      {showContentPicker && (
+        <div className="mx-6 mt-4 border border-purple-200 dark:border-purple-700 rounded-xl bg-purple-50/50 dark:bg-purple-900/10 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-purple-200 dark:border-purple-700">
+            <div>
+              <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">Select Content to Generate From</p>
+              <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5">
+                Pick specific items from <span className="font-medium">{toolName}</span> — AI will generate {genCount} questions grounded ONLY in your selection.
+                Leave all unselected to use full tool context.
+              </p>
+            </div>
+            <button
+              onClick={() => { setShowContentPicker(false); setSelectedContentIds(new Set()) }}
+              className="p-1.5 text-purple-400 hover:text-purple-600 dark:hover:text-purple-200 rounded-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {loadingToolContent ? (
+            <div className="flex items-center gap-2 text-sm text-purple-500 p-4">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading content...
+            </div>
+          ) : toolItems.length === 0 ? (
+            <p className="text-sm text-purple-500 dark:text-purple-400 p-4">
+              No published FAQs, Scripts, or Objections found for this tool. Generate from full context instead.
+            </p>
+          ) : (
+            <div className="max-h-64 overflow-y-auto divide-y divide-purple-100 dark:divide-purple-800">
+              {toolItems.map(item => (
+                <label key={item.id} className="flex items-start gap-3 px-4 py-2.5 cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-900/20 transition-colors">
+                  <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                    selectedContentIds.has(item.id)
+                      ? 'bg-purple-600 border-purple-600'
+                      : 'border-purple-300 dark:border-purple-600'
+                  }`}>
+                    {selectedContentIds.has(item.id) && <span className="text-white text-[10px]">✓</span>}
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={selectedContentIds.has(item.id)}
+                    onChange={() => toggleContentItem(item.id)}
+                  />
+                  <div className="min-w-0">
+                    <span className="text-xs font-medium text-purple-500 dark:text-purple-400 uppercase mr-1.5">
+                      {item.type}
+                    </span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 leading-snug">{item.label}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between px-4 py-3 border-t border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20">
+            <span className="text-xs text-purple-500 dark:text-purple-400">
+              {selectedContentIds.size > 0 ? `${selectedContentIds.size} item${selectedContentIds.size !== 1 ? 's' : ''} selected` : 'No selection — will use full tool context'}
+            </span>
+            <button
+              onClick={handleGenerateFromSelected}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
+            >
+              <Sparkles className="w-4 h-4" />
+              Generate {genCount} Questions
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Status messages */}
       <div className="px-6">

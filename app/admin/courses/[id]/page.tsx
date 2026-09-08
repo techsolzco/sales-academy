@@ -4,12 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { BookOpen, Clock, GripVertical, Plus, Edit, Trash2, UserPlus } from 'lucide-react'
-import { publishCourse, archiveCourse, unpublishCourse } from '@/lib/actions/courses'
+import { publishCourse, archiveCourse, unpublishCourse, fetchCourseContentItems } from '@/lib/actions/courses'
 import { deleteModule } from '@/lib/actions/modules'
 
 import { FAQManager } from '@/components/admin/FAQManager'
 import { ScriptManager } from '@/components/admin/ScriptManager'
 import { ObjectionManager } from '@/components/admin/ObjectionManager'
+import { CourseContentPicker } from '@/components/admin/CourseContentPicker'
 
 import { TabLangToggle } from '@/components/ui/TabLangToggle'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -217,6 +218,22 @@ export default async function CourseDetailPage({
         </table>
       </div>
     )
+  } else if (tab === 'content') {
+    const initialItems = await fetchCourseContentItems(course.id)
+    tabContent = (
+      <div className="mt-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">Course Content</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-5">
+          These items are the curated study checklist shown to salesmen enrolled in this course.
+          Pick a subset — you don't need to include everything from the tool library.
+        </p>
+        <CourseContentPicker
+          courseId={course.id}
+          toolId={course.tool_id ?? null}
+          initialItems={initialItems}
+        />
+      </div>
+    )
   }
 
   return (
@@ -274,15 +291,24 @@ export default async function CourseDetailPage({
 
       <div className="flex items-center justify-between mb-6 border-b border-gray-200 dark:border-gray-600 pb-2">
         <div className="flex gap-6 overflow-x-auto">
-          {['lessons', ...(showContentTabs ? ['faqs', 'scripts', 'objections', 'assignments'] : [])].map(t => (
+          {[
+            { key: 'lessons', label: 'Lessons' },
+            { key: 'content', label: 'Content' },
+            ...(showContentTabs ? [
+              { key: 'faqs', label: 'FAQs' },
+              { key: 'scripts', label: 'Scripts' },
+              { key: 'objections', label: 'Objections' },
+              { key: 'assignments', label: 'Assignments' },
+            ] : []),
+          ].map(({ key, label }) => (
             <Link
-              key={t}
-              href={`/admin/courses/${course.id}?tab=${t}&lang=${lang}`}
-              className={`pb-2 text-sm font-medium transition-colors border-b-2 capitalize ${
-                tab === t ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:border-gray-300'
+              key={key}
+              href={`/admin/courses/${course.id}?tab=${key}&lang=${lang}`}
+              className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                tab === key ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
               }`}
             >
-              {t}
+              {label}
             </Link>
           ))}
         </div>
