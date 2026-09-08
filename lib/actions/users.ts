@@ -17,13 +17,20 @@ export async function fetchTeamMembers() {
     
   if (profile?.role !== 'admin') return []
 
-  const { data } = await supabase
+  const sbAdmin = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  const { data } = await sbAdmin
     .from('profiles')
     .select('id, full_name, email, avatar_url, status, created_at, phone, role')
     .order('full_name')
 
   return data ?? []
 }
+
 
 export async function createUser(data: {
   fullName: string
