@@ -30,7 +30,7 @@ export default async function AdminFAQsPage({
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Frequently Asked Questions</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
           Manage customer questions, quick responses, and customer-ready answers for salesmen.
         </p>
       </div>
@@ -39,3 +39,4 @@ export default async function AdminFAQsPage({
     </div>
   )
 }
+

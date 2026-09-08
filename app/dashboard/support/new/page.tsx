@@ -11,7 +11,7 @@ export default function NewTicketPage() {
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto">
       {/* Breadcrumbs */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
+      <nav className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400 mb-8">
         <Link href="/dashboard" className="hover:text-brand-600 flex items-center gap-1">
           <Home className="w-4 h-4" />
         </Link>
@@ -27,3 +27,4 @@ export default function NewTicketPage() {
     </div>
   )
 }
+

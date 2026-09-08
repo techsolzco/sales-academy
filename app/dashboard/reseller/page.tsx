@@ -31,7 +31,7 @@ export default async function SalesPartnerPage() {
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sales Partner Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Track your commissions and manage your sales portal.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your commissions and manage your sales portal.</p>
       </div>
 
       {profile.sales_portal_url ? (
@@ -71,4 +71,5 @@ export default async function SalesPartnerPage() {
     </div>
   )
 }
+
 

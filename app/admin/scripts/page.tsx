@@ -42,7 +42,7 @@ export default async function AdminScriptsPage({
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sales Scripts Library</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
           Word-for-word pitch scripts, objection handling templates, WhatsApp greetings, and closing lines for salesmen.
         </p>
       </div>
@@ -56,4 +56,5 @@ export default async function AdminScriptsPage({
     </div>
   )
 }
+
 

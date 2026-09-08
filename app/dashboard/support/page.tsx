@@ -53,10 +53,10 @@ export default async function SupportPage() {
                       <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${statusColors[ticket.status]}`}>
                         {ticket.status}
                       </span>
-                      <span className="text-xs text-gray-500 uppercase tracking-wider">{ticket.category}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{ticket.category}</span>
                     </div>
                     <h3 className="font-semibold text-gray-900 text-lg">{ticket.subject}</h3>
-                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </p>
@@ -90,4 +90,5 @@ export default async function SupportPage() {
     </div>
   )
 }
+
 

@@ -29,7 +29,7 @@ export default async function TicketDetailsPage({ params }: { params: { id: stri
       <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between">
         <Link 
           href="/dashboard/support" 
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-brand-600 transition-colors font-medium"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-brand-600 transition-colors font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Tickets
@@ -45,3 +45,4 @@ export default async function TicketDetailsPage({ params }: { params: { id: stri
     </div>
   )
 }
+

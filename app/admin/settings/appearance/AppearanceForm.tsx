@@ -268,7 +268,7 @@ function ThemeSection({ label, data, onChange }: {
         {/* COSMIC TAB */}
         {tab === 'cosmic' && (
           <div className="space-y-4">
-            <p className="text-xs text-gray-500">All cosmic themes use an animated star-field with a unique nebula color overlay. They automatically enable dark mode.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">All cosmic themes use an animated star-field with a unique nebula color overlay. They automatically enable dark mode.</p>
             <div className="grid grid-cols-2 gap-3">
               {COSMIC_PRESETS.map(preset => (
                 <CosmicCard key={preset.id} preset={preset}
@@ -282,7 +282,7 @@ function ThemeSection({ label, data, onChange }: {
         {/* CUSTOM TAB */}
         {tab === 'custom' && (
           <div className="space-y-4">
-            <p className="text-xs text-gray-500">Pick any colors. The sidebar and buttons will use these colors.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Pick any colors. The sidebar and buttons will use these colors.</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Primary Color</label>
@@ -326,7 +326,7 @@ function ThemeSection({ label, data, onChange }: {
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <span className="text-xs text-gray-500">Preview:</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Preview:</span>
               <span style={{ background: data.primary_color }} className="px-3 py-1 rounded-full text-white text-xs font-medium">Primary</span>
               <span style={{ background: data.accent_color }} className="px-3 py-1 rounded-full text-white text-xs font-medium">Accent</span>
             </div>
@@ -419,4 +419,5 @@ export function AppearanceForm({
     </div>
   )
 }
+
 

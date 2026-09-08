@@ -33,7 +33,7 @@ export default async function QuizResultsPage() {
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 break-words">{attempt.profile?.full_name}</td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 break-words">{attempt.quiz?.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{attempt.score}%</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{new Date(attempt.submitted_at).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{new Date(attempt.submitted_at).toLocaleString()}</td>
                   <td className="px-6 py-4 text-sm font-medium"><QuizResultActions attemptId={attempt.id} /></td>
                 </tr>
               ))}
@@ -62,7 +62,7 @@ export default async function QuizResultsPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-semibold text-gray-400 uppercase">Submitted</p>
-                  <p className="text-xs text-gray-500">{new Date(attempt.submitted_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(attempt.submitted_at).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
@@ -100,7 +100,7 @@ export default async function QuizResultsPage() {
                       {attempt.approval_status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{new Date(attempt.submitted_at).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{new Date(attempt.submitted_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -131,7 +131,7 @@ export default async function QuizResultsPage() {
                 </span>
                 <div className="text-right">
                   <p className="text-xs font-semibold text-gray-400 uppercase">Submitted</p>
-                  <p className="text-xs text-gray-500">{new Date(attempt.submitted_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(attempt.submitted_at).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
@@ -141,3 +141,4 @@ export default async function QuizResultsPage() {
     </div>
   )
 }
+

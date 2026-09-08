@@ -35,14 +35,14 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-6 flex flex-col h-[calc(100vh-4rem)]">
       <div>
-        <Link href="/dashboard/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-4 transition-colors">
+        <Link href="/dashboard/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 mb-4 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Meetings
         </Link>
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{meeting.title}</h1>
-            <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-2">
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 {new Date(meeting.scheduled_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
@@ -70,10 +70,11 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex-1 overflow-hidden relative min-h-[500px]">
         <JitsiEmbed url={meeting.jitsi_url} />
       </div>
-      <p className="text-center text-sm text-gray-500 pb-8">
+      <p className="text-center text-sm text-gray-500 dark:text-gray-400 pb-8">
         If the embed doesn't load or your browser blocks permissions, <a href={meeting.jitsi_url} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline">open in a new tab</a>.
       </p>
     </div>
   )
 }
+
 

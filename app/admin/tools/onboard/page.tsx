@@ -12,7 +12,7 @@ export default function ToolOnboardPage() {
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">🌳 New Tool Onboarding Wizard</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
           Describe a tool and AI will generate a complete training package — course, FAQs, objections, and scripts — all linked together.
         </p>
       </div>
@@ -21,3 +21,4 @@ export default function ToolOnboardPage() {
     </div>
   )
 }
+

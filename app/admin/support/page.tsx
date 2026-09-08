@@ -89,7 +89,7 @@ export default async function AdminSupportPage({
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">
                       {ticket.category}
                     </span>
                   </td>
@@ -99,7 +99,7 @@ export default async function AdminSupportPage({
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5 whitespace-nowrap">
                       <Clock className="w-4 h-4" />
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </span>
@@ -133,4 +133,5 @@ export default async function AdminSupportPage({
     </div>
   )
 }
+
 

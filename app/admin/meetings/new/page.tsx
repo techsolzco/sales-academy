@@ -21,7 +21,7 @@ export default async function NewMeetingPage() {
   return (
     <div className="px-4 py-5 md:p-8 max-w-3xl mx-auto">
       <div className="mb-8">
-        <Link href="/admin/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-4 transition-colors">
+        <Link href="/admin/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 mb-4 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Meetings
         </Link>
@@ -33,4 +33,5 @@ export default async function NewMeetingPage() {
     </div>
   )
 }
+
 

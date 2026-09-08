@@ -25,11 +25,12 @@ export default async function ResellerRequestsPage() {
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reseller Applications</h1>
-        <p className="text-sm text-gray-500 mt-1">Review and manage partner applications from salesmen.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Review and manage partner applications from salesmen.</p>
       </div>
       
       <ResellerApplicationManager initialApplications={applications} />
     </div>
   )
 }
+
 

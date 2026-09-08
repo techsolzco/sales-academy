@@ -25,9 +25,10 @@ export default async function GenerateTrainingPage({ params }: { params: { id: s
       ]} />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Bulk Generate: {tool.name}</h1>
-        <p className="text-sm text-gray-400 mt-1">Generate a complete training package (FAQs, objections, scripts) for this tool using AI.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Generate a complete training package (FAQs, objections, scripts) for this tool using AI.</p>
       </div>
       <BulkGeneratePanel toolId={tool.id} toolName={tool.name} toolDescription={tool.description || ''} />
     </div>
   )
 }
+

@@ -18,7 +18,7 @@ export default async function AiHelpPage() {
       <div className="flex flex-col h-full items-center justify-center p-6 text-center">
         <BotOff className="w-12 h-12 text-gray-300 mb-4" />
         <h2 className="text-xl font-semibold text-gray-700 mb-2">AI Features Disabled</h2>
-        <p className="text-sm text-gray-500 max-w-sm">
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
           AI assistance is currently disabled by the administrator. Please reach out to your manager for help with customer objections.
         </p>
       </div>
@@ -42,3 +42,4 @@ export default async function AiHelpPage() {
     </div>
   )
 }
+

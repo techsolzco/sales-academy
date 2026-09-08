@@ -50,7 +50,7 @@ export default async function ResellerDetailsPage(
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-6">
-      <Link href="/admin/resellers" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition mb-2">
+      <Link href="/admin/resellers" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 transition mb-2">
         <ArrowLeft className="w-4 h-4" /> Back to Resellers
       </Link>
       
@@ -61,7 +61,7 @@ export default async function ResellerDetailsPage(
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.full_name}</h1>
-            <p className="text-sm text-gray-500">{profile.email}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{profile.email}</p>
           </div>
         </div>
         
@@ -97,4 +97,5 @@ export default async function ResellerDetailsPage(
     </div>
   )
 }
+
 

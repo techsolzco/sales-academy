@@ -21,7 +21,7 @@ export default async function AdminToolsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Sales & AI Tools Library</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
             Curated directory of AI generation tools, video software, productivity apps, and sales enablement utilities.
           </p>
         </div>
@@ -37,4 +37,5 @@ export default async function AdminToolsPage() {
     </div>
   )
 }
+
 

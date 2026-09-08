@@ -15,7 +15,7 @@ export default async function AiTrainingPage() {
       ]} />
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Training Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Configure the AI persona, locked facts, and tone. All AI features (AI Assist, Quick Create, Ask AI) use these settings in real-time.
         </p>
       </div>
@@ -23,4 +23,5 @@ export default async function AiTrainingPage() {
     </div>
   )
 }
+
 

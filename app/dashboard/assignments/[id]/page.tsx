@@ -71,7 +71,7 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-3xl mx-auto">
-      <Link href="/dashboard/assignments" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 mb-6 font-medium transition-colors">
+      <Link href="/dashboard/assignments" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-6 font-medium transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to Assignments
       </Link>
 
@@ -148,7 +148,7 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
               <Trophy className={`w-5 h-5 ${quizAttempt?.passed ? 'text-green-600' : quizAttempt ? 'text-red-500' : 'text-purple-600'}`} />
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{assignment.quiz.title}</p>
-                <p className="text-xs text-gray-500">Required quiz · Pass score: {assignment.quiz.pass_score}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Required quiz · Pass score: {assignment.quiz.pass_score}%</p>
               </div>
             </div>
             {quizAttempt ? (
@@ -228,3 +228,4 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
     </div>
   )
 }
+

@@ -97,7 +97,7 @@ export default async function ToolTreePage({
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           🌳 {tool.name} — Content Breakdown
         </h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
           Click any card to view and manage specific content for this tool.
         </p>
 
@@ -136,4 +136,5 @@ export default async function ToolTreePage({
     </div>
   )
 }
+
 
