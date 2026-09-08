@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SubmissionReviewer } from '@/components/admin/SubmissionReviewer'
+import { AssignmentContentPicker } from '@/components/admin/AssignmentContentPicker'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Trophy, ClipboardList } from 'lucide-react'
 import AssignmentPublish from './AssignmentPublish'
@@ -132,6 +133,18 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
             </div>
           </div>
         )}
+      </div>
+
+      {/* Study Material Picker */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 mb-6">
+        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">📚 Study Material</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-5">
+          Select which FAQs, Scripts, and Objections students should study before submitting this assignment.
+        </p>
+        <AssignmentContentPicker
+          assignmentId={params.id}
+          initialItems={contentItems || []}
+        />
       </div>
 
       <AssignmentPublish assignmentId={params.id} users={activeUsers || []} />

@@ -2,48 +2,49 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { saveCourseContentItems } from '@/lib/actions/courses'
-import type { CourseContentItem } from '@/lib/actions/courses'
+import { saveAssignmentContentItems } from '@/lib/actions/assignments'
 import { ChevronDown, ChevronUp, Check, Loader2, Save } from 'lucide-react'
 
-interface Props {
-  courseId: string
-  toolId?: string | null
-  initialItems: CourseContentItem[]
+interface ContentItem {
+  content_type: 'faq' | 'script' | 'objection'
+  content_id: string
+  content_title: string
 }
 
 interface ContentLibrary {
   faqs: { id: string; question: string }[]
   scripts: { id: string; title: string }[]
   objections: { id: string; objection_text: string }[]
-  quizzes: { id: string; title: string }[]
 }
 
-export function CourseContentPicker({ courseId, initialItems }: Props) {
-  const [selectedItems, setSelectedItems] = useState<CourseContentItem[]>(initialItems)
+interface Props {
+  assignmentId: string
+  initialItems: ContentItem[]
+}
+
+export function AssignmentContentPicker({ assignmentId, initialItems }: Props) {
+  const [selectedItems, setSelectedItems] = useState<ContentItem[]>(initialItems)
   const [library, setLibrary] = useState<ContentLibrary | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    faq: true, script: false, objection: false, quiz: false,
+    faq: true, script: false, objection: false,
   })
 
   const loadContent = useCallback(async () => {
     setLoading(true)
     const supabase = createClient()
-    const [faqsRes, scriptsRes, objectionsRes, quizzesRes] = await Promise.all([
+    const [faqsRes, scriptsRes, objectionsRes] = await Promise.all([
       supabase.from('faqs').select('id, question').is('deleted_at', null).eq('status', 'published').order('created_at'),
       supabase.from('sales_scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
       supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('status', 'published').order('created_at'),
-      supabase.from('quizzes').select('id, title').is('deleted_at', null).order('created_at'),
     ])
     setLibrary({
       faqs: faqsRes.data || [],
       scripts: scriptsRes.data || [],
       objections: objectionsRes.data || [],
-      quizzes: quizzesRes.data || [],
     })
     setLoading(false)
   }, [])
@@ -53,7 +54,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
   const isSelected = (type: string, id: string) =>
     selectedItems.some(i => i.content_type === type && i.content_id === id)
 
-  const toggleItem = (type: CourseContentItem['content_type'], id: string, title: string) => {
+  const toggleItem = (type: ContentItem['content_type'], id: string, title: string) => {
     setSelectedItems(prev => {
       const exists = prev.find(i => i.content_type === type && i.content_id === id)
       if (exists) return prev.filter(i => !(i.content_type === type && i.content_id === id))
@@ -61,7 +62,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
     })
   }
 
-  const toggleAll = (type: CourseContentItem['content_type'], items: { id: string; label: string }[]) => {
+  const toggleAll = (type: ContentItem['content_type'], items: { id: string; label: string }[]) => {
     const allSelected = items.every(i => isSelected(type, i.id))
     if (allSelected) {
       setSelectedItems(prev => prev.filter(i => i.content_type !== type))
@@ -76,7 +77,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
   const handleSave = async () => {
     setSaving(true)
     setError(null)
-    const res = await saveCourseContentItems(courseId, selectedItems)
+    const res = await saveAssignmentContentItems(assignmentId, selectedItems)
     setSaving(false)
     if (res.error) { setError(res.error); return }
     setSaved(true)
@@ -89,7 +90,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
     emoji,
     items,
   }: {
-    type: CourseContentItem['content_type']
+    type: ContentItem['content_type']
     label: string
     emoji: string
     items: { id: string; label: string }[]
@@ -150,7 +151,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-400 py-8">
+      <div className="flex items-center gap-2 text-sm text-gray-400 py-6">
         <Loader2 className="w-4 h-4 animate-spin" />
         Loading content library...
       </div>
@@ -158,14 +159,14 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
   }
 
   const totalAvailable = library
-    ? library.faqs.length + library.scripts.length + library.objections.length + library.quizzes.length
+    ? library.faqs.length + library.scripts.length + library.objections.length
     : 0
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Tick the FAQs, Scripts, Objections, and Quizzes you want students to study in this course.
+          Select FAQs, Scripts, and Objections that this assignment requires students to study.
         </p>
         <span className="text-xs text-gray-400 shrink-0 ml-4">
           {selectedItems.length} of {totalAvailable} selected
@@ -183,7 +184,6 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
               <Section type="faq" label="FAQs" emoji="?" items={library.faqs.map(f => ({ id: f.id, label: f.question }))} />
               <Section type="script" label="Scripts" emoji="??" items={library.scripts.map(s => ({ id: s.id, label: s.title }))} />
               <Section type="objection" label="Objections" emoji="???" items={library.objections.map(o => ({ id: o.id, label: o.objection_text }))} />
-              <Section type="quiz" label="Quizzes" emoji="??" items={library.quizzes.map(q => ({ id: q.id, label: q.title }))} />
             </>
           )}
         </div>
@@ -197,7 +197,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
 
       <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
         {saved && (
-          <span className="text-sm text-green-600 dark:text-green-400 font-medium">? Content saved!</span>
+          <span className="text-sm text-green-600 dark:text-green-400 font-medium">? Saved!</span>
         )}
         <div className="ml-auto">
           <button
@@ -206,7 +206,7 @@ export function CourseContentPicker({ courseId, initialItems }: Props) {
             className="flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 disabled:opacity-50 transition text-sm"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saving ? 'Saving...' : 'Save Content Selection'}
+            {saving ? 'Saving...' : 'Save Study Material'}
           </button>
         </div>
       </div>

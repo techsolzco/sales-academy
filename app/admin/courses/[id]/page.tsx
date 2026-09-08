@@ -50,6 +50,7 @@ export default async function CourseDetailPage({
   if (!course) notFound()
 
   const showContentTabs = course.tool_id !== null
+  // Content picker always available regardless of tool linkage
 
   let tabContent = null
 
@@ -229,7 +230,6 @@ export default async function CourseDetailPage({
         </p>
         <CourseContentPicker
           courseId={course.id}
-          toolId={course.tool_id ?? null}
           initialItems={initialItems}
         />
       </div>
@@ -293,7 +293,7 @@ export default async function CourseDetailPage({
         <div className="flex gap-6 overflow-x-auto">
           {[
             { key: 'lessons', label: 'Lessons' },
-            { key: 'content', label: 'Content' },
+            { key: 'content', label: '📚 Content' },
             ...(showContentTabs ? [
               { key: 'faqs', label: 'FAQs' },
               { key: 'scripts', label: 'Scripts' },

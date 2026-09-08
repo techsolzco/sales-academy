@@ -109,6 +109,15 @@ export default async function TrainingCoursePage({
   const pct = totalItems > 0 ? Math.round((completedCountTotal / totalItems) * 100) : 0
   const showContentTabs = course.tool_id !== null
 
+  // Fetch course content items (admin-curated study material, no tool required)
+  const { data: courseContentItems } = await supabase
+    .from('course_content_items')
+    .select('content_type, content_id, content_title')
+    .eq('course_id', params.courseId)
+    .order('display_order')
+
+  const hasCuratedContent = (courseContentItems || []).length > 0
+
   let assignments = null
   let submissions = null
   if (course.tool_id && tab === 'assignments') {
@@ -211,6 +220,69 @@ export default async function TrainingCoursePage({
               ))}
             </div>
           </div>
+        )}
+      </div>
+    )
+  } else if (tab === 'study') {
+    // Curated study material from course_content_items
+    const grouped = {
+      faq: (courseContentItems || []).filter(i => i.content_type === 'faq'),
+      script: (courseContentItems || []).filter(i => i.content_type === 'script'),
+      objection: (courseContentItems || []).filter(i => i.content_type === 'objection'),
+      quiz: (courseContentItems || []).filter(i => i.content_type === 'quiz'),
+    }
+    const typeEmoji: Record<string, string> = { faq: '❓', script: '💬', objection: '🛡️', quiz: '📝' }
+    const typeLabel: Record<string, string> = { faq: 'FAQs', script: 'Scripts', objection: 'Objections', quiz: 'Quizzes' }
+    const typeHref: Record<string, string> = {
+      faq: '/dashboard/faqs',
+      script: '/dashboard/scripts',
+      objection: '/dashboard/objections',
+      quiz: '/dashboard/quiz',
+    }
+    tabContent = (
+      <div className="mt-6 space-y-4">
+        {(courseContentItems || []).length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+            <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+            <p className="text-sm font-medium text-gray-500">No study material added yet</p>
+            <p className="text-xs text-gray-400 mt-1">The instructor hasn&apos;t added study material to this course yet.</p>
+          </div>
+        ) : (
+          (['faq', 'script', 'objection', 'quiz'] as const).map(type => {
+            const items = grouped[type]
+            if (items.length === 0) return null
+            return (
+              <div key={type} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-600 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span>{typeEmoji[type]}</span>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{typeLabel[type]}</span>
+                    <span className="text-xs text-gray-400">({items.length})</span>
+                  </div>
+                  <Link href={typeHref[type]} className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">
+                    View all →
+                  </Link>
+                </div>
+                <div className="divide-y divide-gray-50 dark:divide-gray-700">
+                  {items.map(item => (
+                    <Link
+                      key={item.content_id}
+                      href={type === 'quiz' ? `/dashboard/quiz/${item.content_id}` : `${typeHref[type]}`}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                    >
+                      <Circle className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors leading-snug">
+                        {item.content_title}
+                      </span>
+                      {type === 'quiz' && (
+                        <span className="ml-auto text-xs font-medium text-brand-600 dark:text-brand-400 shrink-0">Start →</span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          })
         )}
       </div>
     )
@@ -331,6 +403,16 @@ export default async function TrainingCoursePage({
           >
             Lessons
           </Link>
+          {hasCuratedContent && (
+            <Link
+              href={`/dashboard/training/${course.id}?tab=study&lang=${lang}`}
+              className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                tab === 'study' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              📚 Study Material
+            </Link>
+          )}
           {showContentTabs && (
             <>
               <Link
