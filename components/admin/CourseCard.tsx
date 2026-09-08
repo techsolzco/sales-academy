@@ -37,7 +37,7 @@ export function CourseCard({
   const gradient = gradients[gradientIndex]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
       {/* Thumbnail */}
       <div className={`h-36 bg-gradient-to-br ${gradient} relative overflow-hidden`}>
         {thumbnail_url ? (
@@ -75,20 +75,20 @@ export function CourseCard({
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 flex-1">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-snug line-clamp-2 flex-1">
             {title}
           </h3>
         </div>
 
         {category && (
-          <p className="text-xs text-gray-400 mb-2">{category}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{category}</p>
         )}
 
         {description && (
-          <p className="text-xs text-gray-500 line-clamp-2 mb-3">{description}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{description}</p>
         )}
 
-        <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
+        <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 mb-3">
           <span className="flex items-center gap-1">
             <BookOpen className="w-3 h-3" /> {moduleCount} module{moduleCount !== 1 ? 's' : ''}
           </span>
@@ -104,7 +104,7 @@ export function CourseCard({
 
         <Link
           href={`/admin/courses/${id}`}
-          className="block w-full text-center py-2 rounded-lg bg-brand-50 text-brand-700 text-xs font-medium hover:bg-brand-100 transition"
+          className="block w-full text-center py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium hover:bg-brand-100 dark:hover:bg-brand-900/50 transition"
         >
           Open Course →
         </Link>

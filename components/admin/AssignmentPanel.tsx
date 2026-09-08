@@ -122,13 +122,13 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
         ) : (
           <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
             {localAssigned.map(user => (
-              <div key={user.user_id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100">
-                <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+              <div key={user.user_id} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                <div className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 flex items-center justify-center font-semibold text-sm flex-shrink-0">
                   {user.full_name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{user.full_name}</p>
-                  <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.full_name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user.email}</p>
                   {user.total_lessons > 0 && (
                     <div className="mt-1">
                       <ProgressBar completed={user.completed_lessons} total={user.total_lessons} />
@@ -138,7 +138,7 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
                 <button
                   onClick={() => handleRemove(user.user_id)}
                   disabled={isPending}
-                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition flex-shrink-0"
+                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex-shrink-0"
                   title="Remove assignment"
                 >
                   <UserMinus className="w-4 h-4" />
@@ -194,19 +194,19 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
         ) : (
           <div className="space-y-1.5 max-h-[460px] overflow-y-auto pr-1">
             {available.map(s => (
-              <label key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 cursor-pointer hover:border-brand-200 transition">
+              <label key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-brand-200 dark:hover:border-brand-600 transition">
                 <input
                   type="checkbox"
                   checked={selected.has(s.id)}
                   onChange={() => toggleSelect(s.id)}
                   className="w-4 h-4 rounded accent-brand-600"
                 />
-                <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center font-semibold text-sm flex-shrink-0">
                   {s.full_name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{s.full_name}</p>
-                  <p className="text-xs text-gray-400 truncate">{s.email}{s.department ? ` · ${s.department}` : ''}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{s.full_name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{s.email}{s.department ? ` · ${s.department}` : ''}</p>
                 </div>
               </label>
             ))}

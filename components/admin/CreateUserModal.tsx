@@ -48,13 +48,13 @@ export function CreateUserModal() {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-xl overflow-hidden max-h-[92vh] overflow-y-auto">
-            <div className="p-5 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-xl overflow-hidden max-h-[92vh] overflow-y-auto">
+            <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Add New User</h2>
-                <p className="text-sm text-gray-500 mt-1">Create an admin or salesman account manually</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Add New User</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Create an admin or salesman account manually</p>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:bg-gray-100 p-2 rounded-lg">
+              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
