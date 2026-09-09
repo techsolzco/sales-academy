@@ -228,9 +228,9 @@ export default async function CourseDetailPage({
       { data: allQuizzes },
     ] = await Promise.all([
       fetchCourseContentItems(course.id),
-      supabase.from('faqs').select('id, question').is('deleted_at', null).eq('status', 'published').order('created_at'),
-      supabase.from('scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
-      supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('status', 'published').order('created_at'),
+      supabase.from('faqs').select('id, question, status').is('deleted_at', null).order('status').order('created_at'),
+      supabase.from('scripts').select('id, title, status').is('deleted_at', null).order('status').order('created_at'),
+      supabase.from('objections').select('id, objection_text, status').is('deleted_at', null).order('status').order('created_at'),
       supabase.from('quizzes').select('id, title').is('deleted_at', null).order('created_at'),
     ])
     tabContent = (

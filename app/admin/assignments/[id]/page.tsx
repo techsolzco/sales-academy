@@ -40,9 +40,9 @@ export default async function AssignmentDetailPage({ params }: { params: { id: s
     { data: allObjections },
   ] = await Promise.all([
     supabase.from('assignment_content_items').select('content_type, content_id, content_title').eq('assignment_id', params.id).order('content_type'),
-    supabase.from('faqs').select('id, question').is('deleted_at', null).eq('status', 'published').order('created_at'),
-    supabase.from('scripts').select('id, title').is('deleted_at', null).eq('status', 'published').order('created_at'),
-    supabase.from('objections').select('id, objection_text').is('deleted_at', null).eq('status', 'published').order('created_at'),
+    supabase.from('faqs').select('id, question').is('deleted_at', null).order('created_at'),
+    supabase.from('scripts').select('id, title').is('deleted_at', null).order('created_at'),
+    supabase.from('objections').select('id, objection_text').is('deleted_at', null).order('created_at'),
   ])
 
   const groupedContent = {
