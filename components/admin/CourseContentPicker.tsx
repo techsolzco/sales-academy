@@ -135,7 +135,7 @@ export function CourseContentPicker({ courseId, initialItems, faqs, scripts, obj
     return (
       <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-xl p-8 text-center space-y-1">
         <p className="font-semibold">No content found</p>
-        <p className="text-xs">Create some FAQs, Scripts, or Objections first — then come back here to link them to this course.</p>
+        <p className="text-xs">Create some FAQs, Scripts, or Objections first ï¿½ then come back here to link them to this course.</p>
       </div>
     )
   }

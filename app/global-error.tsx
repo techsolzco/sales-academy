@@ -21,7 +21,7 @@ export default function GlobalError({
             Something went wrong
           </h2>
           <p style={{ color: '#6b7280', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-            Please refresh the page — this usually resolves on its own.
+            Please refresh the page ï¿½ this usually resolves on its own.
           </p>
           <button
             onClick={reset}
