@@ -89,6 +89,11 @@ export default async function AdminLayout({
               <p className="text-xs text-brand-400 truncate">{profile?.email}</p>
             </div>
             <SignOutButton />
+            <div className="px-3 pt-1 pb-0.5">
+              <p className="text-[10px] text-brand-600/60 font-mono">
+                build: b355876
+              </p>
+            </div>
           </div>
         }
       />
