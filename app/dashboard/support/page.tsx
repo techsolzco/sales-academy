@@ -9,10 +9,10 @@ export const metadata = {
 }
 
 const statusColors = {
-  open: 'bg-red-100 text-red-700',
-  'in-progress': 'bg-amber-100 text-amber-700',
-  resolved: 'bg-green-100 text-green-700',
-  closed: 'bg-gray-100 text-gray-700'
+  open: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+  'in-progress': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+  resolved: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+  closed: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
 }
 
 export default async function SupportPage() {
@@ -55,7 +55,7 @@ export default async function SupportPage() {
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{ticket.category}</span>
                     </div>
-                    <h3 className="font-semibold text-gray-900 text-lg">{ticket.subject}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{ticket.subject}</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />
                       {new Date(ticket.created_at).toLocaleDateString()}
@@ -73,7 +73,7 @@ export default async function SupportPage() {
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
               <Search className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">No tickets yet</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">No tickets yet</h3>
             <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
               You haven't submitted any support tickets. If you need help, feel free to open a new one.
             </p>

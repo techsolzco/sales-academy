@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AvatarUpload } from '@/components/profile/AvatarUpload'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
@@ -64,7 +64,7 @@ export default async function ProfilePage() {
               {profile?.is_reseller ? (
                 <div className="p-5 bg-gradient-to-r from-brand-50 to-white rounded-xl border border-brand-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">✅ Sales Partner</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">✅ Sales Partner</h3>
                     <p className="text-sm text-gray-600 mt-1">You have access to the partner program.</p>
                   </div>
                   {profile.sales_portal_url ? (

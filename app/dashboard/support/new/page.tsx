@@ -1,4 +1,4 @@
-import { TicketForm } from '@/components/tickets/TicketForm'
+﻿import { TicketForm } from '@/components/tickets/TicketForm'
 import { SITE_NAME } from '@/lib/config/site'
 import Link from 'next/link'
 import { ChevronRight, Home } from 'lucide-react'
@@ -20,7 +20,7 @@ export default function NewTicketPage() {
           Support
         </Link>
         <ChevronRight className="w-4 h-4" />
-        <span className="text-gray-900 font-medium">New Ticket</span>
+        <span className="text-gray-900 dark:text-white font-medium">New Ticket</span>
       </nav>
 
       <TicketForm />

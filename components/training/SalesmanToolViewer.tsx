@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Search, ExternalLink, Copy, Check, Play, Wrench, X } from 'lucide-react'
@@ -96,7 +96,7 @@ export function SalesmanToolViewer({ tools }: { tools: Tool[] }) {
                     <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-brand-50 text-brand-700">
                       {tool.category}
                     </span>
-                    <h3 className="font-bold text-gray-900 text-base leading-snug truncate mt-1">{tool.name}</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-base leading-snug truncate mt-1">{tool.name}</h3>
                   </div>
                 </div>
 
@@ -127,7 +127,7 @@ export function SalesmanToolViewer({ tools }: { tools: Tool[] }) {
               {/* Action Buttons */}
               <div className="pt-4 border-t border-gray-100 space-y-2">
                 <div className="flex items-center justify-between gap-2 text-xs mb-2">
-                  <span className="text-gray-500 font-medium">Pricing: <strong className="text-gray-900">{tool.pricing || 'Free'}</strong></span>
+                  <span className="text-gray-500 dark:text-gray-400 font-medium">Pricing: <strong className="text-gray-900 dark:text-white">{tool.pricing || 'Free'}</strong></span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">

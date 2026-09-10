@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, useEffect } from 'react'
 import { Copy, Check, FileText, Eye, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
@@ -196,14 +196,14 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
         <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
           <button
             onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'}`}
             title="List View"
           >
             <LayoutList className="w-4 h-4" />
           </button>
           <button
             onClick={() => setViewMode('grouped')}
-            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grouped' ? 'bg-white dark:bg-gray-700 shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'}`}
             title="Grouped by Tool"
           >
             <FolderTree className="w-4 h-4" />
