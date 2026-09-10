@@ -1,4 +1,4 @@
-﻿/**
+/**
  * One-time admin password reset script.
  * Run: node set-admin-password.js
  * Fill in YOUR_NEW_PASSWORD below before running.

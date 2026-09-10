@@ -52,8 +52,8 @@ export default async function QuizStudentPage({ params }: { params: { id: string
           <div className={`flex items-center gap-3 p-4 rounded-xl border ${bestAttempt.passed ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'}`}>
             {bestAttempt.passed ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <XCircle className="w-5 h-5 flex-shrink-0" />}
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm">{bestAttempt.passed ? 'You already passed this quiz!' : 'Previous attempt — not passed yet'}</p>
-              <p className="text-xs opacity-80 mt-0.5">Best score: {bestAttempt.score}/{bestAttempt.max_score} ({Math.round(bestAttempt.percentage)}%) · Pass threshold: {quiz.pass_score}%</p>
+              <p className="font-semibold text-sm">{bestAttempt.passed ? 'You already passed this quiz!' : 'Previous attempt ï¿½ not passed yet'}</p>
+              <p className="text-xs opacity-80 mt-0.5">Best score: {bestAttempt.score}/{bestAttempt.max_score} ({Math.round(bestAttempt.percentage)}%) ï¿½ Pass threshold: {quiz.pass_score}%</p>
             </div>
             <span className="flex-shrink-0 flex items-center gap-1 text-xs font-medium opacity-70">
               <RotateCcw className="w-3.5 h-3.5" /> Retake below

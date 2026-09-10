@@ -1,4 +1,4 @@
-﻿import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { fetchTrashedItems } from '@/lib/actions/recycle-bin'
 import { RecycleBin } from '@/components/admin/RecycleBin'

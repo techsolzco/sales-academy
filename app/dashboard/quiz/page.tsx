@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import Link from 'next/link'
 import { Brain, CheckCircle, XCircle, Clock } from 'lucide-react'

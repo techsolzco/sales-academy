@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 
 const TABLES = ['courses', 'modules', 'lessons', 'faqs', 'scripts', 'objections', 'voice_notes', 'assignments', 'quizzes', 'tools'];

@@ -21,7 +21,7 @@ export default function DashboardError({
       </div>
       <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Something went wrong</h2>
       <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-sm">
-        This page encountered an error. Try refreshing — it usually resolves on its own.
+        This page encountered an error. Try refreshing ï¿½ it usually resolves on its own.
       </p>
       <button
         onClick={reset}

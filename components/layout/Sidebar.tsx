@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { SITE_NAME } from '@/lib/config/site'
 
 import { usePathname, useRouter } from 'next/navigation'

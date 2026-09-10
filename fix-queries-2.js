@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 
 const regex = /\.from\(['"](courses|modules|lessons|faqs|scripts|objections|voice_notes|assignments|quizzes|tools)['"]\)\s*\.select\((['"`].*?['"`])\)(?![\s\S]{0,10}\.is\(['"]deleted_at['"])/g;

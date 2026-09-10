@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 import { SITE_NAME } from '@/lib/config/site'
 
 import { createClient } from '@/lib/supabase/server'
