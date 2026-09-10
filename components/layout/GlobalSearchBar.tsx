@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -90,22 +90,22 @@ export function GlobalSearchBar() {
               No results found for &ldquo;{query}&rdquo;
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-700">
               {results.map((item) => (
                 <button
                   key={`${item.type}-${item.id}`}
                   onClick={() => handleSelect(item.url)}
                   className="w-full text-left p-3.5 hover:bg-brand-50/50 transition flex items-start gap-3 group"
                 >
-                  <div className="mt-0.5 p-1.5 rounded-lg bg-gray-50 group-hover:bg-white transition">
+                  <div className="mt-0.5 p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 group-hover:bg-white dark:group-hover:bg-gray-600 transition">
                     {typeIcons[item.type]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-semibold text-gray-900 truncate">
+                      <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">
                         {item.title}
                       </span>
-                      <span className="text-[10px] font-medium uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                      <span className="text-[10px] font-medium uppercase px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400">
                         {typeLabels[item.type]}
                       </span>
                     </div>

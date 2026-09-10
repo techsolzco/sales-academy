@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { Bell } from 'lucide-react'
@@ -78,9 +78,9 @@ export function NotificationBell({ userId }: { userId: string }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-          <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h3 className="font-semibold text-gray-900">Notifications</h3>
+        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-700/50">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
             {unreadCount > 0 && (
               <button onClick={handleMarkAllRead} className="text-xs text-brand-600 hover:text-brand-700 font-medium">
                 Mark all read
@@ -91,10 +91,10 @@ export function NotificationBell({ userId }: { userId: string }) {
             {notifications.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-400">No notifications</div>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-gray-700">
                 {notifications.map(n => (
-                  <div key={n.id} className={`p-4 hover:bg-gray-50 transition ${!n.read ? 'bg-brand-50/30' : ''}`}>
-                    <h4 className="text-sm font-medium text-gray-900">{n.title}</h4>
+                  <div key={n.id} className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition ${!n.read ? 'bg-brand-50/30' : ''}`}>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">{n.title}</h4>
                     <p className="text-xs text-gray-500 mt-1">{n.body}</p>
                     <span className="text-[10px] text-gray-400 mt-2 block">
                       {new Date(n.created_at).toLocaleDateString()}
@@ -108,8 +108,8 @@ export function NotificationBell({ userId }: { userId: string }) {
       )}
 
       {toast && (
-        <div className="fixed top-20 right-8 bg-white p-4 rounded-xl shadow-lg border border-gray-100 z-50 animate-fade-in max-w-sm">
-          <h4 className="text-sm font-semibold text-gray-900">{toast.title}</h4>
+        <div className="fixed top-20 right-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-50 animate-fade-in max-w-sm">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{toast.title}</h4>
           <p className="text-xs text-gray-500 mt-1">{toast.body}</p>
         </div>
       )}
