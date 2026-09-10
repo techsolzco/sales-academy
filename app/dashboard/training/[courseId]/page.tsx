@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { CheckCircle, Circle, Lock, ChevronLeft, Clock, BookOpen, AlertCircle } from 'lucide-react'
@@ -21,14 +21,13 @@ export default async function TrainingCoursePage({
   const supabase = await createClient()
   const { userId } = await getEffectiveUser()
 
-  // Verify assignment
+  // Fetch assignment metadata (due dates) — optional, does not block access
   const { data: assignment } = await supabase
     .from('course_assignments')
-    .select('id')
+    .select('id, due_date')
     .eq('course_id', params.courseId)
     .eq('user_id', userId)
-    .single()
-  if (!assignment) redirect('/dashboard/training')
+    .maybeSingle()
 
   const { data: course } = await supabase
     .from('courses')
