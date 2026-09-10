@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
@@ -77,9 +77,9 @@ export default async function TrainingCoursePage({
       scriptsRes,
       objectionsRes,
     ] = await Promise.all([
-      supabase.from('faqs').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('scripts').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
-      supabase.from('objections').select('*').is('deleted_at', null).eq('tool_id', course.tool_id).eq('status', 'published'),
+      supabase.from('faqs').select('*').is('deleted_at', null).eq('tool_id', course.tool_id),
+      supabase.from('scripts').select('*').is('deleted_at', null).eq('tool_id', course.tool_id),
+      supabase.from('objections').select('*').is('deleted_at', null).eq('tool_id', course.tool_id),
     ])
     
     faqs = faqsRes.data
@@ -106,7 +106,12 @@ export default async function TrainingCoursePage({
   const totalItems = totalLessons + requiredReads.length
   const completedCountTotal = completedCount + completedReviewsCount
   const pct = totalItems > 0 ? Math.round((completedCountTotal / totalItems) * 100) : 0
-  const showContentTabs = course.tool_id !== null
+  const hasToolContent = course.tool_id !== null && (
+    (faqs && faqs.length > 0) ||
+    (scripts && scripts.length > 0) ||
+    (objections && objections.length > 0)
+  )
+  const showContentTabs = hasToolContent
 
   // Fetch course content items (admin-curated study material, no tool required)
   const { data: courseContentItems } = await supabase
@@ -402,14 +407,14 @@ export default async function TrainingCoursePage({
           >
             Lessons
           </Link>
-          {hasCuratedContent && (
+          {(hasCuratedContent || true) && (
             <Link
               href={`/dashboard/training/${course.id}?tab=study&lang=${lang}`}
               className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                 tab === 'study' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              ðŸ“š Study Material
+              Study Material
             </Link>
           )}
           {showContentTabs && (
