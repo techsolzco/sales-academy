@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
@@ -21,7 +21,7 @@ export default async function TrainingCoursePage({
   const supabase = await createClient()
   const { userId } = await getEffectiveUser()
 
-  // Fetch assignment metadata (due dates) — optional, does not block access
+  // Fetch assignment metadata (due dates) â€” optional, does not block access
   const { data: assignment } = await supabase
     .from('course_assignments')
     .select('id, due_date')
@@ -140,13 +140,13 @@ export default async function TrainingCoursePage({
           const modCompleted = lessons.filter(l => completedIds.has(l.id)).length
 
           return (
-            <div key={mod.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div key={mod.id} className="bg-white rounded-xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
               {/* Module header */}
               <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-gray-400 mb-0.5">Module {modIndex + 1}</p>
-                    <h3 className="font-semibold text-gray-900 text-sm">{mod.title}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{mod.title}</h3>
                   </div>
                   <span className="text-xs text-gray-400">
                     {modCompleted}/{lessons.length}
@@ -230,7 +230,7 @@ export default async function TrainingCoursePage({
       objection: (courseContentItems || []).filter(i => i.content_type === 'objection'),
       quiz: (courseContentItems || []).filter(i => i.content_type === 'quiz'),
     }
-    const typeEmoji: Record<string, string> = { faq: '❓', script: '💬', objection: '🛡️', quiz: '📝' }
+    const typeEmoji: Record<string, string> = { faq: 'â“', script: 'ðŸ’¬', objection: 'ðŸ›¡ï¸', quiz: 'ðŸ“' }
     const typeLabel: Record<string, string> = { faq: 'FAQs', script: 'Scripts', objection: 'Objections', quiz: 'Quizzes' }
     const typeHref: Record<string, string> = {
       faq: '/dashboard/faqs',
@@ -259,7 +259,7 @@ export default async function TrainingCoursePage({
                     <span className="text-xs text-gray-400">({items.length})</span>
                   </div>
                   <Link href={typeHref[type]} className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">
-                    View all →
+                    View all â†’
                   </Link>
                 </div>
                 <div className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -274,7 +274,7 @@ export default async function TrainingCoursePage({
                         {item.content_title}
                       </span>
                       {type === 'quiz' && (
-                        <span className="ml-auto text-xs font-medium text-brand-600 dark:text-brand-400 shrink-0">Start →</span>
+                        <span className="ml-auto text-xs font-medium text-brand-600 dark:text-brand-400 shrink-0">Start â†’</span>
                       )}
                     </Link>
                   ))}
@@ -336,7 +336,7 @@ export default async function TrainingCoursePage({
               stats.map((assignment: any) => (
                 <tr key={assignment.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
-                    <Link href={`/dashboard/assignments/${assignment.id}`} className="font-medium text-gray-900 block hover:text-brand-600">
+                    <Link href={`/dashboard/assignments/${assignment.id}`} className="font-medium text-gray-900 dark:text-white block hover:text-brand-600">
                       {assignment.title}
                     </Link>
                     {assignment.due_date && (
@@ -387,7 +387,7 @@ export default async function TrainingCoursePage({
         <div className="text-xs text-gray-400 mt-2 flex flex-wrap gap-3">
           <span>{completedCount} of {totalLessons} lessons done</span>
           {requiredReads.length > 0 && (
-            <span>• {completedReviewsCount} of {requiredReads.length} required reviews done</span>
+            <span>â€¢ {completedReviewsCount} of {requiredReads.length} required reviews done</span>
           )}
         </div>
       </div>
@@ -409,7 +409,7 @@ export default async function TrainingCoursePage({
                 tab === 'study' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              📚 Study Material
+              ðŸ“š Study Material
             </Link>
           )}
           {showContentTabs && (
