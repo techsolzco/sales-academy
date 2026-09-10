@@ -166,7 +166,7 @@ export default async function DashboardLayout({
             <DarkModeToggle />
             <NotificationBell userId={displayUserId} />
             {isImpersonating ? (
-              <span className="hidden sm:inline-flex text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold uppercase tracking-wider">
+              <span className="hidden sm:inline-flex text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-semibold uppercase tracking-wider">
                 Preview Mode
               </span>
             ) : (

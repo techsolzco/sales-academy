@@ -161,7 +161,7 @@ export default async function TrainingCoursePage({
 
               {/* Lessons list */}
               {lessons.length === 0 && (
-                <p className="px-5 py-4 text-xs text-gray-300 italic">No published lessons in this module yet.</p>
+                <p className="px-5 py-4 text-xs text-gray-300 dark:text-gray-600 italic">No published lessons in this module yet.</p>
               )}
               {lessons.map((lesson, i) => {
                 const isCompleted = completedIds.has(lesson.id)
@@ -169,19 +169,19 @@ export default async function TrainingCoursePage({
                   <Link
                     key={lesson.id}
                     href={`/dashboard/training/${course.id}/lessons/${lesson.id}`}
-                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-brand-50/50 transition border-b border-gray-50 last:border-0 group"
+                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-brand-50/50 dark:hover:bg-brand-900/20 transition border-b border-gray-50 dark:border-gray-700/60 last:border-0 group"
                   >
                     {isCompleted
                       ? <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      : <Circle className="w-5 h-5 text-gray-200 group-hover:text-brand-300 flex-shrink-0 transition" />
+                      : <Circle className="w-5 h-5 text-gray-200 dark:text-gray-600 group-hover:text-brand-300 flex-shrink-0 transition" />
                     }
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                      <p className={`text-sm font-medium ${isCompleted ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-100'}`}>
                         {lesson.title}
                       </p>
-                      {lesson.subtitle && <p className="text-xs text-gray-400 truncate">{lesson.subtitle}</p>}
+                      {lesson.subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{lesson.subtitle}</p>}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-300 flex-shrink-0">
+                    <div className="flex items-center gap-2 text-xs text-gray-300 dark:text-gray-500 flex-shrink-0">
                       {!lesson.is_required && <span className="italic">optional</span>}
                       {lesson.duration_minutes && (
                         <span className="flex items-center gap-0.5">
@@ -198,18 +198,18 @@ export default async function TrainingCoursePage({
 
         {/* Required Reading */}
         {requiredReads.length > 0 && (
-          <div className="bg-white rounded-xl border border-brand-100 overflow-hidden mt-6">
-            <div className="px-5 py-4 border-b border-brand-50 bg-brand-50/30">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-brand-100 dark:border-brand-900/40 overflow-hidden mt-6">
+            <div className="px-5 py-4 border-b border-brand-50 dark:border-brand-900/30 bg-brand-50/30 dark:bg-brand-900/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-brand-500" />
-                  <h3 className="font-semibold text-brand-900 text-sm">Required Reading</h3>
+                  <AlertCircle className="w-4 h-4 text-brand-500 dark:text-brand-400" />
+                  <h3 className="font-semibold text-brand-900 dark:text-brand-200 text-sm">Required Reading</h3>
                 </div>
-                <span className="text-xs text-brand-600 font-medium">
+                <span className="text-xs text-brand-600 dark:text-brand-400 font-medium">
                   {completedReviewsCount}/{requiredReads.length}
                 </span>
               </div>
-              <p className="text-xs text-brand-600/70 mt-1">
+              <p className="text-xs text-brand-600/70 dark:text-brand-300/70 mt-1">
                 You must review these tool materials to complete the course.
               </p>
             </div>
@@ -235,7 +235,7 @@ export default async function TrainingCoursePage({
       objection: (courseContentItems || []).filter(i => i.content_type === 'objection'),
       quiz: (courseContentItems || []).filter(i => i.content_type === 'quiz'),
     }
-    const typeEmoji: Record<string, string> = { faq: 'â“', script: 'ðŸ’¬', objection: 'ðŸ›¡ï¸', quiz: 'ðŸ“' }
+    const typeEmoji: Record<string, string> = { faq: '❓', script: '💬', objection: '🛡️', quiz: '📝' }
     const typeLabel: Record<string, string> = { faq: 'FAQs', script: 'Scripts', objection: 'Objections', quiz: 'Quizzes' }
     const typeHref: Record<string, string> = {
       faq: '/dashboard/faqs',
@@ -264,7 +264,7 @@ export default async function TrainingCoursePage({
                     <span className="text-xs text-gray-400">({items.length})</span>
                   </div>
                   <Link href={typeHref[type]} className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">
-                    View all â†’
+                    View all →
                   </Link>
                 </div>
                 <div className="divide-y divide-gray-50 dark:divide-gray-700">
@@ -279,7 +279,7 @@ export default async function TrainingCoursePage({
                         {item.content_title}
                       </span>
                       {type === 'quiz' && (
-                        <span className="ml-auto text-xs font-medium text-brand-600 dark:text-brand-400 shrink-0">Start â†’</span>
+                        <span className="ml-auto text-xs font-medium text-brand-600 dark:text-brand-400 shrink-0">Start →</span>
                       )}
                     </Link>
                   ))}
@@ -351,9 +351,9 @@ export default async function TrainingCoursePage({
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    {assignment.submissionStatus === 'graded' && <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-semibold">Graded</span>}
-                    {assignment.submissionStatus === 'pending' && <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold">Submitted</span>}
-                    {assignment.submissionStatus === 'unsubmitted' && <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-semibold">Not Started</span>}
+                    {assignment.submissionStatus === 'graded' && <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-1 rounded-full text-xs font-semibold">Graded</span>}
+                    {assignment.submissionStatus === 'pending' && <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-semibold">Submitted</span>}
+                    {assignment.submissionStatus === 'unsubmitted' && <span className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-xs font-semibold">Not Started</span>}
                   </td>
                 </tr>
               ))

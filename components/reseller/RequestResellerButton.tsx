@@ -32,7 +32,7 @@ export function RequestResellerButton({
 
   if (success || currentApplication?.status === 'pending') {
     return (
-      <div className="flex items-center gap-2 p-3 bg-amber-50 text-amber-700 rounded-xl border border-amber-200 animate-pulse">
+      <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 rounded-xl border border-amber-200 dark:border-amber-800 animate-pulse">
         <Clock className="w-5 h-5" />
         <span className="text-sm font-medium">⏳ Reseller application under review</span>
       </div>
@@ -41,7 +41,7 @@ export function RequestResellerButton({
 
   if (currentApplication?.status === 'approved') {
     return (
-      <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl border border-green-200">
+      <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 rounded-xl border border-green-200 dark:border-green-800">
         <CheckCircle2 className="w-5 h-5" />
         <span className="text-sm font-medium">✅ Sales Partner</span>
       </div>
@@ -51,9 +51,9 @@ export function RequestResellerButton({
   if (currentApplication?.status === 'rejected') {
     return (
       <div className="space-y-3">
-        <div className="p-3 bg-red-50 text-red-700 rounded-xl border border-red-200 text-sm">
+        <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm">
           <p className="font-semibold mb-1">Application Rejected</p>
-          <p>{currentApplication.rejection_reason || 'Please contact support for more details.'}</p>
+          <p className="text-red-600 dark:text-red-400">{currentApplication.rejection_reason || 'Please contact support for more details.'}</p>
         </div>
         <button
           onClick={handleRequest}

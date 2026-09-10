@@ -96,7 +96,7 @@ export default async function QuizResultsPage() {
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 break-words">{attempt.quiz?.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{attempt.score}%</td>
                   <td className="px-6 py-4 text-sm">
-                    <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${attempt.approval_status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${attempt.approval_status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'}`}>
                       {attempt.approval_status}
                     </span>
                   </td>
@@ -126,7 +126,7 @@ export default async function QuizResultsPage() {
                   <p className="text-xs font-semibold text-gray-400 uppercase">Score</p>
                   <p className="text-sm font-bold">{attempt.score}%</p>
                 </div>
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${attempt.approval_status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${attempt.approval_status === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'}`}>
                   {attempt.approval_status}
                 </span>
                 <div className="text-right">

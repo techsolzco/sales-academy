@@ -99,7 +99,7 @@ export default async function QuizDetailPage({ params }: { params: { id: string 
                     <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-gray-100 text-sm">{attempt.profile?.full_name}</td>
                     <td className="px-5 py-3.5 text-sm text-gray-600 dark:text-gray-300">{attempt.score}/{attempt.max_score} ({Math.round(attempt.percentage)}%)</td>
                     <td className="px-5 py-3.5">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${attempt.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${attempt.passed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
                         {attempt.passed ? 'Passed' : 'Failed'}
                       </span>
                     </td>

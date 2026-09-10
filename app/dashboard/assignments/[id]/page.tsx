@@ -64,9 +64,9 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
   }
 
   const statusColors: Record<string, string> = {
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    pending: 'bg-amber-100 text-amber-700',
+    approved: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   }
 
   return (
@@ -145,14 +145,14 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Trophy className={`w-5 h-5 ${quizAttempt?.passed ? 'text-green-600' : quizAttempt ? 'text-red-500' : 'text-purple-600'}`} />
+              <Trophy className={`w-5 h-5 ${quizAttempt?.passed ? 'text-green-600 dark:text-green-400' : quizAttempt ? 'text-red-500 dark:text-red-400' : 'text-purple-600 dark:text-purple-400'}`} />
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{assignment.quiz.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Required quiz · Pass score: {assignment.quiz.pass_score}%</p>
               </div>
             </div>
             {quizAttempt ? (
-              <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${quizAttempt.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${quizAttempt.passed ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                 {quizAttempt.passed ? '✓ Passed' : '✗ Failed'} ({quizAttempt.percentage}%)
               </span>
             ) : (

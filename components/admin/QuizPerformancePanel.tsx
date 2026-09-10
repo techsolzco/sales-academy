@@ -37,12 +37,12 @@ interface QuizPerformancePanelProps {
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    published: 'bg-emerald-100 text-emerald-700',
-    draft: 'bg-amber-100 text-amber-700',
-    archived: 'bg-gray-100 text-gray-500',
+    published: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+    draft: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+    archived: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
   }
   return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${colors[status] ?? 'bg-gray-100 text-gray-500'}`}>
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${colors[status] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
       {status}
     </span>
   )
@@ -135,7 +135,7 @@ export function QuizPerformancePanel({ toolId, quizzes, attempts }: QuizPerforma
                         <span className="font-semibold text-sm text-gray-900 truncate">
                           {getProfile(a)?.full_name ?? getProfile(a)?.email ?? 'Unknown'}
                         </span>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${a.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${a.passed ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
                           {a.passed ? '✅ Passed' : '❌ Failed'}
                         </span>
                       </div>
@@ -174,7 +174,7 @@ export function QuizPerformancePanel({ toolId, quizzes, attempts }: QuizPerforma
                             <span className="text-xs font-normal text-gray-400 ml-1">({a.score}/{a.max_score})</span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${a.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${a.passed ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
                               {a.passed ? '✅ Passed' : '❌ Failed'}
                             </span>
                           </td>

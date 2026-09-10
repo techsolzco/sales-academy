@@ -213,14 +213,14 @@ export function AudioPlayer({
 
             <button
               onClick={handleCopyTranscript}
-              className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium transition"
+              className="flex items-center gap-1 text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium transition"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied!' : 'Copy Transcript'}
             </button>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-100 max-h-48 overflow-y-auto">
+          <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 max-h-48 overflow-y-auto">
             {renderTranscript()}
           </div>
         </div>

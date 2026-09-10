@@ -197,9 +197,9 @@ export function LessonViewer({ lessonId, courseId, blocks, isCompleted }: Lesson
       </div>
 
       {/* Mark as complete button */}
-      <div className="mt-10 pt-6 border-t border-gray-100">
+      <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-700">
         {completed ? (
-          <div className="flex items-center gap-2 text-green-600 font-medium">
+          <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-medium">
             <CheckCircle className="w-5 h-5" /> Lesson completed!
           </div>
         ) : (

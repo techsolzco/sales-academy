@@ -129,7 +129,7 @@ export function BulkGeneratePanel({ toolId, toolName, toolDescription }: { toolI
                     <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">{o.response_text}</p>
                     <div className="flex gap-2 mt-2">
                       <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{o.category}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded font-medium ${o.severity === 'high' ? 'bg-red-100 text-red-600' : o.severity === 'medium' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>{o.severity}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded font-medium ${o.severity === 'high' ? 'bg-red-100 text-red-600' : o.severity === 'medium' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'}`}>{o.severity}</span>
                     </div>
                   </div>
                 ))}

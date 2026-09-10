@@ -46,7 +46,7 @@ export function PasswordResetManager({ initialRequests }: { initialRequests: Pas
           <p className="text-emerald-800 dark:text-emerald-300 font-semibold text-sm">✓ Password reset approved!</p>
           <p className="text-emerald-700 dark:text-emerald-400 text-sm mt-1">Temporary password: <code className="font-mono bg-emerald-100 dark:bg-emerald-800 px-2 py-0.5 rounded">{approvedResult.tempPassword}</code></p>
           <p className="text-emerald-600 dark:text-emerald-500 text-xs mt-1">Share this securely with the user. They should change it immediately after logging in.</p>
-          <button onClick={() => setApprovedResult(null)} className="text-xs text-emerald-600 mt-2 hover:underline">Dismiss</button>
+          <button onClick={() => setApprovedResult(null)} className="text-xs text-emerald-600 dark:text-emerald-400 mt-2 hover:underline">Dismiss</button>
         </div>
       )}
 
@@ -100,7 +100,7 @@ export function PasswordResetManager({ initialRequests }: { initialRequests: Pas
                   <p className="font-medium text-gray-900 dark:text-white text-sm">{r.full_name || r.email}</p>
                   <p className="text-xs text-gray-400">{r.email}</p>
                 </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${r.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${r.status === 'approved' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
                   {r.status}
                 </span>
               </div>

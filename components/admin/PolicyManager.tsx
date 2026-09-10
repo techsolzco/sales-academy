@@ -114,7 +114,7 @@ export function PolicyManager({ initialPolicies }: { initialPolicies: Policy[] }
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-gray-900 dark:text-white truncate">{p.title}</h3>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.is_published ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
                     {p.is_published ? 'Published' : 'Draft'}
                   </span>
                 </div>

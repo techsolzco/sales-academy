@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { Search, ExternalLink, Copy, Check, Play, Wrench, X } from 'lucide-react'
@@ -145,9 +145,9 @@ export function SalesmanToolViewer({ tools }: { tools: Tool[] }) {
                   {tool.website_url && (
                     <button
                       onClick={() => handleCopyLink(tool)}
-                      className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-xs transition"
+                      className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-xs transition"
                     >
-                      {copiedId === tool.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedId === tool.id ? <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
                       {copiedId === tool.id ? 'Copied!' : 'Copy Link'}
                     </button>
                   )}

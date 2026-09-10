@@ -32,9 +32,9 @@ export function SubmissionReviewer({ submission, linkedQuizResult }: Props) {
   }
 
   const statusColors = {
-    pending: 'bg-amber-100 text-amber-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
+    pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+    approved: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+    rejected: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
   }
 
   return (
@@ -51,7 +51,7 @@ export function SubmissionReviewer({ submission, linkedQuizResult }: Props) {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {submission.score != null && (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-bold">
               <Star className="w-3 h-3" /> {submission.score}/100
             </span>
           )}
@@ -63,7 +63,7 @@ export function SubmissionReviewer({ submission, linkedQuizResult }: Props) {
 
       {/* Quiz result badge */}
       {linkedQuizResult && (
-        <div className={`mb-4 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${linkedQuizResult.passed ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+        <div className={`mb-4 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${linkedQuizResult.passed ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800'}`}>
           {linkedQuizResult.passed ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
           Quiz: {linkedQuizResult.percentage}% — {linkedQuizResult.passed ? 'Passed' : 'Failed'}
         </div>
@@ -123,13 +123,13 @@ export function SubmissionReviewer({ submission, linkedQuizResult }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => { setStatus('approved'); setIsReviewing(true) }}
-            className="flex items-center gap-1 px-4 py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1 px-4 py-2 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg text-sm font-medium transition-colors"
           >
             <Check className="w-4 h-4" /> Approve
           </button>
           <button
             onClick={() => { setStatus('rejected'); setIsReviewing(true) }}
-            className="flex items-center gap-1 px-4 py-2 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1 px-4 py-2 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg text-sm font-medium transition-colors"
           >
             <X className="w-4 h-4" /> Reject
           </button>

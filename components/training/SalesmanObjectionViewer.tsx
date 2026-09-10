@@ -134,7 +134,7 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                         <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                         Recommended Response Strategy
                       </div>
-                      <p className="text-sm text-emerald-950 dark:text-emerald-100 leading-relaxed">
+                      <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
                         <RichText text={displayTexts.recommended_response_translated || ''} />
                       </p>
                     </div>
@@ -144,7 +144,7 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                           <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
                           DO NOT SAY
                         </div>
-                        <p className="text-sm text-red-950 dark:text-red-100 leading-relaxed"><RichText text={displayTexts.do_not_say_translated || ''} /></p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed"><RichText text={displayTexts.do_not_say_translated || ''} /></p>
                       </div>
                     )}
                   </div>

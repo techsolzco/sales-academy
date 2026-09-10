@@ -43,10 +43,10 @@ export function AssignmentSubmitForm({ assignmentId, assignmentTitle }: Props) {
 
   if (success) {
     return (
-      <div className="bg-green-50 text-green-700 p-8 rounded-2xl border border-green-100 text-center">
-        <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-        <h3 className="text-lg font-bold mb-2">Assignment Submitted!</h3>
-        <p className="text-sm text-green-600">
+      <div className="bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 p-8 rounded-2xl border border-green-100 dark:border-green-800 text-center">
+        <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500 dark:text-green-400" />
+        <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-gray-100">Assignment Submitted!</h3>
+        <p className="text-sm text-green-600 dark:text-green-300">
           Your work has been submitted for review. You will be notified once it's graded.
         </p>
       </div>

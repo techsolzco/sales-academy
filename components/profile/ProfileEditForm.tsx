@@ -48,7 +48,7 @@ export function ProfileEditForm({ initialData }: Props) {
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5">Edit Profile</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <p className="text-sm text-red-500">{error}</p>}
-        {saved && <p className="text-sm text-emerald-600 font-medium">✓ Profile saved successfully!</p>}
+        {saved && <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">✓ Profile saved successfully!</p>}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Display Name</label>
           <input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} className={inputCls} placeholder="Your full name" />

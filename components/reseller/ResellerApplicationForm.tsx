@@ -27,10 +27,10 @@ export function ResellerApplicationForm() {
 
   if (success) {
     return (
-      <div className="bg-green-50 p-6 rounded-2xl border border-green-100 text-center">
-        <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-green-900 mb-2">Application Submitted!</h2>
-        <p className="text-green-700">We will review your pledge and get back to you soon.</p>
+      <div className="bg-green-50 dark:bg-green-950/30 p-6 rounded-2xl border border-green-100 dark:border-green-800 text-center">
+        <CheckCircle2 className="w-12 h-12 text-green-500 dark:text-green-400 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Application Submitted!</h2>
+        <p className="text-green-700 dark:text-green-300">We will review your pledge and get back to you soon.</p>
       </div>
     )
   }

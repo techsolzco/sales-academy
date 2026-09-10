@@ -16,9 +16,9 @@ interface CourseCardProps {
 }
 
 const difficultyColors: Record<Difficulty, string> = {
-  beginner:     'text-emerald-600 bg-emerald-50',
-  intermediate: 'text-blue-600 bg-blue-50',
-  advanced:     'text-purple-600 bg-purple-50',
+  beginner:     'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30',
+  intermediate: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30',
+  advanced:     'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/30',
 }
 
 const gradients = [

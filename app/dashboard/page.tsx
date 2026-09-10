@@ -52,8 +52,8 @@ export default async function SalesmanDashboardPage() {
       </div>
 
       {/* Placeholder */}
-      <div className="rounded-xl border border-dashed border-gray-200 bg-white p-12 text-center">
-        <p className="text-gray-400 text-sm">
+      <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12 text-center">
+        <p className="text-gray-400 dark:text-gray-500 text-sm">
           Your assigned training courses will appear here.
         </p>
       </div>

@@ -206,7 +206,7 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
                   )}
                   <Link
                     href={`/admin/tools/${tool.id}/tree`}
-                    className="flex items-center gap-1 text-emerald-600 font-medium hover:underline"
+                    className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium hover:underline"
                   >
                     <TreeDeciduous className="w-3 h-3" /> View Tree
                   </Link>

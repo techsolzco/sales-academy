@@ -72,7 +72,7 @@ export function AiTrainingForm({ initialSettings }: { initialSettings: AiTrainin
       {/* Form Section */}
       <div className="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm">
         {success && (
-          <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200 flex items-center">
+          <div className="p-3 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 text-sm rounded-lg border border-green-200 dark:border-green-800 flex items-center">
             ✅ Settings saved successfully!
           </div>
         )}

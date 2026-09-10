@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useMemo, useEffect } from 'react'
 import { Copy, Check, FileText, Eye, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'

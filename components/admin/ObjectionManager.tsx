@@ -81,12 +81,12 @@ const ObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, onDelete
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
               <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/50 space-y-1">
                 <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">✅ Recommended Response</p>
-                <p className="text-xs text-emerald-950 dark:text-emerald-100 leading-relaxed font-sans">{displayTexts.recommended_response_translated}</p>
+                <p className="text-xs text-gray-900 dark:text-gray-100 leading-relaxed font-sans">{displayTexts.recommended_response_translated}</p>
               </div>
               {o.do_not_say && (
                 <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50 space-y-1">
                   <p className="text-xs font-bold text-red-800 dark:text-red-300 uppercase tracking-wider">🚫 DO NOT SAY</p>
-                  <p className="text-xs text-red-950 dark:text-red-100 leading-relaxed font-sans">{o.do_not_say}</p>
+                  <p className="text-xs text-gray-900 dark:text-gray-100 leading-relaxed font-sans">{o.do_not_say}</p>
                 </div>
               )}
             </div>

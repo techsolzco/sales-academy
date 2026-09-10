@@ -1,4 +1,4 @@
-﻿import { TicketForm } from '@/components/tickets/TicketForm'
+import { TicketForm } from '@/components/tickets/TicketForm'
 import { SITE_NAME } from '@/lib/config/site'
 import Link from 'next/link'
 import { ChevronRight, Home } from 'lucide-react'

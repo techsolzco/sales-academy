@@ -9,10 +9,10 @@ export const metadata = {
 }
 
 const statusColors = {
-  open: 'bg-red-100 text-red-700',
-  'in-progress': 'bg-amber-100 text-amber-700',
-  resolved: 'bg-green-100 text-green-700',
-  closed: 'bg-gray-100 text-gray-700'
+  open: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  'in-progress': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+  resolved: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+  closed: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
 }
 
 export default async function AdminSupportPage({

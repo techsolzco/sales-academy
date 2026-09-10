@@ -42,7 +42,7 @@ export function CommissionManager({
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col items-center justify-center">
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Total Paid</span>
-          <span className="text-3xl font-bold text-green-600">${totalPaid.toFixed(2)}</span>
+          <span className="text-3xl font-bold text-green-600 dark:text-green-400">${totalPaid.toFixed(2)}</span>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col items-center justify-center">
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Total Pending</span>
@@ -114,7 +114,7 @@ export function CommissionManager({
                   {comm.status === 'pending' && (
                     <button
                       onClick={() => handleMarkPaid(comm.id)}
-                      className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition"
+                      className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition"
                       title="Mark as Paid"
                     >
                       <Check className="w-5 h-5" />

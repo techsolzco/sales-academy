@@ -109,7 +109,7 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
         </div>
 
         {feedback && (
-          <div className="mb-3 flex items-center gap-2 p-2.5 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm animate-fade-in">
+          <div className="mb-3 flex items-center gap-2 p-2.5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-sm animate-fade-in">
             <Check className="w-4 h-4 flex-shrink-0" />
             {feedback}
           </div>

@@ -151,7 +151,7 @@ export function QuizEditor({ quizId, initialData, lessons, tools = [] }: Props) 
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
             {settingsSaved && (
-              <span className="text-sm text-green-600 font-medium">✓ Settings saved</span>
+              <span className="text-sm text-green-600 dark:text-green-400 font-medium">✓ Settings saved</span>
             )}
             <div className="ml-auto">
               <button

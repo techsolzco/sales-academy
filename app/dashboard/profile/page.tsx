@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AvatarUpload } from '@/components/profile/AvatarUpload'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'

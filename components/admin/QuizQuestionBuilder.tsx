@@ -399,7 +399,7 @@ export function QuizQuestionBuilder({ quizId, initialQuestions = [], toolId, too
                       <div key={o.id} className="flex items-center gap-2">
                         <button
                           onClick={() => setCorrect(qIdx, oIdx)}
-                          className={`flex-shrink-0 transition ${o.is_correct ? 'text-green-600' : 'text-gray-300 hover:text-gray-400'}`}
+                          className={`flex-shrink-0 transition ${o.is_correct ? 'text-green-600 dark:text-green-400' : 'text-gray-300 hover:text-gray-400'}`}
                           title={o.is_correct ? 'Correct answer' : 'Mark as correct'}
                         >
                           {o.is_correct ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
