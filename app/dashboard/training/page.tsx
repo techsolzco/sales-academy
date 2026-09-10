@@ -1,25 +1,8 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
-import { BookOpen, Clock, CheckCircle, ChevronRight } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { getGreeting } from '@/lib/utils'
-
-function ProgressRing({ pct }: { pct: number }) {
-  const r = 20, c = 2 * Math.PI * r
-  const offset = c - (pct / 100) * c
-  return (
-    <svg width="52" height="52" className="flex-shrink-0 -rotate-90">
-      <circle cx="26" cy="26" r={r} fill="none" stroke="#e5e7eb" strokeWidth="4" />
-      <circle cx="26" cy="26" r={r} fill="none" stroke="#4f6ef7" strokeWidth="4"
-        strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
-      <text x="26" y="26" textAnchor="middle" dominantBaseline="central" className="rotate-90"
-        style={{ fontSize: 10, fill: '#374151', fontWeight: 700, transform: 'rotate(90deg)', transformOrigin: '26px 26px' }}>
-        {pct}%
-      </text>
-    </svg>
-  )
-}
+import { StudentCourseCard } from '@/components/training/StudentCourseCard'
 
 export default async function TrainingPage() {
   const supabase = await createClient()
@@ -120,69 +103,44 @@ export default async function TrainingPage() {
     
   const reviewedKbIds = new Set((kbReviews ?? []).map(r => r.content_id))
 
-  const assignmentByCourse = Object.fromEntries(assignments.map(a => [a.course_id, a]))
+  const assignmentByCourse = Object.fromEntries((assignments ?? []).map(a => [a.course_id, a]))
 
   return (
     <div className="px-4 py-5 md:p-8 animate-fade-in">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
-          {courses.length} course{courses.length !== 1 ? 's' : ''} assigned to you
+        <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+          {courses.length} course{courses.length !== 1 ? 's' : ''} available
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Card grid — same layout as admin courses page */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
         {courses.map(course => {
           const allLessons = lessonsByCourse[course.id] ?? []
-          const requiredKbIds = course.tool_id ? (kbItemsByTool[course.tool_id] ?? []) : []
-          
           const completedLessonsCount = allLessons.filter(id => completedSet.has(id)).length
-          const completedReviewsCount = requiredKbIds.filter(id => reviewedKbIds.has(id)).length
-          
-          const totalItems = allLessons.length + requiredKbIds.length
-          const completedTotal = completedLessonsCount + completedReviewsCount
-          const pct = totalItems > 0 ? Math.round((completedTotal / totalItems) * 100) : 0
-          const isComplete = pct === 100 && totalItems > 0
           const assignment = assignmentByCourse[course.id]
 
           return (
-            <Link
+            <StudentCourseCard
               key={course.id}
-              href={`/dashboard/training/${course.id}`}
-              className="flex items-center gap-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-brand-200 dark:hover:border-brand-700 hover:shadow-sm transition group"
-            >
-              <ProgressRing pct={pct} />
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h3 className="font-semibold text-gray-900 text-sm truncate">{course.title}</h3>
-                  {isComplete && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />}
-                </div>
-                {course.category && <p className="text-xs text-gray-400">{course.category}</p>}
-                <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-300">
-                  <span>{completedLessonsCount}/{allLessons.length} lessons</span>
-                  {requiredKbIds.length > 0 && (
-                    <span>• {completedReviewsCount}/{requiredKbIds.length} reviews</span>
-                  )}
-                  {course.estimated_duration_minutes && (
-                    <span className="flex items-center gap-0.5">
-                      <Clock className="w-3 h-3" /> {course.estimated_duration_minutes} min
-                    </span>
-                  )}
-                  {assignment?.due_date && (
-                    <span>Due {new Date(assignment.due_date).toLocaleDateString()}</span>
-                  )}
-                </div>
-              </div>
-
-              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-500 transition flex-shrink-0" />
-            </Link>
+              id={course.id}
+              title={course.title}
+              description={course.description ?? null}
+              thumbnail_url={course.thumbnail_url ?? null}
+              category={course.category ?? null}
+              difficulty={course.difficulty ?? null}
+              lessonCount={allLessons.length}
+              completedCount={completedLessonsCount}
+              durationMinutes={course.estimated_duration_minutes ?? null}
+              dueDate={assignment?.due_date ?? null}
+            />
           )
         })}
       </div>
     </div>
   )
 }
-
