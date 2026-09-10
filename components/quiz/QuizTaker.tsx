@@ -44,7 +44,7 @@ export function QuizTaker({ quiz }: Props) {
         })
       }
     } catch {
-      setSubmitError('Submission failed — please check your connection and try again.')
+      setSubmitError('Submission failed â€” please check your connection and try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -104,7 +104,7 @@ export function QuizTaker({ quiz }: Props) {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{quiz.title}</h1>
         {quiz.description && <p className="text-gray-500 dark:text-gray-400">{quiz.description}</p>}
         <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-          {quiz.questions?.length || 0} questions · Passing score: {quiz.pass_score}%
+          {quiz.questions?.length || 0} questions Â· Passing score: {quiz.pass_score}%
         </p>
       </div>
 
