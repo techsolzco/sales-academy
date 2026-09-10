@@ -25,37 +25,19 @@ export default async function TrainingPage() {
   const supabase = await createClient()
   const { userId, profile } = await getEffectiveUser()
 
-  // Get all assigned courses with their status
+  // Get assignment metadata (due dates etc.) — optional, not required to see courses
   const { data: assignments } = await supabase
     .from('course_assignments')
     .select('course_id, assigned_at, due_date')
     .eq('user_id', userId)
 
-  if (!assignments || assignments.length === 0) {
-    return (
-      <div className="px-4 py-5 md:p-8 animate-fade-in">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">Your assigned training courses will appear here.</p>
-        </div>
-        <div className="text-center py-20 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
-          <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-          No courses assigned yet. Check back soon!
-        </div>
-      </div>
-    )
-  }
-
-  const courseIds = assignments.map(a => a.course_id)
-
-  // Fetch published courses
+  // Fetch ALL published courses (visible to every logged-in student)
   const { data: courses } = await supabase
     .from('courses')
-    .select('*').is('deleted_at', null)
-    .in('id', courseIds)
+    .select('*')
+    .is('deleted_at', null)
     .eq('status', 'published')
+    .order('created_at', { ascending: true })
 
   if (!courses || courses.length === 0) {
     return (
@@ -64,13 +46,17 @@ export default async function TrainingPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
           </h1>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Your training courses will appear here once they&apos;re published.</p>
         </div>
-        <div className="text-center py-20 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
-          No published courses yet. Check back soon!
+        <div className="text-center py-20 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-gray-400 text-sm">
+          <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+          No courses published yet. Check back soon!
         </div>
       </div>
     )
   }
+
+  const courseIds = courses.map(c => c.id)
 
   // Get all lessons for these courses (for progress calc)
   const { data: modules } = await supabase
@@ -165,7 +151,7 @@ export default async function TrainingPage() {
             <Link
               key={course.id}
               href={`/dashboard/training/${course.id}`}
-              className="flex items-center gap-4 p-5 bg-white rounded-xl border border-gray-100 hover:border-brand-200 hover:shadow-sm transition group"
+              className="flex items-center gap-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-brand-200 dark:hover:border-brand-700 hover:shadow-sm transition group"
             >
               <ProgressRing pct={pct} />
 
