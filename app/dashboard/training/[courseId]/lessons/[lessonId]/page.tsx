@@ -14,15 +14,6 @@ export default async function LessonViewerPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  // Verify assignment
-  const { data: assignment } = await supabase
-    .from('course_assignments')
-    .select('id')
-    .eq('course_id', params.courseId)
-    .eq('user_id', user.id)
-    .single()
-  if (!assignment) redirect('/dashboard/training')
-
   const { data: lesson } = await supabase
     .from('lessons')
     .select('*').is('deleted_at', null)
