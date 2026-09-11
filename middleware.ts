@@ -66,6 +66,7 @@ export async function middleware(request: NextRequest) {
     if (pathname !== '/auth/pending') {
       const pendingUrl = request.nextUrl.clone()
       pendingUrl.pathname = '/auth/pending'
+      pendingUrl.searchParams.set('status', profile.status ?? 'inactive')
       return NextResponse.redirect(pendingUrl)
     }
     return supabaseResponse
