@@ -147,7 +147,7 @@ export default async function TrainingCoursePage({
           return (
             <div key={mod.id} className="bg-white rounded-xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
               {/* Module header */}
-              <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
+              <div className="px-5 py-4 border-b border-gray-50 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-gray-400 mb-0.5">Module {modIndex + 1}</p>
