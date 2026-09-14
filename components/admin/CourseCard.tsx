@@ -71,7 +71,7 @@ export function CourseCard({
         <div className="absolute top-3 left-3">
           <StatusBadge status={status} />
         </div>
-        {/* Action menu overlay */}
+        {/* Edit / Assign hover buttons */}
         <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="flex items-center gap-1">
             <Link
@@ -88,13 +88,6 @@ export function CourseCard({
             >
               <UserPlus className="w-3.5 h-3.5" />
             </Link>
-            <button
-              onClick={() => { setConfirmDelete(true); setDeleteError(null) }}
-              className="p-1.5 rounded-lg bg-white/90 hover:bg-red-50 text-red-500 transition"
-              title="Delete course"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </div>
@@ -160,12 +153,21 @@ export function CourseCard({
             </div>
           </div>
         ) : (
-          <Link
-            href={`/admin/courses/${id}`}
-            className="block w-full text-center py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium hover:bg-brand-100 dark:hover:bg-brand-900/50 transition"
-          >
-            Open Course →
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href={`/admin/courses/${id}`}
+              className="flex-1 text-center py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium hover:bg-brand-100 dark:hover:bg-brand-900/50 transition"
+            >
+              Open Course →
+            </Link>
+            <button
+              onClick={() => { setConfirmDelete(true); setDeleteError(null) }}
+              className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition border border-red-100 dark:border-red-800"
+              title="Delete course"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
       </div>
     </div>
