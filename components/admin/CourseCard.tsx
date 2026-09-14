@@ -1,6 +1,11 @@
+'use client'
+
 import Link from 'next/link'
-import { BookOpen, Users, MoreVertical, Edit, Trash2, UserPlus } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { BookOpen, Users, Edit, UserPlus, Trash2, AlertTriangle, Loader2, XCircle } from 'lucide-react'
 import { StatusBadge } from '@/components/admin/StatusBadge'
+import { deleteCourse } from '@/lib/actions/courses'
 import type { Status, Difficulty } from '@/types'
 
 interface CourseCardProps {
@@ -33,8 +38,23 @@ export function CourseCard({
   id, title, description, thumbnail_url, category, difficulty, status,
   moduleCount, assignmentCount,
 }: CourseCardProps) {
+  const router = useRouter()
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, startDeleting] = useTransition()
+
   const gradientIndex = id.charCodeAt(0) % gradients.length
   const gradient = gradients[gradientIndex]
+
+  const handleDelete = () => {
+    setDeleteError(null)
+    startDeleting(async () => {
+      const res = await deleteCourse(id)
+      if (res.error) { setDeleteError(res.error); return }
+      setConfirmDelete(false)
+      router.refresh()
+    })
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
@@ -68,6 +88,13 @@ export function CourseCard({
             >
               <UserPlus className="w-3.5 h-3.5" />
             </Link>
+            <button
+              onClick={() => { setConfirmDelete(true); setDeleteError(null) }}
+              className="p-1.5 rounded-lg bg-white/90 hover:bg-red-50 text-red-500 transition"
+              title="Delete course"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
@@ -102,13 +129,46 @@ export function CourseCard({
           )}
         </div>
 
-        <Link
-          href={`/admin/courses/${id}`}
-          className="block w-full text-center py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium hover:bg-brand-100 dark:hover:bg-brand-900/50 transition"
-        >
-          Open Course →
-        </Link>
+        {/* Inline delete confirm */}
+        {confirmDelete ? (
+          <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 space-y-2">
+            <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Delete <strong>{title}</strong>? This cannot be undone.</span>
+            </div>
+            {deleteError && (
+              <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                <XCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                {deleteError}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold disabled:opacity-60 flex items-center justify-center gap-1 transition"
+              >
+                {isDeleting && <Loader2 className="w-3 h-3 animate-spin" />}
+                Yes, delete
+              </button>
+              <button
+                onClick={() => { setConfirmDelete(false); setDeleteError(null) }}
+                className="flex-1 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Link
+            href={`/admin/courses/${id}`}
+            className="block w-full text-center py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium hover:bg-brand-100 dark:hover:bg-brand-900/50 transition"
+          >
+            Open Course →
+          </Link>
+        )}
       </div>
     </div>
   )
 }
+
