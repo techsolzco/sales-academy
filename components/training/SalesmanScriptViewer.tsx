@@ -39,7 +39,10 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
   const [isPending, setIsPending] = useState(false)
   const { language: contextLang } = useLanguage()
   const [language, setLanguage] = useState(initialLang || contextLang || 'en')
-  useEffect(() => { if (initialLang) setLanguage(initialLang) }, [initialLang])
+  // Re-sync when contextLang loads asynchronously from user preferences
+  useEffect(() => {
+    if (!initialLang) setLanguage(contextLang)
+  }, [contextLang, initialLang])
 
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 
@@ -106,13 +109,78 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
   }
 
   function renderScriptCard(script: SalesScript) {
+    const hasHinglish = !!script.content_hinglish
+    const showHinglish = language === 'hi' && hasHinglish
+    const displayContent = showHinglish ? script.content_hinglish! : script.content
+
+    // If script has stored Hinglish, render directly (no AI call needed)
+    if (hasHinglish) {
+      return (
+        <div
+          key={script.id}
+          id={`script-${script.id}`}
+          className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 sm:p-6 shadow-sm hover:border-brand-200 transition space-y-3"
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 font-bold text-blue-700 dark:text-blue-300 uppercase">
+              {script.script_type.replace(/_/g, ' ')}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
+              🌐 {script.language}
+            </span>
+            {/* Per-card language toggle */}
+            <button
+              onClick={() => setLanguage(language === 'hi' ? 'en' : 'hi')}
+              className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-sm text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+            >
+              {language === 'hi' ? '🔤 Show English' : '🌐 Show Hinglish'}
+            </button>
+            <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => handleToggleReview(script.id)}
+                disabled={isPending}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition shadow-sm ${
+                  reviewedIds.has(script.id)
+                    ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
+                    : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                {reviewedIds.has(script.id) ? (
+                  <><Check className="w-3.5 h-3.5" /> Reviewed</>
+                ) : (
+                  <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
+                )}
+              </button>
+              <button
+                onClick={() => handleCopy(script)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold text-xs transition shadow-sm"
+              >
+                {copiedId === script.id ? <Check className="w-4 h-4 text-brand-600 dark:text-brand-400" /> : <Copy className="w-4 h-4" />}
+                {copiedId === script.id ? 'Copied!' : 'Copy Script'}
+              </button>
+            </div>
+          </div>
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{script.title}</h3>
+          {script.when_to_use && (
+            <p className="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50/80 dark:bg-brand-950/40 px-3 py-1.5 rounded-lg border border-brand-100/50 dark:border-brand-800/60">
+              💡 When to send: {script.when_to_use}
+            </p>
+          )}
+          <p className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed select-all font-[450]">
+            <RichText text={displayContent} />
+          </p>
+        </div>
+      )
+    }
+
+    // Fallback: no Hinglish stored — use AI TranslateContextWrapper
     return (
       <TranslateContextWrapper
         key={script.id}
         table="scripts"
         recordId={script.id}
         fieldsToTranslate={{
-          content_translated: (language === 'hi' && script.content_hinglish ? script.content_hinglish : script.content),
+          content_translated: script.content,
           when_to_use_translated: script.when_to_use || ''
         }}
         initialTranslations={{
@@ -125,7 +193,6 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
             id={`script-${script.id}`}
             className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 sm:p-6 shadow-sm hover:border-brand-200 transition space-y-3"
           >
-            {/* Top meta row: type badge + language + toggleButton + action buttons — flex-wrap for mobile */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 font-bold text-blue-700 dark:text-blue-300 uppercase">
                 {script.script_type.replace(/_/g, ' ')}
@@ -159,14 +226,13 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
                 </button>
               </div>
             </div>
-            {/* Title — full card width */}
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">
               {script.title}
-              {language === 'hi' && !script.content_hinglish && <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>}
+              <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>
             </h3>
             {script.when_to_use && (
               <p className="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50/80 dark:bg-brand-950/40 px-3 py-1.5 rounded-lg border border-brand-100/50 dark:border-brand-800/60">
-                💡 When to send: {language === 'hi' ? '(EN) ' : ''}{displayTexts.when_to_use_translated}
+                💡 When to send: {displayTexts.when_to_use_translated}
               </p>
             )}
             <p className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed select-all font-[450]">
