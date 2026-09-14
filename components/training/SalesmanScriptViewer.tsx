@@ -162,7 +162,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
           </div>
           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{script.title}</h3>
           {script.when_to_use && (
-            <p className="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50/80 dark:bg-brand-950/40 px-3 py-1.5 rounded-lg border border-brand-100/50 dark:border-brand-800/60">
+            <p className="text-xs text-amber-800 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-700/50">
               💡 When to send: {script.when_to_use}
             </p>
           )}
@@ -231,7 +231,7 @@ export function SalesmanScriptViewer({ scripts, tools = [], initialReviewed = []
               <span className="text-xs text-gray-400 ml-2 font-normal">(EN only)</span>
             </h3>
             {script.when_to_use && (
-              <p className="text-xs text-brand-700 dark:text-brand-300 font-medium bg-brand-50/80 dark:bg-brand-950/40 px-3 py-1.5 rounded-lg border border-brand-100/50 dark:border-brand-800/60">
+              <p className="text-xs text-amber-800 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-700/50">
                 💡 When to send: {displayTexts.when_to_use_translated}
               </p>
             )}
