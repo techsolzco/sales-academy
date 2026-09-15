@@ -36,6 +36,32 @@ export async function submitEnrollmentApplication(
   // Use service client — anonymous users have no session so anon client is blocked by RLS
   const serviceClient = getServiceClient()
 
+  // Guard: check if email already exists in profiles
+  const { data: existingProfile } = await serviceClient
+    .from('profiles')
+    .select('id, role')
+    .eq('email', input.email)
+    .maybeSingle()
+
+  if (existingProfile) {
+    return { error: 'An account with this email already exists. Please use a different email or contact the admin.' }
+  }
+
+  // Also check pending/approved enrollment applications with this email
+  const { data: existingApp } = await serviceClient
+    .from('enrollment_applications')
+    .select('id, status')
+    .eq('email', input.email)
+    .in('status', ['pending', 'approved'])
+    .maybeSingle()
+
+  if (existingApp) {
+    if (existingApp.status === 'pending') {
+      return { error: 'An application with this email is already under review. Please wait for approval or contact the admin.' }
+    }
+    return { error: 'This email has already been approved. Please login or use the Forgot Password option.' }
+  }
+
   // Insert application
   const { data: app, error: appErr } = await serviceClient
     .from('enrollment_applications')
@@ -100,6 +126,22 @@ export async function approveApplication(id: string): Promise<ActionResult> {
 
   const serviceClient = getServiceClient()
 
+  // SAFETY GUARD: check if this email already has a profile — never overwrite existing accounts
+  const { data: existingProfile } = await serviceClient
+    .from('profiles')
+    .select('id, role, status')
+    .eq('email', app.email)
+    .maybeSingle()
+
+  if (existingProfile) {
+    // Mark application rejected to keep data clean
+    await serviceClient
+      .from('enrollment_applications')
+      .update({ status: 'rejected', rejection_reason: 'Email already belongs to an existing account.', updated_at: new Date().toISOString() })
+      .eq('id', id)
+    return { error: `Cannot approve: this email (${app.email}) already belongs to an existing ${existingProfile.role} account. The application has been rejected.` }
+  }
+
   // Generate a secure temp password for the new user
   const tempPassword = `SA_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 6).toUpperCase()}!`
 
@@ -114,19 +156,7 @@ export async function approveApplication(id: string): Promise<ActionResult> {
   })
 
   if (authErr) {
-    if (authErr.message.toLowerCase().includes('already') || authErr.message.toLowerCase().includes('registered')) {
-      const { data: existingUsers } = await serviceClient.auth.admin.listUsers()
-      const existingUser = existingUsers?.users.find(u => u.email === app.email)
-      if (existingUser) {
-        newUserId = existingUser.id
-        // Reset their password so they can log in
-        await serviceClient.auth.admin.updateUserById(newUserId, { password: tempPassword })
-      } else {
-        return { error: `Auth user creation failed: ${authErr.message}` }
-      }
-    } else {
-      return { error: `Auth user creation failed: ${authErr.message}` }
-    }
+    return { error: `Auth user creation failed: ${authErr.message}` }
   } else {
     newUserId = authData.user.id
   }
