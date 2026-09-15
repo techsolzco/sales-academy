@@ -33,10 +33,11 @@ export interface EnrollmentInput {
 export async function submitEnrollmentApplication(
   input: EnrollmentInput
 ): Promise<ActionResult> {
-  const supabase = await createClient()
+  // Use service client — anonymous users have no session so anon client is blocked by RLS
+  const serviceClient = getServiceClient()
 
-  // Insert application (public â€” no auth required)
-  const { data: app, error: appErr } = await supabase
+  // Insert application
+  const { data: app, error: appErr } = await serviceClient
     .from('enrollment_applications')
     .insert({
       full_name: input.full_name,
@@ -58,8 +59,7 @@ export async function submitEnrollmentApplication(
 
   if (appErr) return { error: appErr.message }
 
-  // Notify all admins using service client (bypasses RLS for insert)
-  const serviceClient = getServiceClient()
+  // Notify all admins
   const { data: admins } = await serviceClient
     .from('profiles')
     .select('id')

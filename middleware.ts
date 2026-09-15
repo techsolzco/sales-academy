@@ -56,13 +56,21 @@ export async function middleware(request: NextRequest) {
 
   // ── Fetch the user's role from the profiles table ─────────────────────
   // We do this server-side so the client cannot fake their role.
+  // Use maybeSingle() — profile may not exist yet (race condition after signup)
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, status')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (profile && profile.status !== 'active') {
+  // If profile doesn't exist yet, redirect to login to retry
+  if (!profile) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/auth/login'
+    return NextResponse.redirect(loginUrl)
+  }
+
+  if (profile.status !== 'active') {
     if (pathname !== '/auth/pending') {
       const pendingUrl = request.nextUrl.clone()
       pendingUrl.pathname = '/auth/pending'
