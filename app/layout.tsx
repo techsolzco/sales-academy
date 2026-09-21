@@ -27,19 +27,29 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
   let role: 'admin' | 'salesman' = 'salesman'
-  
-  if (user) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role === 'admin') {
-      role = 'admin'
-    }
-  }
+  let theme = null
 
-  const theme = await fetchThemeSettings(role)
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }))
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (profile?.role === 'admin') {
+        role = 'admin'
+      }
+    }
+
+    theme = await fetchThemeSettings(role)
+  } catch (error) {
+    console.error('[RootLayout] Error fetching theme or user:', error)
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>

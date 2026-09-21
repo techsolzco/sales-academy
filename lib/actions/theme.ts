@@ -5,47 +5,57 @@ import { revalidatePath } from 'next/cache'
 import { ThemeSettings } from '@/types'
 
 export async function fetchThemeSettings(portal: 'admin' | 'salesman'): Promise<ThemeSettings | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('theme_settings')
-    .select('*')
-    .eq('portal', portal)
-    .single()
+    const { data, error } = await supabase
+      .from('theme_settings')
+      .select('*')
+      .eq('portal', portal)
+      .maybeSingle()
 
-  if (error) {
-    console.error('Error fetching theme settings:', error)
+    if (error) {
+      console.error('Error fetching theme settings:', error)
+      return null
+    }
+
+    return data
+  } catch (err) {
+    console.error('Exception fetching theme settings:', err)
     return null
   }
-
-  return data
 }
 
 export async function updateThemeSettings(portal: 'admin' | 'salesman', data: Partial<ThemeSettings>) {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { error } = await supabase
-    .from('theme_settings')
-    .update({
-        primary_color: data.primary_color,
-        accent_color: data.accent_color,
-        theme_mode: data.theme_mode,
-        theme_preset: data.theme_preset ?? 'custom',
-        gradient_css: data.gradient_css ?? null,
-        sidebar_gradient_css: data.sidebar_gradient_css ?? null,
-        wallpaper_url: data.wallpaper_url ?? null,
-        wallpaper_opacity: data.wallpaper_opacity ?? 0.15,
-        card_opacity: data.card_opacity ?? 1.0,
-        updated_at: new Date().toISOString()
-    })
-    .eq('portal', portal)
+    const { error } = await supabase
+      .from('theme_settings')
+      .update({
+          primary_color: data.primary_color,
+          accent_color: data.accent_color,
+          theme_mode: data.theme_mode,
+          theme_preset: data.theme_preset ?? 'custom',
+          gradient_css: data.gradient_css ?? null,
+          sidebar_gradient_css: data.sidebar_gradient_css ?? null,
+          wallpaper_url: data.wallpaper_url ?? null,
+          wallpaper_opacity: data.wallpaper_opacity ?? 0.15,
+          card_opacity: data.card_opacity ?? 1.0,
+          updated_at: new Date().toISOString()
+      })
+      .eq('portal', portal)
 
-  if (error) {
-    console.error('Error updating theme settings:', error)
-    return { success: false, error: error.message }
+    if (error) {
+      console.error('Error updating theme settings:', error)
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/', 'layout')
+    return { success: true }
+  } catch (err: any) {
+    console.error('Exception updating theme settings:', err)
+    return { success: false, error: err?.message || 'Failed to update theme' }
   }
-
-  revalidatePath('/', 'layout')
-  return { success: true }
 }
 

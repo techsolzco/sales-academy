@@ -22,7 +22,7 @@ export async function getEffectiveUser(): Promise<EffectiveUser> {
     .from('profiles')
     .select('role, full_name, email')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   const isAdmin = realProfile?.role === 'admin'
   const isImpersonating = isAdmin && !!viewAsUserId
@@ -37,7 +37,7 @@ export async function getEffectiveUser(): Promise<EffectiveUser> {
       .from('profiles')
       .select('full_name, email, role')
       .eq('id', viewAsUserId)
-      .single()
+      .maybeSingle()
 
     return { userId: viewAsUserId, realUserId: user.id, isImpersonating: true, profile: studentProfile ?? null }
   }

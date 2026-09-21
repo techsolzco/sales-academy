@@ -60,7 +60,7 @@ export default async function DashboardLayout({
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
     
   const realProfile = realProfileRaw as any
 
