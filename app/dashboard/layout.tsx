@@ -141,7 +141,7 @@ export default async function DashboardLayout({
     <LanguageProvider>
       <ToastProvider>
         <SidebarProvider>
-          <div className="flex h-screen overflow-hidden text-gray-900 dark:text-gray-100" style={{ background: 'transparent' }}>
+          <div className="flex h-screen overflow-hidden w-full max-w-[100vw] text-gray-900 dark:text-gray-100" style={{ background: 'transparent' }}>
       <Sidebar
         navItems={navItems}
         footer={

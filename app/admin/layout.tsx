@@ -79,7 +79,7 @@ export default async function AdminLayout({
     <LanguageProvider>
       <ToastProvider>
         <SidebarProvider>
-          <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+          <div className="flex h-screen overflow-hidden w-full max-w-[100vw] bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Sidebar
         navItems={adminNavItems}
         footer={

@@ -51,10 +51,13 @@ export default async function RootLayout({
     console.error('[RootLayout] Error fetching theme or user:', error)
   }
 
-  const isDark = theme?.theme_mode === 'dark' || theme?.theme_preset?.startsWith('cosmic-') || theme?.theme_preset === 'galaxy'
+  const isCosmic = theme?.theme_preset?.startsWith('cosmic-') || theme?.theme_preset === 'galaxy'
+  const isDark = theme?.theme_mode === 'dark' || isCosmic
+
+  const rootClasses = [isDark ? 'dark' : '', isCosmic ? 'galaxy-theme' : ''].filter(Boolean).join(' ')
 
   return (
-    <html lang="en" className={isDark ? 'dark' : ''} suppressHydrationWarning>
+    <html lang="en" className={rootClasses} suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeInjector theme={theme} />
         {children}
