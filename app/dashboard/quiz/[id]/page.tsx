@@ -38,12 +38,12 @@ export default async function QuizStudentPage({ params }: { params: { id: string
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-          <Link href="/dashboard/quiz" className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to Quizzes
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <Link href="/dashboard/quiz" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors shrink-0">
+            <ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Back to </span>Quizzes
           </Link>
-          <div className="font-bold text-gray-900 dark:text-gray-100 truncate max-w-xs text-center">{quiz.title}</div>
-          <div className="w-24" />
+          <div className="font-bold text-gray-900 dark:text-gray-100 truncate text-xs sm:text-sm md:text-base text-center flex-1">{quiz.title}</div>
+          <div className="w-12 sm:w-24 shrink-0 text-right" />
         </div>
       </div>
 

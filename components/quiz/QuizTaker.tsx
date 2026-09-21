@@ -52,44 +52,43 @@ export function QuizTaker({ quiz }: Props) {
 
   if (result) {
     return (
-      <div className="max-w-2xl mx-auto py-12 px-6">
-        <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm p-10 text-center">
+      <div className="max-w-2xl mx-auto py-8 sm:py-12 px-4 sm:px-6">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 sm:p-10 text-center">
           {result.passed ? (
-            <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-12 h-12" />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+              <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12" />
             </div>
           ) : (
-            <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
-              <XCircle className="w-12 h-12" />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+              <XCircle className="w-10 h-10 sm:w-12 sm:h-12" />
             </div>
           )}
 
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {result.passed ? 'Congratulations!' : 'Keep Trying!'}
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-2">
+          <p className="text-gray-500 dark:text-gray-400 mb-2 text-sm sm:text-base">
             You got <span className="font-bold text-gray-900 dark:text-gray-100">{result.correctCount}</span> of {result.totalCount} questions correct
           </p>
-          <p className="text-gray-400 dark:text-gray-500 text-sm mb-8">
+          <p className="text-gray-400 dark:text-gray-500 text-xs sm:text-sm mb-6 sm:mb-8">
             Score: {result.score} / {result.totalPoints} points
           </p>
 
-          <div className="mb-8">
-            <div className="text-5xl font-black text-gray-900 dark:text-gray-100 mb-2">{result.percentage}%</div>
-            <div className={`inline-block px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider ${result.passed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
+          <div className="mb-6 sm:mb-8">
+            <div className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-gray-100 mb-2">{result.percentage}%</div>
+            <div className={`inline-block px-4 py-1 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider ${result.passed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
               {result.passed ? 'Passed' : 'Failed'}
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Passing score: {quiz.pass_score}%</p>
           </div>
 
-          <div className="flex gap-4 justify-center flex-wrap">
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <button
-              onClick={() => { setAnswers({}); setResult(null); setSubmitError(null) }}
-              className="px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => { setResult(null); setAnswers({}) }}
+              className="px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base"
             >
               Try Again
             </button>
-            <a href="/dashboard/quiz" className="px-6 py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors">
+            <a href="/dashboard/quiz" className="px-6 py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors text-center text-sm sm:text-base">
               Back to Quizzes
             </a>
           </div>
@@ -163,7 +162,7 @@ export function QuizTaker({ quiz }: Props) {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || Object.keys(answers).length < (quiz.questions?.length || 0)}
-          className="bg-brand-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto bg-brand-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-center"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
         </button>

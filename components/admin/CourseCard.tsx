@@ -71,8 +71,8 @@ export function CourseCard({
         <div className="absolute top-3 left-3">
           <StatusBadge status={status} />
         </div>
-        {/* Edit / Assign hover buttons */}
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Edit / Assign buttons — visible on touch/mobile, hover on desktop */}
+        <div className="absolute top-3 right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
           <div className="flex items-center gap-1">
             <Link
               href={`/admin/courses/${id}/edit`}

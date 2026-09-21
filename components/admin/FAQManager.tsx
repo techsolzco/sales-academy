@@ -194,20 +194,22 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
   return (
     <div>
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{selectedIds.size} selected</span>
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[94vw] max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-3 sm:px-6 sm:py-3 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedIds.size} selected</span>
 
-          <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
-            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            Publish Selected
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
+              {isBulkDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              Publish
+            </button>
 
-          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
-            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            Delete Selected
-          </button>
+            <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
+              {isBulkDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              Delete
+            </button>
 
-          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-1">Cancel</button>
+          </div>
         </div>
       )}
 

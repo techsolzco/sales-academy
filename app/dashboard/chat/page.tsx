@@ -116,6 +116,7 @@ export default function DashboardChatPage() {
           currentUserId={currentUserId}
           otherUser={selectedUser}
           initialMessages={messages}
+          onBack={() => setSelectedId(null)}
         />
       </div>
     </div>

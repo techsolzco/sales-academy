@@ -106,17 +106,19 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
             id={`faq-${faq.id}`}
             className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 sm:p-6 shadow-sm hover:border-brand-200 dark:hover:border-brand-700 transition space-y-3"
           >
-            {/* Top meta row: badge + language toggle + action buttons — flex-wrap so they all fit on mobile */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300">
-                {faq.category}
-              </span>
-              {toggleButton}
-              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+            {/* Top meta row: badge + language toggle + action buttons */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300">
+                  {faq.category}
+                </span>
+                {toggleButton}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => handleToggleReview(faq.id)}
                   disabled={isPending}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition shadow-sm ${
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition shadow-sm ${
                     reviewedIds.has(faq.id)
                       ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
                       : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -130,7 +132,7 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
                 </button>
                 <button
                   onClick={() => handleCopy(faq)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold text-xs transition shadow-sm"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold text-xs transition shadow-sm"
                   title="Copy customer-ready answer"
                 >
                   {copiedId === faq.id ? <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" /> : <Copy className="w-3.5 h-3.5" />}

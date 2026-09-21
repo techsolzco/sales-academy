@@ -319,7 +319,8 @@ export default async function TrainingCoursePage({
 
     tabContent = (
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mt-6">
-        <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/50">
               <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Assignment</th>
@@ -360,6 +361,7 @@ export default async function TrainingCoursePage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     )
   }
@@ -397,11 +399,11 @@ export default async function TrainingCoursePage({
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-2 border-b border-gray-200 pb-2">
-        <div className="flex gap-6 overflow-x-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+        <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <Link
             href={`/dashboard/training/${course.id}?tab=lessons&lang=${lang}`}
-            className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+            className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
               tab === 'lessons' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -421,7 +423,7 @@ export default async function TrainingCoursePage({
             <>
               <Link
                 href={`/dashboard/training/${course.id}?tab=faqs&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   tab === 'faqs' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -429,7 +431,7 @@ export default async function TrainingCoursePage({
               </Link>
               <Link
                 href={`/dashboard/training/${course.id}?tab=scripts&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   tab === 'scripts' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -437,7 +439,7 @@ export default async function TrainingCoursePage({
               </Link>
               <Link
                 href={`/dashboard/training/${course.id}?tab=objections&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   tab === 'objections' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -445,7 +447,7 @@ export default async function TrainingCoursePage({
               </Link>
               <Link
                 href={`/dashboard/training/${course.id}?tab=assignments&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 ${
+                className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
                   tab === 'assignments' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -455,7 +457,7 @@ export default async function TrainingCoursePage({
           )}
         </div>
         {showContentTabs && (
-          <div className="ml-4">
+          <div className="self-end sm:self-auto sm:ml-4 shrink-0">
             <TabLangToggle currentLang={lang} />
           </div>
         )}

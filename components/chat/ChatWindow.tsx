@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { sendMessage, markMessagesRead } from '@/lib/actions/chat'
-import { Send, User } from 'lucide-react'
+import { Send, User, ChevronLeft } from 'lucide-react'
 import type { DirectMessage } from '@/types'
 
 interface Props {
@@ -11,9 +11,10 @@ interface Props {
   currentUserId: string
   otherUser: { id: string; full_name: string; avatar_url?: string | null; role?: string } | null
   initialMessages: DirectMessage[]
+  onBack?: () => void
 }
 
-export function ChatWindow({ conversationId, currentUserId, otherUser, initialMessages }: Props) {
+export function ChatWindow({ conversationId, currentUserId, otherUser, initialMessages, onBack }: Props) {
   const [messages, setMessages] = useState<DirectMessage[]>(initialMessages)
   const [newMessage, setNewMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -128,8 +129,18 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, initialMe
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3 bg-white dark:bg-gray-800 z-10 shadow-sm relative">
-        <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold flex-shrink-0">
+      <div className="p-3.5 sm:p-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2.5 sm:gap-3 bg-white dark:bg-gray-800 z-10 shadow-sm relative">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="md:hidden p-1.5 -ml-1 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            title="Back to conversations"
+            aria-label="Back to conversations"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold flex-shrink-0 text-sm">
           {otherUser.avatar_url ? (
             <img src={otherUser.avatar_url} alt={otherUser.full_name} className="w-full h-full rounded-full object-cover" />
           ) : (

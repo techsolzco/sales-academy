@@ -89,6 +89,7 @@ export default function AdminChatPage() {
             currentUserId={currentUserId}
             otherUser={selectedUser}
             initialMessages={messages}
+            onBack={() => setSelectedId(null)}
           />
         )}
       </div>

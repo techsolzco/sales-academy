@@ -28,14 +28,14 @@ export default async function AssignmentsAdminPage() {
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Assignments</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Manage course assignments and review submissions.</p>
         </div>
         <Link
           href="/admin/assignments/new"
-          className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-brand-700 transition-colors"
+          className="flex items-center justify-center gap-2 bg-brand-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-700 transition-colors w-full sm:w-auto text-sm"
         >
           <Plus className="w-4 h-4" />
           New Assignment

@@ -89,34 +89,38 @@ export function SalesmanObjectionViewer({ objections, tools = [], initialReviewe
                   id={`obj-${o.id}`}
                   className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 sm:p-6 shadow-sm hover:border-brand-200 dark:hover:border-brand-700 transition space-y-3"
                 >
-                  {/* Top meta row: badges + toggleButton + Mark Reviewed — flex-wrap for mobile */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {o.difficulty && (
-                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 font-semibold text-gray-600 dark:text-gray-300 capitalize">
-                        {o.difficulty}
-                      </span>
-                    )}
-                    {o.related_product && (
-                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300">
-                        Product: {o.related_product}
-                      </span>
-                    )}
-                    {toggleButton}
-                    <button
-                      onClick={() => handleToggleReview(o.id)}
-                      disabled={isPending}
-                      className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition shadow-sm flex-shrink-0 ${
-                        reviewedIds.has(o.id)
-                          ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
-                          : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {reviewedIds.has(o.id) ? (
-                        <><Check className="w-3.5 h-3.5" /> Reviewed</>
-                      ) : (
-                        <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
+                  {/* Top meta row: badges + toggleButton + Mark Reviewed */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {o.difficulty && (
+                        <span className="text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 font-semibold text-gray-600 dark:text-gray-300 capitalize">
+                          {o.difficulty}
+                        </span>
                       )}
-                    </button>
+                      {o.related_product && (
+                        <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-900/30 font-semibold text-brand-700 dark:text-brand-300">
+                          Product: {o.related_product}
+                        </span>
+                      )}
+                      {toggleButton}
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => handleToggleReview(o.id)}
+                        disabled={isPending}
+                        className={`w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition shadow-sm ${
+                          reviewedIds.has(o.id)
+                            ? 'border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50'
+                            : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {reviewedIds.has(o.id) ? (
+                          <><Check className="w-3.5 h-3.5" /> Reviewed</>
+                        ) : (
+                          <><Eye className="w-3.5 h-3.5" /> Mark Reviewed</>
+                        )}
+                      </button>
+                    </div>
                   </div>
                   {/* Objection text — full card width */}
                   <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base leading-snug">

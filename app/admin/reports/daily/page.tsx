@@ -133,36 +133,38 @@ export default async function DailyReportPage({
     } else {
       content = (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
-              <tr>
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4 text-center">Lessons Done</th>
-                <th className="px-6 py-4 text-center">KB Reviews</th>
-                <th className="px-6 py-4 text-center">Scripts Copied</th>
-                <th className="px-6 py-4 text-center">Quiz Attempts</th>
-                <th className="px-6 py-4 text-center">Assignments</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {summary.map(s => (
-                <tr key={s.id} className="hover:bg-gray-50 dark:bg-gray-900/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{s.full_name}</td>
-                  <td className="px-6 py-4 text-center">{s.sLessons}</td>
-                  <td className="px-6 py-4 text-center">{s.sKb}</td>
-                  <td className="px-6 py-4 text-center">{s.sScripts}</td>
-                  <td className="px-6 py-4 text-center">{s.sQuizzes}</td>
-                  <td className="px-6 py-4 text-center">{s.sAssignments}</td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={`/admin/reports/daily?date=${date}&userId=${s.id}`} className="text-brand-600 hover:text-brand-700 font-medium">
-                      View Details
-                    </Link>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-left text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+              <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+                <tr>
+                  <th className="px-6 py-4">Student</th>
+                  <th className="px-6 py-4 text-center">Lessons Done</th>
+                  <th className="px-6 py-4 text-center">KB Reviews</th>
+                  <th className="px-6 py-4 text-center">Scripts Copied</th>
+                  <th className="px-6 py-4 text-center">Quiz Attempts</th>
+                  <th className="px-6 py-4 text-center">Assignments</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {summary.map(s => (
+                  <tr key={s.id} className="hover:bg-gray-50 dark:bg-gray-900/50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{s.full_name}</td>
+                    <td className="px-6 py-4 text-center">{s.sLessons}</td>
+                    <td className="px-6 py-4 text-center">{s.sKb}</td>
+                    <td className="px-6 py-4 text-center">{s.sScripts}</td>
+                    <td className="px-6 py-4 text-center">{s.sQuizzes}</td>
+                    <td className="px-6 py-4 text-center">{s.sAssignments}</td>
+                    <td className="px-6 py-4 text-right">
+                      <Link href={`/admin/reports/daily?date=${date}&userId=${s.id}`} className="text-brand-600 hover:text-brand-700 font-medium whitespace-nowrap">
+                        View Details
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )
     }

@@ -11,7 +11,7 @@ export function WhatsAppButton() {
       target="_blank"
       rel="noreferrer"
       title="Chat with us on WhatsApp"
-      className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-lg transition-transform duration-150 select-none"
+      className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 w-12 h-12 md:w-14 md:h-14 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-lg transition-transform duration-150 select-none"
       style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       {/* Pulse ring */}
