@@ -57,7 +57,7 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed md:sticky top-0 left-0 z-50 h-screen w-64 sidebar-wrapper',
+          '!fixed md:!sticky top-0 left-0 z-50 h-screen w-64 sidebar-wrapper',
           'border-r border-brand-700/50 flex flex-col transition-transform duration-300 ease-in-out',
           'sidebar-bg',
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'

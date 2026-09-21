@@ -280,10 +280,8 @@ body.has-wallpaper::before {
   background: var(--nebula-gradient, radial-gradient(ellipse 60% 40% at 20% 30%, rgba(120,60,237,0.15) 0%, transparent 60%));
 }
 
-/* Galaxy sidebar and content should sit above the star field */
-.galaxy-theme .sidebar-wrapper,
-.galaxy-theme main,
-.galaxy-theme header {
+/* Galaxy main content should sit above the star field */
+.galaxy-theme main {
   position: relative;
   z-index: 1;
 }
