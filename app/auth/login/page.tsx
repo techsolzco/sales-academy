@@ -46,8 +46,20 @@ export default function LoginPage() {
       localStorage.setItem('sa_remember', '1')
     }
 
-    router.push(redirectTo)
-    router.refresh()
+    // Determine target portal directly to avoid competing redirects
+    let target = redirectTo && redirectTo !== '/' ? redirectTo : null
+    if (!target) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authError ? '' : (await supabase.auth.getUser()).data.user?.id || '')
+        .maybeSingle()
+
+      target = profile?.role === 'admin' ? '/admin' : '/dashboard'
+    }
+
+    // Hard navigation guarantees fresh SSR, updated cookies, correct theme, and zero UI tearing
+    window.location.href = target
   }
 
   return (

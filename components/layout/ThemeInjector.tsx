@@ -101,7 +101,15 @@ export function ThemeInjector({ theme }: { theme: ThemeSettings | null }) {
     } else {
       root.classList.remove('galaxy-theme')
     }
-  }, [primaryHex, accentHex, theme?.gradient_css, theme?.sidebar_gradient_css, theme?.wallpaper_url, isCosmic, theme?.card_opacity, theme?.wallpaper_opacity])
+
+    // Ensure dark class is active for dark themes and cosmic presets
+    const isDark = theme?.theme_mode === 'dark' || isCosmic
+    if (isDark) {
+      root.classList.add('dark')
+    } else if (theme?.theme_mode === 'light') {
+      root.classList.remove('dark')
+    }
+  }, [primaryHex, accentHex, theme?.gradient_css, theme?.sidebar_gradient_css, theme?.wallpaper_url, isCosmic, theme?.card_opacity, theme?.wallpaper_opacity, theme?.theme_mode])
 
   const css = buildCSS(theme)
   return <style id="theme-injector" dangerouslySetInnerHTML={{ __html: css }} />

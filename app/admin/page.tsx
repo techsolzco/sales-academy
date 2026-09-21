@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { StatCard } from '@/components/ui/StatCard'
 import { Users, BookOpen, TrendingUp, Award } from 'lucide-react'
 
@@ -6,11 +7,15 @@ export default async function AdminDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  if (!user) {
+    redirect('/auth/login')
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
-    .eq('id', user!.id)
-    .single()
+    .eq('id', user.id)
+    .maybeSingle()
 
   return (
     <div className="px-4 py-5 md:p-8 animate-fade-in">
@@ -53,8 +58,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Placeholder content area */}
-      <div className="rounded-xl border border-dashed border-gray-200 bg-white p-12 text-center">
-        <p className="text-gray-400 text-sm">
+      <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 p-12 text-center">
+        <p className="text-gray-400 dark:text-gray-500 text-sm">
           Content panels will appear here in the next phase.
         </p>
       </div>
