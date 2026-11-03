@@ -3,62 +3,77 @@ import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { BookOpen } from 'lucide-react'
 import { getGreeting } from '@/lib/utils'
 import { StudentCourseCard } from '@/components/training/StudentCourseCard'
+import { TrainingTabs } from '@/components/training/TrainingTabs'
+import { SalesmanScriptViewer } from '@/components/training/SalesmanScriptViewer'
+import { SalesmanObjectionViewer } from '@/components/training/SalesmanObjectionViewer'
+import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
+import { getReviewedKbItems } from '@/lib/actions/kb-reviews'
 
-export default async function TrainingPage() {
+const SCRIPT_TYPE_ORDER: Record<string, number> = {
+  greeting: 1,
+  upsell: 2,
+  voice_note_script: 3,
+  warranty_explanation: 4,
+  payment: 5,
+  after_sales: 6,
+  objection_response: 7,
+  follow_up: 8,
+  closing: 9,
+  cross_sell: 10,
+  review_request: 11,
+  whatsapp: 12,
+}
+
+function scriptTypePriority(type: string): number {
+  return SCRIPT_TYPE_ORDER[type] ?? 99
+}
+
+export default async function TrainingPage({
+  searchParams,
+}: {
+  searchParams?: { tab?: string }
+}) {
   const supabase = await createClient()
   const { userId, profile } = await getEffectiveUser()
 
-  // Get assignment metadata (due dates etc.) — optional, not required to see courses
-  const { data: assignments } = await supabase
-    .from('course_assignments')
-    .select('course_id, assigned_at, due_date')
-    .eq('user_id', userId)
-
-  // Fetch ALL published courses (visible to every logged-in student)
-  const { data: courses } = await supabase
+  // 1. Fetch ALL published courses (visible to logged-in salesmen)
+  // "Google Ai + Canva" has been set to draft, so only published courses (Reel Bundle) return
+  const { data: coursesData } = await supabase
     .from('courses')
     .select('*')
     .is('deleted_at', null)
     .eq('status', 'published')
     .order('created_at', { ascending: true })
 
-  if (!courses || courses.length === 0) {
-    return (
-      <div className="px-4 py-5 md:p-8 animate-fade-in">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
-          </h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Your training courses will appear here once they&apos;re published.</p>
-        </div>
-        <div className="text-center py-20 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-gray-400 text-sm">
-          <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
-          No courses published yet. Check back soon!
-        </div>
-      </div>
-    )
-  }
-
+  const courses = coursesData ?? []
   const courseIds = courses.map(c => c.id)
 
-  // Get all lessons for these courses (for progress calc)
-  const { data: modules } = await supabase
-    .from('modules').select('id, course_id').is('deleted_at', null).in('course_id', courseIds)
+  // 2. Fetch course assignments, modules, and lessons for courses
+  const [{ data: assignments }, { data: modules }] = await Promise.all([
+    supabase
+      .from('course_assignments')
+      .select('course_id, assigned_at, due_date')
+      .eq('user_id', userId),
+    courseIds.length > 0
+      ? supabase.from('modules').select('id, course_id').is('deleted_at', null).in('course_id', courseIds)
+      : { data: [] }
+  ])
 
   const moduleIds = (modules ?? []).map(m => m.id)
   const { data: lessons } = moduleIds.length > 0
     ? await supabase.from('lessons').select('id, module_id').is('deleted_at', null).in('module_id', moduleIds)
     : { data: [] }
 
-  // Build course→lesson map
   const moduleCoursMap = Object.fromEntries((modules ?? []).map(m => [m.id, m.course_id]))
   const lessonsByCourse = (lessons ?? []).reduce<Record<string, string[]>>((acc, l) => {
     const cid = moduleCoursMap[l.module_id]
-    if (cid) { if (!acc[cid]) acc[cid] = []; acc[cid].push(l.id) }
+    if (cid) {
+      if (!acc[cid]) acc[cid] = []
+      acc[cid].push(l.id)
+    }
     return acc
   }, {})
 
-  // Get user's lesson progress
   const lessonIds = (lessons ?? []).map(l => l.id)
   const { data: progress } = lessonIds.length > 0
     ? await supabase
@@ -70,77 +85,158 @@ export default async function TrainingPage() {
     : { data: [] }
 
   const completedSet = new Set((progress ?? []).map(p => p.lesson_id))
-
-  // Fetch required KB items for courses linked to a tool
-  const toolIds = Array.from(new Set(courses.map(c => c.tool_id).filter(Boolean))) as string[]
-  const [{ data: allFaqs }, { data: allScripts }, { data: allObjections }, { data: allVoiceNotes }] = toolIds.length > 0
-    ? await Promise.all([
-        supabase.from('faqs').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published'),
-        supabase.from('scripts').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published'),
-        supabase.from('objections').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published'),
-        supabase.from('voice_notes').select('id, tool_id').is('deleted_at', null).in('tool_id', toolIds).eq('status', 'published')
-      ])
-    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }]
-
-  const kbItems = [
-    ...(allFaqs ?? []),
-    ...(allScripts ?? []),
-    ...(allObjections ?? []),
-    ...(allVoiceNotes ?? [])
-  ]
-
-  const kbItemsByTool = kbItems.reduce((acc, item) => {
-    if (!item.tool_id) return acc
-    if (!acc[item.tool_id]) acc[item.tool_id] = []
-    acc[item.tool_id].push(item.id)
-    return acc
-  }, {} as Record<string, string[]>)
-
-  const allKbItemIds = kbItems.map(k => k.id)
-  const { data: kbReviews } = allKbItemIds.length > 0
-    ? await supabase.from('kb_reviews').select('content_id').eq('user_id', userId).in('content_id', allKbItemIds)
-    : { data: [] }
-    
-  const reviewedKbIds = new Set((kbReviews ?? []).map(r => r.content_id))
-
   const assignmentByCourse = Object.fromEntries((assignments ?? []).map(a => [a.course_id, a]))
+
+  // 3. Fetch published General (Uncategorized, tool_id is null) scripts, objections, faqs
+  const [
+    { data: rawGeneralScripts },
+    { data: rawGeneralObjections },
+    { data: rawGeneralFaqs },
+    reviewedScripts,
+    reviewedObjections,
+    reviewedFaqs,
+  ] = await Promise.all([
+    supabase
+      .from('scripts')
+      .select('*')
+      .is('deleted_at', null)
+      .eq('status', 'published')
+      .is('tool_id', null)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('objections')
+      .select('*')
+      .is('deleted_at', null)
+      .eq('status', 'published')
+      .is('tool_id', null)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('faqs')
+      .select('*')
+      .is('deleted_at', null)
+      .eq('status', 'published')
+      .is('tool_id', null)
+      .order('priority', { ascending: false })
+      .order('created_at', { ascending: false }),
+    getReviewedKbItems('script'),
+    getReviewedKbItems('objection'),
+    getReviewedKbItems('faq'),
+  ])
+
+  const generalScripts = (rawGeneralScripts ?? []).sort((a, b) =>
+    scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) ||
+    a.title.localeCompare(b.title)
+  )
+  const generalObjections = rawGeneralObjections ?? []
+  const generalFaqs = rawGeneralFaqs ?? []
+
+  // Pre-render content for each tab
+  const coursesContent = (
+    <div>
+      {courses.length === 0 ? (
+        <div className="text-center py-20 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 text-gray-400 text-sm">
+          <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+          No courses published yet. Check back soon!
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+          {courses.map(course => {
+            const allLessons = lessonsByCourse[course.id] ?? []
+            const completedLessonsCount = allLessons.filter(id => completedSet.has(id)).length
+            const assignment = assignmentByCourse[course.id]
+
+            return (
+              <StudentCourseCard
+                key={course.id}
+                id={course.id}
+                title={course.title}
+                description={course.description ?? null}
+                thumbnail_url={course.thumbnail_url ?? null}
+                category={course.category ?? null}
+                difficulty={course.difficulty ?? null}
+                lessonCount={allLessons.length}
+                completedCount={completedLessonsCount}
+                durationMinutes={course.estimated_duration_minutes ?? null}
+                dueDate={assignment?.due_date ?? null}
+              />
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+
+  const scriptsContent = (
+    <div className="max-w-5xl">
+      <div className="mb-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sales Scripts & Message Templates</h2>
+        <p className="text-gray-400 dark:text-gray-500 text-sm mt-0.5">
+          Ready-to-use scripts for WhatsApp, voice notes, objection responses, and closing lines. Click &ldquo;Copy Script&rdquo; to paste directly.
+        </p>
+      </div>
+      <SalesmanScriptViewer
+        scripts={generalScripts}
+        initialReviewed={reviewedScripts}
+        initialViewMode="list"
+      />
+    </div>
+  )
+
+  const objectionsContent = (
+    <div className="max-w-5xl">
+      <div className="mb-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Objection Handling Playbook</h2>
+        <p className="text-gray-400 dark:text-gray-500 text-sm mt-0.5">
+          Learn how to turn common customer doubts into closed deals. Study the recommended responses and avoid common pitfalls.
+        </p>
+      </div>
+      <SalesmanObjectionViewer
+        objections={generalObjections}
+        initialReviewed={reviewedObjections}
+      />
+    </div>
+  )
+
+  const faqsContent = (
+    <div className="max-w-5xl">
+      <div className="mb-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Knowledge Base — FAQs</h2>
+        <p className="text-gray-400 dark:text-gray-500 text-sm mt-0.5">
+          Quickly find answers to common customer questions. Use &ldquo;Copy Answer&rdquo; to send responses directly to clients.
+        </p>
+      </div>
+      <SalesmanFAQViewer
+        faqs={generalFaqs}
+        initialReviewed={reviewedFaqs}
+        initialViewMode="list"
+      />
+    </div>
+  )
 
   return (
     <div className="px-4 py-5 md:p-8 animate-fade-in">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'there'} 👋
         </h1>
         <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
-          {courses.length} course{courses.length !== 1 ? 's' : ''} available
+          {courses.length} course{courses.length !== 1 ? 's' : ''} · {generalScripts.length} scripts · {generalObjections.length} objections · {generalFaqs.length} FAQs available
         </p>
       </div>
 
-      {/* Card grid — same layout as admin courses page */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-        {courses.map(course => {
-          const allLessons = lessonsByCourse[course.id] ?? []
-          const completedLessonsCount = allLessons.filter(id => completedSet.has(id)).length
-          const assignment = assignmentByCourse[course.id]
-
-          return (
-            <StudentCourseCard
-              key={course.id}
-              id={course.id}
-              title={course.title}
-              description={course.description ?? null}
-              thumbnail_url={course.thumbnail_url ?? null}
-              category={course.category ?? null}
-              difficulty={course.difficulty ?? null}
-              lessonCount={allLessons.length}
-              completedCount={completedLessonsCount}
-              durationMinutes={course.estimated_duration_minutes ?? null}
-              dueDate={assignment?.due_date ?? null}
-            />
-          )
-        })}
-      </div>
+      {/* Tabs */}
+      <TrainingTabs
+        initialTab={searchParams?.tab || 'courses'}
+        coursesCount={courses.length}
+        scriptsCount={generalScripts.length}
+        objectionsCount={generalObjections.length}
+        faqsCount={generalFaqs.length}
+        coursesContent={coursesContent}
+        scriptsContent={scriptsContent}
+        objectionsContent={objectionsContent}
+        faqsContent={faqsContent}
+      />
     </div>
   )
 }

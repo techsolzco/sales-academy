@@ -9,11 +9,11 @@ import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper
 import { RichText } from '@/components/ui/RichText'
 import { ViewerSearchBar } from '@/components/training/ViewerSearchBar'
 
-export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], initialToolId = '', initialLang }: { faqs: FAQ[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi' }) {
+export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], initialToolId = '', initialLang, initialViewMode = 'grouped' }: { faqs: FAQ[], tools?: { id: string; name: string }[], initialReviewed?: string[], initialToolId?: string, initialLang?: 'en' | 'hi', initialViewMode?: 'list' | 'grouped' }) {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [filterToolId, setFilterToolId] = useState(initialToolId)
-  const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped')
+  const [viewMode, setViewMode] = useState<'list' | 'grouped'>(tools.length === 0 ? 'list' : initialViewMode)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set(initialReviewed))
@@ -43,7 +43,7 @@ export function SalesmanFAQViewer({ faqs, tools = [], initialReviewed = [], init
 
   const grouped = useMemo(() => {
     const map = new Map<string, { name: string; items: FAQ[] }>()
-    map.set('uncategorized', { name: 'Uncategorized', items: [] })
+    map.set('uncategorized', { name: 'General (Uncategorized)', items: [] })
     tools.forEach(t => map.set(t.id, { name: t.name, items: [] }))
     
     filtered.forEach(f => {
