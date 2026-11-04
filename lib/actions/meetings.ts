@@ -182,7 +182,12 @@ export async function deleteMeeting(id: string): Promise<ActionResult> {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
-  const { error } = await supabase
+  const serviceClient = getServiceClient()
+  
+  // Clean up any invitees first if necessary
+  await serviceClient.from('meeting_invitees').delete().eq('meeting_id', id)
+
+  const { error } = await serviceClient
     .from('meetings')
     .delete()
     .eq('id', id)

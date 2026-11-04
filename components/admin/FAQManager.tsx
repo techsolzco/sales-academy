@@ -1,97 +1,117 @@
 'use client'
 
-import { useState, useTransition, useMemo, memo, useCallback } from 'react'
-import { Plus, Edit, Trash2, Search, HelpCircle, ChevronDown, ChevronRight, LayoutList, FolderTree } from 'lucide-react'
+import { useState, useMemo, memo, useCallback } from 'react'
+import { Plus, Edit, Trash2, Search, HelpCircle, ChevronDown, ChevronRight, LayoutList, FolderTree, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
 import { deleteFAQ, bulkSoftDeleteFAQs, bulkPublishFAQs } from '@/lib/actions/faqs'
-import { Loader2 } from 'lucide-react'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { FAQ } from '@/types'
 
-
-const FaqCardComponent = memo(({ faq, isSelected, onToggle, onEdit, onDelete, isPending }: { faq: FAQ, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (faq: FAQ) => void, onDelete: (id: string) => void, isPending: boolean }) => {
-    return (
-      <TranslateContextWrapper
-        key={faq.id}
-        table="faqs"
-        recordId={faq.id}
-        fieldsToTranslate={{
-          question_translated: faq.question,
-          short_answer_translated: faq.short_answer,
-          customer_ready_answer_translated: faq.customer_ready_answer || ''
-        }}
-        initialTranslations={{
-          question_translated: faq.question_translated,
-          short_answer_translated: faq.short_answer_translated,
-          customer_ready_answer_translated: faq.customer_ready_answer_translated
-        }}
-      >
-        {({ displayTexts, toggleButton }) => (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 hover:border-gray-200 dark:hover:border-gray-600 transition shadow-sm space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <input type="checkbox" checked={isSelected} onChange={e => onToggle(faq.id, e.target.checked)} className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 mt-1 mr-2" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <StatusBadge status={faq.status} />
-                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
-                    {faq.category}
+const FaqCardComponent = memo(({
+  faq,
+  isSelected,
+  onToggle,
+  onEdit,
+  onDelete,
+  isPending
+}: {
+  faq: FAQ
+  isSelected: boolean
+  onToggle: (id: string, checked: boolean) => void
+  onEdit: (faq: FAQ) => void
+  onDelete: (id: string, title?: string) => void
+  isPending: boolean
+}) => {
+  return (
+    <TranslateContextWrapper
+      key={faq.id}
+      table="faqs"
+      recordId={faq.id}
+      fieldsToTranslate={{
+        question_translated: faq.question,
+        short_answer_translated: faq.short_answer,
+        customer_ready_answer_translated: faq.customer_ready_answer || ''
+      }}
+      initialTranslations={{
+        question_translated: faq.question_translated,
+        short_answer_translated: faq.short_answer_translated,
+        customer_ready_answer_translated: faq.customer_ready_answer_translated
+      }}
+    >
+      {({ displayTexts, toggleButton }) => (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 hover:border-gray-200 dark:hover:border-gray-600 transition shadow-sm space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={e => onToggle(faq.id, e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 mt-1 mr-2 cursor-pointer"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <StatusBadge status={faq.status} />
+                <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 font-medium text-gray-600 dark:text-gray-300">
+                  {faq.category}
+                </span>
+                {faq.priority > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 font-medium text-amber-700 dark:text-amber-300">
+                    Priority: {faq.priority}
                   </span>
-                  {faq.priority > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 font-medium text-amber-700 dark:text-amber-300">
-                      Priority: {faq.priority}
-                    </span>
-                  )}
-                  {toggleButton}
-                </div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base">{displayTexts.question_translated}</h3>
+                )}
+                {toggleButton}
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  onClick={() => onEdit(faq)}
-                  className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition"
-                  title="Edit FAQ"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onDelete(faq.id)}
-                  disabled={isPending}
-                  className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
-                  title="Delete FAQ"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base">{displayTexts.question_translated}</h3>
             </div>
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-0.5">Short Answer</span>
-                <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/60 p-3 rounded-xl border border-gray-100 dark:border-gray-600">{displayTexts.short_answer_translated}</p>
-              </div>
-              {faq.customer_ready_answer && (
-                <div>
-                  <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
-                  <p className="text-gray-900 dark:text-gray-100 bg-brand-50 dark:bg-brand-900/30 p-3 rounded-xl border border-brand-100 dark:border-brand-800/50 font-sans">{displayTexts.customer_ready_answer_translated}</p>
-                </div>
-              )}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={() => onEdit(faq)}
+                className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition"
+                title="Edit FAQ"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(faq.id, faq.question)}
+                disabled={isPending}
+                className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
+                title="Delete FAQ"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        )}
-      </TranslateContextWrapper>
-    )
+          <div className="space-y-2 text-sm">
+            <div>
+              <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-0.5">Short Answer</span>
+              <p className="text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/60 p-3 rounded-xl border border-gray-100 dark:border-gray-600">{displayTexts.short_answer_translated}</p>
+            </div>
+            {faq.customer_ready_answer && (
+              <div>
+                <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wider block mb-0.5">Customer-Ready Answer</span>
+                <p className="text-gray-900 dark:text-gray-100 bg-brand-50 dark:bg-brand-900/30 p-3 rounded-xl border border-brand-100 dark:border-brand-800/50 font-sans">{displayTexts.customer_ready_answer_translated}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </TranslateContextWrapper>
+  )
 })
 FaqCardComponent.displayName = 'renderFaqCard'
 
 export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initialFaqs: FAQ[], tools?: { id: string; name: string }[], initialToolId?: string }) {
+  const router = useRouter()
   const handleToggle = useCallback((id: string, checked: boolean) => {
     setSelectedIds(prev => { const next = new Set(prev); checked ? next.add(id) : next.delete(id); return next; })
   }, [])
 
   const [faqs, setFaqs] = useState(initialFaqs)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [isBulkPublishing, setIsBulkPublishing] = useState(false)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [filterToolId, setFilterToolId] = useState(initialToolId || '')
@@ -99,7 +119,15 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
   const [selectedFaq, setSelectedFaq] = useState<FAQ | null>(null)
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'single' | 'bulk'
+    id?: string
+    title?: string
+    count?: number
+  } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
 
@@ -159,37 +187,65 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
     setAiDraft(null)
   }
 
-  async function handleBulkDelete() {
-    if (!confirm(`Delete ${selectedIds.size} FAQs?`)) return
-    setIsBulkDeleting(true)
-    const res = await bulkSoftDeleteFAQs(Array.from(selectedIds))
-    setIsBulkDeleting(false)
-    if (!res.error) {
-      setFaqs(prev => prev.filter(f => !selectedIds.has(f.id)))
-      setSelectedIds(new Set())
+  const handleDelete = useCallback((id: string, title?: string) => {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'single', id, title })
+  }, [])
+
+  function requestBulkDelete() {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'bulk', count: selectedIds.size })
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      if (deleteTarget.type === 'single' && deleteTarget.id) {
+        const res = await deleteFAQ(deleteTarget.id)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setFaqs(prev => prev.filter(f => f.id !== deleteTarget.id))
+        setSelectedIds(prev => {
+          const next = new Set(prev)
+          next.delete(deleteTarget.id!)
+          return next
+        })
+      } else if (deleteTarget.type === 'bulk') {
+        const ids = Array.from(selectedIds)
+        const res = await bulkSoftDeleteFAQs(ids)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setFaqs(prev => prev.filter(f => !selectedIds.has(f.id)))
+        setSelectedIds(new Set())
+      }
+      setIsDeleting(false)
+      setDeleteTarget(null)
+      router.refresh()
+    } catch (e: any) {
+      setDeleteError(e.message || 'Failed to delete')
+      setIsDeleting(false)
     }
   }
 
   async function handleBulkPublish() {
-    if (!confirm(`Publish ${selectedIds.size} FAQs?`)) return
-    setIsBulkDeleting(true)
+    setIsBulkPublishing(true)
     const res = await bulkPublishFAQs(Array.from(selectedIds))
-    setIsBulkDeleting(false)
+    setIsBulkPublishing(false)
     if (!res.error) {
       setFaqs(prev => prev.map(f => selectedIds.has(f.id) ? { ...f, status: 'published' } : f))
       setSelectedIds(new Set())
+      router.refresh()
     }
   }
-
-  const handleDelete = useCallback((id: string) => {
-    if (!confirm('Are you sure you want to delete this FAQ?')) return
-    startTransition(async () => {
-      const res = await deleteFAQ(id)
-      if (!res.error) {
-        setFaqs(prev => prev.filter(f => f.id !== id))
-      }
-    })
-  }, [])
 
   return (
     <div>
@@ -198,13 +254,21 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
           <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200">{selectedIds.size} selected</span>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
-              {isBulkDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+            <button
+              onClick={handleBulkPublish}
+              disabled={isBulkPublishing || isDeleting}
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50"
+            >
+              {isBulkPublishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
               Publish
             </button>
 
-            <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
-              {isBulkDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            <button
+              onClick={requestBulkDelete}
+              disabled={isDeleting || isBulkPublishing}
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
               Delete
             </button>
 
@@ -229,7 +293,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
           <select
             value={filterToolId}
             onChange={e => setFilterToolId(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 [&>option]:text-gray-900 dark:[&>option]:text-gray-100"
+            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 [&>option]:text-gray-900 dark:[&>option]:text-gray-100"
           >
             <option value="" className="text-gray-900 dark:text-gray-100">All Tools</option>
             {tools.map(t => <option key={t.id} value={t.id} className="text-gray-900 dark:text-gray-100">{t.name}</option>)}
@@ -260,9 +324,9 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
           />
           <button
             onClick={handleCreate}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm flex-shrink-0"
           >
-            <Plus className="w-4 h-4" /> Add FAQ
+            <Plus className="w-4 h-4" /> New FAQ
           </button>
         </div>
       </div>
@@ -288,11 +352,11 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
       {filtered.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-sm">
           <HelpCircle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-          No FAQs match your search.
+          No FAQs found.
         </div>
       ) : (
         viewMode === 'list' ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {filtered.map(faq => (
               <FaqCardComponent
                 key={faq.id}
@@ -301,7 +365,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
                 onToggle={handleToggle}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                isPending={isPending}
+                isPending={isDeleting}
               />
             ))}
           </div>
@@ -334,7 +398,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
                           onToggle={handleToggle}
                           onEdit={handleEdit}
                           onDelete={handleDelete}
-                          isPending={isPending}
+                          isPending={isDeleting}
                         />
                       ))}
                     </div>
@@ -352,6 +416,23 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
         onClose={handleClose}
         defaultValues={aiDraft || undefined}
         tools={tools}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        title={deleteTarget?.type === 'bulk' ? `Delete ${deleteTarget.count} FAQs` : 'Delete FAQ'}
+        message="Are you sure? This cannot be undone."
+        itemTitle={deleteTarget?.type === 'single' ? deleteTarget.title : undefined}
+        isDeleting={isDeleting}
+        error={deleteError}
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteTarget(null)
+            setDeleteError(null)
+          }
+        }}
       />
     </div>
   )

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, Calendar, Video, Users } from 'lucide-react'
 import { fetchMeeting } from '@/lib/actions/meetings'
 import { CopyLinkButton } from '@/components/meetings/CopyLinkButton'
+import { DeleteMeetingButton } from '@/components/meetings/DeleteMeetingButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,7 @@ export default async function AdminMeetingDetailPage({ params }: { params: { id:
   return (
     <div className="px-4 py-5 md:p-8 max-w-4xl mx-auto space-y-8">
       <div>
-        <Link href="/admin/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100 mb-6 transition-colors">
+        <Link href="/admin/meetings" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Meetings
         </Link>
@@ -60,7 +61,7 @@ export default async function AdminMeetingDetailPage({ params }: { params: { id:
               </span>
             </div>
             {meeting.description && (
-              <p className="text-gray-600 dark:text-gray-400 dark:text-gray-500 max-w-2xl">{meeting.description}</p>
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl">{meeting.description}</p>
             )}
           </div>
           
@@ -75,6 +76,7 @@ export default async function AdminMeetingDetailPage({ params }: { params: { id:
               Join Meeting
             </a>
             <CopyLinkButton url={meeting.jitsi_url} label="Copy Meeting Link" />
+            <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} />
           </div>
         </div>
 
@@ -104,13 +106,13 @@ export default async function AdminMeetingDetailPage({ params }: { params: { id:
                   )}
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{invitee.profile.full_name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 truncate">{invitee.profile.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{invitee.profile.email}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">No specific invitees for this meeting.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No specific invitees for this meeting.</p>
           )}
         </div>
       </div>

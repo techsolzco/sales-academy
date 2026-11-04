@@ -75,6 +75,25 @@ export async function updateTool(id: string, input: Partial<ToolInput>): Promise
 export async function deleteTool(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
+    
+    // Check for active linked items
+    const [scriptsRes, objectionsRes, faqsRes] = await Promise.all([
+      supabase.from('scripts').select('id', { count: 'exact', head: true }).eq('tool_id', id).is('deleted_at', null),
+      supabase.from('objections').select('id', { count: 'exact', head: true }).eq('tool_id', id).is('deleted_at', null),
+      supabase.from('faqs').select('id', { count: 'exact', head: true }).eq('tool_id', id).is('deleted_at', null),
+    ])
+
+    const scriptCount = scriptsRes.count || 0
+    const objectionCount = objectionsRes.count || 0
+    const faqCount = faqsRes.count || 0
+    const totalLinked = scriptCount + objectionCount + faqCount
+
+    if (totalLinked > 0) {
+      return {
+        error: `Cannot delete tool: It still has ${totalLinked} linked item(s) (${scriptCount} scripts, ${objectionCount} objections, ${faqCount} FAQs). Please delete all linked items first.`
+      }
+    }
+
     const { error } = await supabase.from('tools').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     if (error) return { error: error.message }
     revalidatePath('/admin/tools')
@@ -88,10 +107,29 @@ export async function deleteTool(id: string): Promise<ActionResult> {
 export async function bulkSoftDeleteTools(ids: string[]): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
+
+    // Check for any active linked items across all selected tools
+    const [scriptsRes, objectionsRes, faqsRes] = await Promise.all([
+      supabase.from('scripts').select('id', { count: 'exact', head: true }).in('tool_id', ids).is('deleted_at', null),
+      supabase.from('objections').select('id', { count: 'exact', head: true }).in('tool_id', ids).is('deleted_at', null),
+      supabase.from('faqs').select('id', { count: 'exact', head: true }).in('tool_id', ids).is('deleted_at', null),
+    ])
+
+    const scriptCount = scriptsRes.count || 0
+    const objectionCount = objectionsRes.count || 0
+    const faqCount = faqsRes.count || 0
+    const totalLinked = scriptCount + objectionCount + faqCount
+
+    if (totalLinked > 0) {
+      return {
+        error: `Cannot delete selected tools: ${totalLinked} active linked item(s) exist (${scriptCount} scripts, ${objectionCount} objections, ${faqCount} FAQs). Please delete all linked items first.`
+      }
+    }
+
     const { error } = await supabase.from('tools').update({ deleted_at: new Date().toISOString() }).in('id', ids)
     if (error) return { error: error.message }
     revalidatePath('/admin/tools')
-    
+    revalidatePath('/dashboard/tools')
     return { data: undefined }
   } catch (e: unknown) {
     return { error: (e as Error).message }

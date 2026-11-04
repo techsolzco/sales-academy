@@ -7,37 +7,57 @@ const SCRIPT_TYPE_ORDER: Record<string, number> = {
 }
 function scriptTypePriority(type: string): number { return SCRIPT_TYPE_ORDER[type] ?? 99 }
 
-import { useState, useTransition, useMemo, memo, useCallback } from 'react'
+import { useState, useMemo, memo, useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, FileText, ChevronDown, ChevronRight, LayoutList, FolderTree, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
 import { deleteScript, bulkSoftDeleteScripts, bulkPublishScripts } from '@/lib/actions/scripts'
 import type { SalesScript } from '@/types'
 
+const ScriptCardComponent = memo(({
+  script,
+  isSelected,
+  tabLang,
+  setTabLang,
+  copyCounts,
+  onToggle,
+  onEdit,
+  onDelete,
+  isPending
+}: {
+  script: SalesScript
+  isSelected: boolean
+  tabLang: string
+  setTabLang: (lang: 'en' | 'hi') => void
+  copyCounts: Record<string, number>
+  onToggle: (id: string, checked: boolean) => void
+  onEdit: (script: SalesScript) => void
+  onDelete: (id: string, title?: string) => void
+  isPending: boolean
+}) => {
+  const displayContent = tabLang === 'hi' && script.content_hinglish ? script.content_hinglish : script.content
+  const hasHinglish = !!script.content_hinglish
 
-const ScriptCardComponent = memo(({ script, isSelected, tabLang, setTabLang, copyCounts, onToggle, onEdit, onDelete, isPending }: { script: SalesScript, isSelected: boolean, tabLang: string, setTabLang: (lang: 'en' | 'hi') => void, copyCounts: Record<string, number>, onToggle: (id: string, checked: boolean) => void, onEdit: (script: SalesScript) => void, onDelete: (id: string) => void, isPending: boolean }) => {
-    const displayContent = tabLang === 'hi' && script.content_hinglish ? script.content_hinglish : script.content
-    const hasHinglish = !!script.content_hinglish
-
-    return (
-      <div key={script.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 hover:border-gray-200 dark:hover:border-gray-600 transition shadow-sm space-y-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={e => onToggle(script.id, e.target.checked)}
-              onClick={e => e.stopPropagation()}
-              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 mt-1 flex-shrink-0 cursor-pointer"
-            />
-            <div className="flex-1 min-w-0">
+  return (
+    <div key={script.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 hover:border-gray-200 dark:hover:border-gray-600 transition shadow-sm space-y-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={e => onToggle(script.id, e.target.checked)}
+            onClick={e => e.stopPropagation()}
+            className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 mt-1 flex-shrink-0 cursor-pointer"
+          />
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <StatusBadge status={script.status} />
               <span className="text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold uppercase">
                 {script.script_type.replace(/_/g, ' ')}
               </span>
-              {/* Language toggle pill */}
               <div className="flex items-center rounded-lg bg-gray-100 dark:bg-gray-700 p-0.5 gap-0.5">
                 <button
                   onClick={() => setTabLang('hi')}
@@ -60,40 +80,42 @@ const ScriptCardComponent = memo(({ script, isSelected, tabLang, setTabLang, cop
                 <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded">EN only</span>
               )}
               {copyCounts[script.id] > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 font-semibold">
-                  📋 Copied {copyCounts[script.id]} times
+                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
+                  Copied {copyCounts[script.id]}x
                 </span>
               )}
             </div>
             <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">{script.title}</h3>
           </div>
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={() => onEdit(script)}
-              className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onDelete(script.id)}
-              disabled={isPending}
-              className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
         </div>
-        {script.when_to_use && (
-          <p className="text-xs text-brand-600 dark:text-brand-400 font-medium bg-brand-50 dark:bg-brand-900/30 px-3 py-1.5 rounded-lg inline-block">
-            💡 When to use: {script.when_to_use}
-          </p>
-        )}
-        <pre className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-xs text-gray-900 dark:text-gray-100 font-mono whitespace-pre-wrap leading-relaxed">
-          {displayContent}
-        </pre>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={() => onEdit(script)}
+            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition"
+            title="Edit Script"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(script.id, script.title)}
+            disabled={isPending}
+            className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
+            title="Delete Script"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
-    )
+      {script.when_to_use && (
+        <p className="text-xs text-brand-600 dark:text-brand-400 font-medium bg-brand-50 dark:bg-brand-900/30 px-3 py-1.5 rounded-lg inline-block">
+          💡 When to use: {script.when_to_use}
+        </p>
+      )}
+      <pre className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-xs text-gray-900 dark:text-gray-100 font-mono whitespace-pre-wrap leading-relaxed">
+        {displayContent}
+      </pre>
+    </div>
+  )
 })
 ScriptCardComponent.displayName = 'renderScriptCard'
 
@@ -108,6 +130,7 @@ export function ScriptManager({
   tools?: { id: string; name: string }[]
   initialToolId?: string
 }) {
+  const router = useRouter()
   const handleToggle = useCallback((id: string, checked: boolean) => {
     setSelectedIds(prev => { const next = new Set(prev); checked ? next.add(id) : next.delete(id); return next; })
   }, [])
@@ -119,12 +142,20 @@ export function ScriptManager({
   const [selectedScript, setSelectedScript] = useState<SalesScript | null>(null)
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [filterToolId, setFilterToolId] = useState(initialToolId)
   const [tabLang, setTabLang] = useState<'en' | 'hi'>('hi')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [isBulkPublishing, setIsBulkPublishing] = useState(false)
+
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'single' | 'bulk'
+    id?: string
+    title?: string
+    count?: number
+  } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const scriptTypes = ['All', ...Array.from(new Set(scripts.map(s => s.script_type)))]
 
@@ -183,37 +214,63 @@ export function ScriptManager({
     setAiDraft(null)
   }
 
-  const handleDelete = useCallback((id: string) => {
-    if (!confirm('Are you sure you want to delete this script?')) return
-    startTransition(async () => {
-      const res = await deleteScript(id)
-      if (!res.error) {
-        setScripts(prev => prev.filter(s => s.id !== id))
-        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
-      }
-    })
+  const handleDelete = useCallback((id: string, title?: string) => {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'single', id, title })
   }, [])
 
-  async function handleBulkDelete() {
-    if (!confirm(`Delete ${selectedIds.size} selected scripts?`)) return
-    setIsBulkDeleting(true)
-    const ids = Array.from(selectedIds)
-    const res = await bulkSoftDeleteScripts(ids)
-    if (!res.error) {
-      setScripts(prev => prev.filter(s => !selectedIds.has(s.id)))
-      setSelectedIds(new Set())
+  function requestBulkDelete() {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'bulk', count: selectedIds.size })
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      if (deleteTarget.type === 'single' && deleteTarget.id) {
+        const res = await deleteScript(deleteTarget.id)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setScripts(prev => prev.filter(s => s.id !== deleteTarget.id))
+        setSelectedIds(prev => {
+          const next = new Set(prev)
+          next.delete(deleteTarget.id!)
+          return next
+        })
+      } else if (deleteTarget.type === 'bulk') {
+        const ids = Array.from(selectedIds)
+        const res = await bulkSoftDeleteScripts(ids)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setScripts(prev => prev.filter(s => !selectedIds.has(s.id)))
+        setSelectedIds(new Set())
+      }
+      setIsDeleting(false)
+      setDeleteTarget(null)
+      router.refresh()
+    } catch (e: any) {
+      setDeleteError(e.message || 'Failed to delete')
+      setIsDeleting(false)
     }
-    setIsBulkDeleting(false)
   }
 
   async function handleBulkPublish() {
-    if (!confirm(`Publish ${selectedIds.size} scripts?`)) return
-    setIsBulkDeleting(true)
+    setIsBulkPublishing(true)
     const res = await bulkPublishScripts(Array.from(selectedIds))
-    setIsBulkDeleting(false)
+    setIsBulkPublishing(false)
     if (!res.error) {
       setScripts(prev => prev.map(s => selectedIds.has(s.id) ? { ...s, status: 'published' } : s))
       setSelectedIds(new Set())
+      router.refresh()
     }
   }
 
@@ -266,14 +323,14 @@ export function ScriptManager({
           />
           <button
             onClick={handleCreate}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm flex-shrink-0"
           >
-            <Plus className="w-4 h-4" /> Add Script
+            <Plus className="w-4 h-4" /> New Script
           </button>
         </div>
       </div>
 
-      {/* Script Type Filter Pills */}
+      {/* Script Type Filters */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-4">
         {scriptTypes.map(st => (
           <button
@@ -310,7 +367,7 @@ export function ScriptManager({
                 onToggle={handleToggle}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                isPending={isPending}
+                isPending={isDeleting}
               />
             ))}
           </div>
@@ -346,7 +403,7 @@ export function ScriptManager({
                           onToggle={handleToggle}
                           onEdit={handleEdit}
                           onDelete={handleDelete}
-                          isPending={isPending}
+                          isPending={isDeleting}
                         />
                       ))}
                     </div>
@@ -370,19 +427,44 @@ export function ScriptManager({
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{selectedIds.size} selected</span>
 
-          <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
-            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          <button
+            onClick={handleBulkPublish}
+            disabled={isBulkPublishing || isDeleting}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50"
+          >
+            {isBulkPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Publish Selected
           </button>
 
-          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
-            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          <button
+            onClick={requestBulkDelete}
+            disabled={isDeleting || isBulkPublishing}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
             Delete Selected
           </button>
 
           <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        title={deleteTarget?.type === 'bulk' ? `Delete ${deleteTarget.count} Scripts` : 'Delete Script'}
+        message="Are you sure? This cannot be undone."
+        itemTitle={deleteTarget?.type === 'single' ? deleteTarget.title : undefined}
+        isDeleting={isDeleting}
+        error={deleteError}
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteTarget(null)
+            setDeleteError(null)
+          }
+        }}
+      />
     </div>
   )
 }

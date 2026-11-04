@@ -1,40 +1,55 @@
 'use client'
 
-import { useState, useTransition, useMemo, memo, useCallback } from 'react'
+import { useState, useMemo, memo, useCallback } from 'react'
 import { Plus, Edit, Trash2, Search, AlertCircle, ChevronDown, ChevronRight, LayoutList, FolderTree, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
 import { deleteObjection, bulkSoftDeleteObjections, bulkPublishObjections } from '@/lib/actions/objections'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { Objection } from '@/types'
 
-
-const ObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, onDelete, isPending }: { o: Objection, isSelected: boolean, onToggle: (id: string, checked: boolean) => void, onEdit: (o: Objection) => void, onDelete: (id: string) => void, isPending: boolean }) => {
-    return (
-      <TranslateContextWrapper
-        key={o.id}
-        table="objections"
-        recordId={o.id}
-        fieldsToTranslate={{
-          recommended_response_translated: o.recommended_response
-        }}
-        initialTranslations={{
-          recommended_response_translated: o.recommended_response_translated
-        }}
-      >
-        {({ displayTexts, toggleButton }) => (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm hover:border-gray-200 dark:hover:border-gray-600 transition space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={e => onToggle(o.id, e.target.checked)}
-                  onClick={e => e.stopPropagation()}
-                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 mt-1 flex-shrink-0 cursor-pointer"
-                />
-                <div className="flex-1 min-w-0">
+const ObjectionCardComponent = memo(({
+  o,
+  isSelected,
+  onToggle,
+  onEdit,
+  onDelete,
+  isPending
+}: {
+  o: Objection
+  isSelected: boolean
+  onToggle: (id: string, checked: boolean) => void
+  onEdit: (o: Objection) => void
+  onDelete: (id: string, title?: string) => void
+  isPending: boolean
+}) => {
+  return (
+    <TranslateContextWrapper
+      key={o.id}
+      table="objections"
+      recordId={o.id}
+      fieldsToTranslate={{
+        recommended_response_translated: o.recommended_response
+      }}
+      initialTranslations={{
+        recommended_response_translated: o.recommended_response_translated
+      }}
+    >
+      {({ displayTexts, toggleButton }) => (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm hover:border-gray-200 dark:hover:border-gray-600 transition space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={e => onToggle(o.id, e.target.checked)}
+                onClick={e => e.stopPropagation()}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 mt-1 flex-shrink-0 cursor-pointer"
+              />
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5">
                   <StatusBadge status={o.status} />
                   {o.difficulty && (
@@ -56,48 +71,51 @@ const ObjectionCardComponent = memo(({ o, isSelected, onToggle, onEdit, onDelete
                 </div>
                 <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base">&ldquo;{o.objection_text}&rdquo;</h3>
               </div>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  onClick={() => onEdit(o)}
-                  className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onDelete(o.id)}
-                  disabled={isPending}
-                  className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
             </div>
-            {o.meaning && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/60 p-2.5 rounded-lg border border-gray-100 dark:border-gray-600">
-                🔍 <span className="font-semibold text-gray-700 dark:text-gray-300">Underlying Meaning:</span> {o.meaning}
-              </p>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-              <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/50 space-y-1">
-                <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">✅ Recommended Response</p>
-                <p className="text-xs text-gray-900 dark:text-gray-100 leading-relaxed font-sans">{displayTexts.recommended_response_translated}</p>
-              </div>
-              {o.do_not_say && (
-                <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50 space-y-1">
-                  <p className="text-xs font-bold text-red-800 dark:text-red-300 uppercase tracking-wider">🚫 DO NOT SAY</p>
-                  <p className="text-xs text-gray-900 dark:text-gray-100 leading-relaxed font-sans">{o.do_not_say}</p>
-                </div>
-              )}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={() => onEdit(o)}
+                className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 transition"
+                title="Edit Objection"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(o.id, o.objection_text)}
+                disabled={isPending}
+                className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-40"
+                title="Delete Objection"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        )}
-      </TranslateContextWrapper>
-    )
+          {o.meaning && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/60 p-2.5 rounded-lg border border-gray-100 dark:border-gray-600">
+              🔍 <span className="font-semibold text-gray-700 dark:text-gray-300">Underlying Meaning:</span> {o.meaning}
+            </p>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/50 space-y-1">
+              <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">✅ Recommended Response</p>
+              <p className="text-xs text-gray-900 dark:text-gray-100 leading-relaxed font-sans">{displayTexts.recommended_response_translated}</p>
+            </div>
+            {o.do_not_say && (
+              <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50 space-y-1">
+                <p className="text-xs font-bold text-red-800 dark:text-red-300 uppercase tracking-wider">🚫 DO NOT SAY</p>
+                <p className="text-xs text-gray-900 dark:text-gray-100 leading-relaxed font-sans">{o.do_not_say}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </TranslateContextWrapper>
+  )
 })
 ObjectionCardComponent.displayName = 'renderObjectionCard'
 
 export function ObjectionManager({ initialObjections, tools = [], initialToolId }: { initialObjections: Objection[], tools?: { id: string; name: string }[], initialToolId?: string }) {
+  const router = useRouter()
   const handleToggle = useCallback((id: string, checked: boolean) => {
     setSelectedIds(prev => { const next = new Set(prev); checked ? next.add(id) : next.delete(id); return next; })
   }, [])
@@ -111,9 +129,17 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
   const [selectedObjection, setSelectedObjection] = useState<Objection | null>(null)
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [isBulkPublishing, setIsBulkPublishing] = useState(false)
+
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'single' | 'bulk'
+    id?: string
+    title?: string
+    count?: number
+  } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const filtered = objections.filter(o => {
     const q = search.toLowerCase()
@@ -142,6 +168,8 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
       .sort((a, b) => b[1].items.length - a[1].items.length || a[1].name.localeCompare(b[1].name))
   }, [filtered, tools])
 
+  const categories = Array.from(new Set(objections.map(o => o.category).filter((c): c is string => Boolean(c))))
+
   function toggleGroup(key: string) {
     setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }))
   }
@@ -169,37 +197,63 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
     setAiDraft(null)
   }
 
-  const handleDelete = useCallback((id: string) => {
-    if (!confirm('Are you sure you want to delete this objection response?')) return
-    startTransition(async () => {
-      const res = await deleteObjection(id)
-      if (!res.error) {
-        setObjections(prev => prev.filter(o => o.id !== id))
-        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
-      }
-    })
+  const handleDelete = useCallback((id: string, title?: string) => {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'single', id, title })
   }, [])
 
-  async function handleBulkDelete() {
-    if (!confirm(`Delete ${selectedIds.size} selected objections?`)) return
-    setIsBulkDeleting(true)
-    const ids = Array.from(selectedIds)
-    const res = await bulkSoftDeleteObjections(ids)
-    if (!res.error) {
-      setObjections(prev => prev.filter(o => !selectedIds.has(o.id)))
-      setSelectedIds(new Set())
+  function requestBulkDelete() {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'bulk', count: selectedIds.size })
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      if (deleteTarget.type === 'single' && deleteTarget.id) {
+        const res = await deleteObjection(deleteTarget.id)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setObjections(prev => prev.filter(o => o.id !== deleteTarget.id))
+        setSelectedIds(prev => {
+          const next = new Set(prev)
+          next.delete(deleteTarget.id!)
+          return next
+        })
+      } else if (deleteTarget.type === 'bulk') {
+        const ids = Array.from(selectedIds)
+        const res = await bulkSoftDeleteObjections(ids)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setObjections(prev => prev.filter(o => !selectedIds.has(o.id)))
+        setSelectedIds(new Set())
+      }
+      setIsDeleting(false)
+      setDeleteTarget(null)
+      router.refresh()
+    } catch (e: any) {
+      setDeleteError(e.message || 'Failed to delete')
+      setIsDeleting(false)
     }
-    setIsBulkDeleting(false)
   }
 
   async function handleBulkPublish() {
-    if (!confirm(`Publish ${selectedIds.size} objections?`)) return
-    setIsBulkDeleting(true)
+    setIsBulkPublishing(true)
     const res = await bulkPublishObjections(Array.from(selectedIds))
-    setIsBulkDeleting(false)
+    setIsBulkPublishing(false)
     if (!res.error) {
       setObjections(prev => prev.map(o => selectedIds.has(o.id) ? { ...o, status: 'published' } : o))
       setSelectedIds(new Set())
+      router.refresh()
     }
   }
 
@@ -232,9 +286,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
             className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-400 [&>option]:text-gray-900 dark:[&>option]:text-gray-100"
           >
             <option value="" className="text-gray-900 dark:text-gray-100">All Categories</option>
-            {Array.from(new Set(objections.map(o => o.category).filter(Boolean))).sort().map(cat => (
-              <option key={cat} value={cat!} className="text-gray-900 dark:text-gray-100">{cat}</option>
-            ))}
+            {categories.map(c => <option key={c} value={c} className="text-gray-900 dark:text-gray-100">{c}</option>)}
           </select>
         </div>
 
@@ -262,18 +314,18 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
           />
           <button
             onClick={handleCreate}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm flex-shrink-0"
           >
-            <Plus className="w-4 h-4" /> Add Objection
+            <Plus className="w-4 h-4" /> New Objection
           </button>
         </div>
       </div>
 
-      {/* List */}
+      {/* Main Content */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-sm">
           <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-          No objections found.
+          No objection responses found.
         </div>
       ) : (
         viewMode === 'list' ? (
@@ -286,7 +338,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
                 onToggle={handleToggle}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                isPending={isPending}
+                isPending={isDeleting}
               />
             ))}
           </div>
@@ -319,7 +371,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
                           onToggle={handleToggle}
                           onEdit={handleEdit}
                           onDelete={handleDelete}
-                          isPending={isPending}
+                          isPending={isDeleting}
                         />
                       ))}
                     </div>
@@ -343,19 +395,44 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{selectedIds.size} selected</span>
 
-          <button onClick={handleBulkPublish} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50">
-            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          <button
+            onClick={handleBulkPublish}
+            disabled={isBulkPublishing || isDeleting}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50"
+          >
+            {isBulkPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Publish Selected
           </button>
 
-          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
-            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          <button
+            onClick={requestBulkDelete}
+            disabled={isDeleting || isBulkPublishing}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
             Delete Selected
           </button>
 
           <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        title={deleteTarget?.type === 'bulk' ? `Delete ${deleteTarget.count} Objections` : 'Delete Objection'}
+        message="Are you sure? This cannot be undone."
+        itemTitle={deleteTarget?.type === 'single' ? deleteTarget.title : undefined}
+        isDeleting={isDeleting}
+        error={deleteError}
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteTarget(null)
+            setDeleteError(null)
+          }
+        }}
+      />
     </div>
   )
 }

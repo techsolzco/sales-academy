@@ -1,24 +1,33 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Plus, Edit, Trash2, Search, Wrench, ExternalLink, Play, TreeDeciduous, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Edit, Trash2, Search, Wrench, ExternalLink, TreeDeciduous } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ToolFormModal } from '@/components/admin/ToolFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
+import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
 import { deleteTool, bulkSoftDeleteTools } from '@/lib/actions/tools'
 import type { Tool } from '@/types'
 
 export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
+  const router = useRouter()
   const [tools, setTools] = useState(initialTools)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
   const [aiDraft, setAiDraft] = useState<Record<string, unknown> | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'single' | 'bulk'
+    id?: string
+    name?: string
+    count?: number
+  } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const categories = ['All', ...Array.from(new Set(tools.map(t => t.category)))]
 
@@ -56,31 +65,61 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
     setAiDraft(null)
   }
 
-  function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this tool?')) return
-    startTransition(async () => {
-      const res = await deleteTool(id)
-      if (!res.error) {
-        setTools(prev => prev.filter(t => t.id !== id))
-        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
+  function requestDelete(tool: Tool) {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'single', id: tool.id, name: tool.name })
+  }
+
+  function requestBulkDelete() {
+    setDeleteError(null)
+    setDeleteTarget({ type: 'bulk', count: selectedIds.size })
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      if (deleteTarget.type === 'single' && deleteTarget.id) {
+        const res = await deleteTool(deleteTarget.id)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setTools(prev => prev.filter(t => t.id !== deleteTarget.id))
+        setSelectedIds(prev => {
+          const next = new Set(prev)
+          next.delete(deleteTarget.id!)
+          return next
+        })
+      } else if (deleteTarget.type === 'bulk') {
+        const ids = Array.from(selectedIds)
+        const res = await bulkSoftDeleteTools(ids)
+        if (res.error) {
+          setDeleteError(res.error)
+          setIsDeleting(false)
+          return
+        }
+        setTools(prev => prev.filter(t => !selectedIds.has(t.id)))
+        setSelectedIds(new Set())
       }
-    })
+      setIsDeleting(false)
+      setDeleteTarget(null)
+      router.refresh()
+    } catch (e: any) {
+      setDeleteError(e.message || 'Failed to delete')
+      setIsDeleting(false)
+    }
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
-  }
-
-  async function handleBulkDelete() {
-    if (!confirm(`Delete ${selectedIds.size} selected tools?`)) return
-    setIsBulkDeleting(true)
-    const ids = Array.from(selectedIds)
-    const res = await bulkSoftDeleteTools(ids)
-    if (!res.error) {
-      setTools(prev => prev.filter(t => !selectedIds.has(t.id)))
-      setSelectedIds(new Set())
-    }
-    setIsBulkDeleting(false)
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
 
   return (
@@ -169,13 +208,15 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
                     <button
                       onClick={() => handleEdit(tool)}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                      title="Edit Tool"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(tool.id)}
-                      disabled={isPending}
+                      onClick={() => requestDelete(tool)}
+                      disabled={isDeleting}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-40"
+                      title="Delete Tool"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -237,13 +278,34 @@ export function ToolManager({ initialTools }: { initialTools: Tool[] }) {
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-gray-200 rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4">
           <span className="text-sm font-medium text-gray-700">{selectedIds.size} selected</span>
-          <button onClick={handleBulkDelete} disabled={isBulkDeleting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50">
-            {isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          <button
+            onClick={requestBulkDelete}
+            disabled={isDeleting}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
             Delete {selectedIds.size} selected
           </button>
           <button onClick={() => setSelectedIds(new Set())} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        title={deleteTarget?.type === 'bulk' ? `Delete ${deleteTarget.count} Tools` : 'Delete Tool'}
+        message="Are you sure? This cannot be undone."
+        itemTitle={deleteTarget?.type === 'single' ? deleteTarget.name : undefined}
+        isDeleting={isDeleting}
+        error={deleteError}
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (!isDeleting) {
+            setDeleteTarget(null)
+            setDeleteError(null)
+          }
+        }}
+      />
     </div>
   )
 }
