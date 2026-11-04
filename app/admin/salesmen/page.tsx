@@ -1,18 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { redirect } from 'next/navigation'
 import { fetchTeamMembers } from '@/lib/actions/users'
 import { SalesmenList } from './SalesmenList'
 import { CreateUserModal } from '@/components/admin/CreateUserModal'
 
 export default async function AdminSalesmenPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
-
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { userId, profile } = await getEffectiveUser()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const salesmen = await fetchTeamMembers()
+  const salesmen = await fetchTeamMembers(true)
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto w-full">
@@ -23,7 +19,7 @@ export default async function AdminSalesmenPage() {
         </div>
         <CreateUserModal />
       </div>
-      <SalesmenList salesmen={salesmen} currentUserId={user.id} />
+      <SalesmenList salesmen={salesmen} currentUserId={userId} />
     </div>
   )
 }

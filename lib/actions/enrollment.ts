@@ -33,59 +33,100 @@ export interface EnrollmentInput {
 export async function submitEnrollmentApplication(
   input: EnrollmentInput
 ): Promise<ActionResult> {
-  // Use service client — anonymous users have no session so anon client is blocked by RLS
   const serviceClient = getServiceClient()
+  const cleanEmail = input.email.trim().toLowerCase()
+  const fullName = input.full_name.trim()
+
+  if (!input.password || input.password.length < 6) {
+    return { error: 'Password must be at least 6 characters long.' }
+  }
 
   // Guard: check if email already exists in profiles
   const { data: existingProfile } = await serviceClient
     .from('profiles')
     .select('id, role')
-    .eq('email', input.email)
+    .eq('email', cleanEmail)
     .maybeSingle()
 
   if (existingProfile) {
-    return { error: 'An account with this email already exists. Please use a different email or contact the admin.' }
+    return { error: 'An account with this email already exists. Please log in or use a different email.' }
   }
 
-  // Also check pending/approved enrollment applications with this email
+  // Also check existing applications
   const { data: existingApp } = await serviceClient
     .from('enrollment_applications')
     .select('id, status')
-    .eq('email', input.email)
+    .eq('email', cleanEmail)
     .in('status', ['pending', 'approved'])
     .maybeSingle()
 
   if (existingApp) {
-    if (existingApp.status === 'pending') {
-      return { error: 'An application with this email is already under review. Please wait for approval or contact the admin.' }
-    }
-    return { error: 'This email has already been approved. Please login or use the Forgot Password option.' }
+    return { error: 'An account with this email already exists. Please log in or use a different email.' }
   }
 
-  // Insert application
-  const { data: app, error: appErr } = await serviceClient
+  // Create user directly in Supabase Auth using the user's chosen password
+  const { data: authData, error: authErr } = await serviceClient.auth.admin.createUser({
+    email: cleanEmail,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+      role: 'salesman',
+    },
+  })
+
+  if (authErr) {
+    if (authErr.message.toLowerCase().includes('already') || authErr.message.toLowerCase().includes('registered')) {
+      return { error: 'An account with this email already exists. Please log in or use a different email.' }
+    }
+    return { error: `Signup failed: ${authErr.message}` }
+  }
+
+  const newUserId = authData.user.id
+
+  // Create or update profile with all provided metadata
+  const { error: profileErr } = await serviceClient.from('profiles').upsert({
+    id: newUserId,
+    full_name: fullName,
+    email: cleanEmail,
+    role: 'salesman',
+    status: 'active',
+    avatar_url: input.avatar_url || null,
+    phone: input.phone?.trim() || null,
+    whatsapp: input.whatsapp?.trim() || null,
+    instagram: input.instagram?.trim() || null,
+    facebook: input.facebook?.trim() || null,
+    linkedin: input.linkedin?.trim() || null,
+  })
+
+  if (profileErr) {
+    console.error('Profile creation error during signup:', profileErr)
+  }
+
+  // Insert application record for auditing and admin tracking
+  const { error: appErr } = await serviceClient
     .from('enrollment_applications')
     .insert({
-      full_name: input.full_name,
-      email: input.email,
-      phone: input.phone || null,
+      full_name: fullName,
+      email: cleanEmail,
+      phone: input.phone?.trim() || null,
       knowledge_level: input.knowledge_level || null,
       desired_course: input.desired_course || null,
       reason: input.reason || null,
       prior_experience: input.prior_experience || null,
       avatar_url: input.avatar_url || null,
-      whatsapp: input.whatsapp || null,
-      instagram: input.instagram || null,
-      facebook: input.facebook || null,
-      linkedin: input.linkedin || null,
-      status: 'pending',
+      whatsapp: input.whatsapp?.trim() || null,
+      instagram: input.instagram?.trim() || null,
+      facebook: input.facebook?.trim() || null,
+      linkedin: input.linkedin?.trim() || null,
+      status: 'approved',
     })
-    .select()
-    .single()
 
-  if (appErr) return { error: appErr.message }
+  if (appErr) {
+    console.error('Application record insert error:', appErr)
+  }
 
-  // Notify all admins
+  // Notify admins
   const { data: admins } = await serviceClient
     .from('profiles')
     .select('id')
@@ -94,10 +135,10 @@ export async function submitEnrollmentApplication(
   if (admins && admins.length > 0) {
     const notifs = admins.map((a) => ({
       user_id: a.id,
-      title: `New enrollment application from ${input.full_name}`,
-      body: `${input.email} wants to join ${SITE_NAME}.`,
+      title: `New salesman registered: ${fullName}`,
+      body: `${cleanEmail} joined ${SITE_NAME}.`,
       type: 'enrollment',
-      link: '/admin/enrollments',
+      link: '/admin/salesmen',
     }))
     await serviceClient.from('notifications').insert(notifs)
   }
@@ -126,7 +167,7 @@ export async function approveApplication(id: string): Promise<ActionResult> {
 
   const serviceClient = getServiceClient()
 
-  // SAFETY GUARD: check if this email already has a profile — never overwrite existing accounts
+  // Check if profile already exists
   const { data: existingProfile } = await serviceClient
     .from('profiles')
     .select('id, role, status')
@@ -134,12 +175,27 @@ export async function approveApplication(id: string): Promise<ActionResult> {
     .maybeSingle()
 
   if (existingProfile) {
-    // Mark application rejected to keep data clean
+    if (existingProfile.role === 'admin') {
+      await serviceClient
+        .from('enrollment_applications')
+        .update({ status: 'rejected', rejection_reason: 'Email belongs to an existing admin account.', updated_at: new Date().toISOString() })
+        .eq('id', id)
+      return { error: `Cannot approve: this email (${app.email}) belongs to an admin account.` }
+    }
+
+    // Existing salesman: activate profile and approve application without touching their password
+    await serviceClient
+      .from('profiles')
+      .update({ status: 'active' })
+      .eq('id', existingProfile.id)
+
     await serviceClient
       .from('enrollment_applications')
-      .update({ status: 'rejected', rejection_reason: 'Email already belongs to an existing account.', updated_at: new Date().toISOString() })
+      .update({ status: 'approved', updated_at: new Date().toISOString() })
       .eq('id', id)
-    return { error: `Cannot approve: this email (${app.email}) already belongs to an existing ${existingProfile.role} account. The application has been rejected.` }
+
+    revalidatePath('/admin/enrollments')
+    return { data: undefined }
   }
 
   // Generate a secure temp password for the new user

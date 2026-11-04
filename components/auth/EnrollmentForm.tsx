@@ -79,30 +79,51 @@ export function EnrollmentForm() {
       setUploadingAvatar(false)
     }
 
+    const cleanEmail = formData.email.trim().toLowerCase()
     const result = await submitEnrollmentApplication({
       ...formData,
+      email: cleanEmail,
       avatar_url: avatarUrl,
       knowledge_level: formData.knowledge_level as 'beginner' | 'intermediate' | 'advanced' | undefined,
     })
-    setLoading(false)
+
     if (result.error) {
+      setLoading(false)
       alert(result.error)
-    } else {
-      setSuccess(true)
+      return
     }
+
+    // Automatically log in the user with their newly registered credentials
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: formData.password,
+      })
+      if (!signInErr) {
+        window.location.href = '/dashboard'
+        return
+      }
+    } catch {
+      // Fallback to success screen
+    }
+
+    setLoading(false)
+    setSuccess(true)
   }
 
   if (success) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
         <CheckCircle2 className="w-16 h-16 text-brand-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Application Submitted! 🎉</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Your application has been submitted! We'll review it and notify you by email once approved.</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Account Created! 🎉</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">Your registration is complete. You can now log in using your email and password.</p>
         <button
           onClick={() => router.push('/auth/login')}
           className="bg-brand-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-brand-700 transition"
         >
-          Return to Login
+          Go to Login
         </button>
       </div>
     )

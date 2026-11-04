@@ -1,10 +1,11 @@
 'use client'
 import { SITE_NAME } from '@/lib/config/site'
 
-import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useSidebar } from './SidebarContext'
-import { useEffect, useTransition, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 
 interface NavItem {
@@ -24,7 +25,6 @@ function SidebarNavList({
   footer,
   pathname,
   pendingHref,
-  isPending,
   onNavClick,
   onClose,
   showCloseButton = false,
@@ -33,7 +33,6 @@ function SidebarNavList({
   footer?: React.ReactNode
   pathname: string
   pendingHref: string | null
-  isPending: boolean
   onNavClick: (href: string) => void
   onClose?: () => void
   showCloseButton?: boolean
@@ -70,8 +69,10 @@ function SidebarNavList({
           const isPendingItem = pendingHref === item.href
           const isActive = isPendingItem || (isCurrentRoute && !pendingHref)
           return (
-            <button
+            <Link
               key={item.href}
+              href={item.href}
+              prefetch={true}
               onClick={() => onNavClick(item.href)}
               className={cn(
                 // min h-11 = 44px touch target, full width, left-aligned text
@@ -89,10 +90,10 @@ function SidebarNavList({
                   {item.badge > 99 ? '99+' : item.badge}
                 </span>
               )}
-              {isPendingItem && isPending && (
+              {isPendingItem && (
                 <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin flex-shrink-0" />
               )}
-            </button>
+            </Link>
           )
         })}
       </nav>
@@ -109,12 +110,10 @@ function SidebarNavList({
 
 export function Sidebar({ navItems, footer }: SidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
-  const [isPending, startTransition] = useTransition()
   const [pendingHref, setPendingHref] = useState<string | null>(null)
 
-  // Close sidebar on route change
+  // Close sidebar and reset pending on route change
   useEffect(() => {
     setIsOpen(false)
     setPendingHref(null)
@@ -127,9 +126,6 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
     }
     setIsOpen(false) // Close mobile sidebar immediately
     setPendingHref(href)
-    startTransition(() => {
-      router.push(href)
-    })
   }
 
   const sidebarBackground = {
@@ -151,7 +147,6 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
           footer={footer}
           pathname={pathname}
           pendingHref={pendingHref}
-          isPending={isPending}
           onNavClick={handleNavClick}
         />
       </aside>
@@ -186,7 +181,6 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
             footer={footer}
             pathname={pathname}
             pendingHref={pendingHref}
-            isPending={isPending}
             onNavClick={handleNavClick}
             onClose={() => setIsOpen(false)}
             showCloseButton
@@ -196,4 +190,3 @@ export function Sidebar({ navItems, footer }: SidebarProps) {
     </>
   )
 }
-

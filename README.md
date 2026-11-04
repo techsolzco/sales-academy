@@ -1,4 +1,4 @@
-# Sales Academy
+# Academy ProWala
 
 A role-based SaaS platform for managing salesperson training.
 

@@ -54,10 +54,18 @@ export async function updateProfile(data: { full_name?: string; bio?: string; ph
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
+
+  // Only include columns that actually exist in the profiles schema
+  const payload: Record<string, string | null> = {}
+  if (data.full_name !== undefined) payload.full_name = data.full_name.trim()
+  if (data.bio !== undefined) payload.bio = data.bio.trim() || null
+  if (data.phone !== undefined) payload.phone = data.phone.trim() || null
+
   const { error } = await supabase
     .from('profiles')
-    .update({ ...data, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq('id', user.id)
+
   if (error) return { error: error.message }
   return { data: undefined }
 }

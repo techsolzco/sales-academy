@@ -12,7 +12,7 @@
  */
 
 export const SITE_NAME =
-  process.env.NEXT_PUBLIC_SITE_NAME ?? 'Sales Academy'
+  process.env.NEXT_PUBLIC_SITE_NAME ?? 'Academy ProWala'
 
 export const SITE_TAGLINE =
   process.env.NEXT_PUBLIC_SITE_TAGLINE ?? 'Elevate your sales performance'

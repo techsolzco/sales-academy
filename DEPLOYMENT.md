@@ -19,7 +19,7 @@ Update **only** these vars — no code changes needed:
 
 ```env
 # Branding
-NEXT_PUBLIC_SITE_NAME=Sales Academy          # or whatever you want to call it
+NEXT_PUBLIC_SITE_NAME=Academy ProWala          # or whatever you want to call it
 NEXT_PUBLIC_SITE_TAGLINE=Elevate your sales performance
 NEXT_PUBLIC_SITE_URL=https://portal.example.com   # ← new subdomain
 NEXT_PUBLIC_SUPPORT_WHATSAPP=923107902212         # digits only

@@ -7,7 +7,6 @@ import { TrainingTabs } from '@/components/training/TrainingTabs'
 import { SalesmanScriptViewer } from '@/components/training/SalesmanScriptViewer'
 import { SalesmanObjectionViewer } from '@/components/training/SalesmanObjectionViewer'
 import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
-import { getReviewedKbItems } from '@/lib/actions/kb-reviews'
 
 const SCRIPT_TYPE_ORDER: Record<string, number> = {
   greeting: 1,
@@ -40,7 +39,7 @@ export default async function TrainingPage({
   // "Google Ai + Canva" has been set to draft, so only published courses (Reel Bundle) return
   const { data: coursesData } = await supabase
     .from('courses')
-    .select('*')
+    .select('id, title, description, thumbnail_url, category, difficulty, estimated_duration_minutes, tool_id')
     .is('deleted_at', null)
     .eq('status', 'published')
     .order('created_at', { ascending: true })
@@ -87,14 +86,12 @@ export default async function TrainingPage({
   const completedSet = new Set((progress ?? []).map(p => p.lesson_id))
   const assignmentByCourse = Object.fromEntries((assignments ?? []).map(a => [a.course_id, a]))
 
-  // 3. Fetch published General (Uncategorized, tool_id is null) scripts, objections, faqs
+  // 3. Parallel fetch: published General items + combined kb_reviews in a single query
   const [
     { data: rawGeneralScripts },
     { data: rawGeneralObjections },
     { data: rawGeneralFaqs },
-    reviewedScripts,
-    reviewedObjections,
-    reviewedFaqs,
+    { data: reviewsData },
   ] = await Promise.all([
     supabase
       .from('scripts')
@@ -118,10 +115,15 @@ export default async function TrainingPage({
       .is('tool_id', null)
       .order('priority', { ascending: false })
       .order('created_at', { ascending: false }),
-    getReviewedKbItems('script'),
-    getReviewedKbItems('objection'),
-    getReviewedKbItems('faq'),
+    supabase
+      .from('kb_reviews')
+      .select('content_type, content_id')
+      .eq('user_id', userId),
   ])
+
+  const reviewedScripts = (reviewsData ?? []).filter(r => r.content_type === 'script').map(r => r.content_id)
+  const reviewedObjections = (reviewsData ?? []).filter(r => r.content_type === 'objection').map(r => r.content_id)
+  const reviewedFaqs = (reviewsData ?? []).filter(r => r.content_type === 'faq').map(r => r.content_id)
 
   const generalScripts = (rawGeneralScripts ?? []).sort((a, b) =>
     scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) ||

@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
@@ -10,12 +11,12 @@ export interface EffectiveUser {
   profile: { full_name: string | null; email: string | null; role: string | null } | null
 }
 
-export async function getEffectiveUser(): Promise<EffectiveUser> {
+export const getEffectiveUser = cache(async (): Promise<EffectiveUser> => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   const viewAsUserId = cookieStore.get('view_as_user_id')?.value
 
   const { data: realProfile } = await supabase
@@ -43,4 +44,4 @@ export async function getEffectiveUser(): Promise<EffectiveUser> {
   }
 
   return { userId: user.id, realUserId: user.id, isImpersonating: false, profile: realProfile ?? null }
-}
+})

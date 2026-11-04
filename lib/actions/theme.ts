@@ -1,10 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { ThemeSettings } from '@/types'
 
-export async function fetchThemeSettings(portal: 'admin' | 'salesman'): Promise<ThemeSettings | null> {
+async function getThemeFromDb(portal: 'admin' | 'salesman'): Promise<ThemeSettings | null> {
   try {
     const supabase = await createClient()
 
@@ -25,6 +25,12 @@ export async function fetchThemeSettings(portal: 'admin' | 'salesman'): Promise<
     return null
   }
 }
+
+export const fetchThemeSettings = unstable_cache(
+  async (portal: 'admin' | 'salesman') => getThemeFromDb(portal),
+  ['theme_settings_cache'],
+  { revalidate: 3600, tags: ['theme_settings'] }
+)
 
 export async function updateThemeSettings(portal: 'admin' | 'salesman', data: Partial<ThemeSettings>) {
   try {
@@ -58,4 +64,3 @@ export async function updateThemeSettings(portal: 'admin' | 'salesman', data: Pa
     return { success: false, error: err?.message || 'Failed to update theme' }
   }
 }
-

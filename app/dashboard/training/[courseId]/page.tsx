@@ -21,30 +21,33 @@ export default async function TrainingCoursePage({
   const supabase = await createClient()
   const { userId } = await getEffectiveUser()
 
-  // Fetch assignment metadata (due dates) â€” optional, does not block access
-  const { data: assignment } = await supabase
-    .from('course_assignments')
-    .select('id, due_date')
-    .eq('course_id', params.courseId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const { data: course } = await supabase
-    .from('courses')
-    .select('*').is('deleted_at', null)
-    .eq('id', params.courseId)
-    .eq('status', 'published')
-    .single()
-  if (!course) notFound()
-
   const tab = searchParams.tab || 'lessons'
   const lang = (searchParams.lang as 'en' | 'hi') || 'en'
 
-  const { data: modules } = await supabase
-    .from('modules')
-    .select('*, lessons(*)').is('deleted_at', null)
-    .eq('course_id', params.courseId)
-    .order('order_index')
+  // Parallelize initial queries
+  const [{ data: assignment }, { data: course }, { data: modules }] = await Promise.all([
+    supabase
+      .from('course_assignments')
+      .select('id, due_date')
+      .eq('course_id', params.courseId)
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('courses')
+      .select('*')
+      .is('deleted_at', null)
+      .eq('id', params.courseId)
+      .eq('status', 'published')
+      .maybeSingle(),
+    supabase
+      .from('modules')
+      .select('*, lessons(*)')
+      .is('deleted_at', null)
+      .eq('course_id', params.courseId)
+      .order('order_index'),
+  ])
+
+  if (!course) notFound()
 
   const allLessonIds = (modules ?? []).flatMap(m =>
     (m.lessons as { id: string }[]).map(l => l.id)

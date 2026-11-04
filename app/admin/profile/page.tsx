@@ -1,8 +1,10 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AvatarUpload } from '@/components/profile/AvatarUpload'
-import { Mail, User, ShieldCheck } from 'lucide-react'
+import { Mail, User, ShieldCheck, KeyRound, ExternalLink } from 'lucide-react'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'
+import { ChangePasswordForm } from '@/components/settings/ChangePasswordForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +23,16 @@ export default async function AdminProfilePage() {
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+        <Link
+          href="/admin/settings"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline"
+        >
+          <KeyRound className="w-3.5 h-3.5" />
+          Settings &amp; Password
+        </Link>
+      </div>
       
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="h-28 bg-gradient-to-r from-brand-700 to-brand-500" />
@@ -42,6 +53,8 @@ export default async function AdminProfilePage() {
       </div>
 
       <ProfileEditForm initialData={{ full_name: profile?.full_name, bio: profile?.bio, phone: profile?.phone }} />
+
+      <ChangePasswordForm />
     </div>
   )
 }
