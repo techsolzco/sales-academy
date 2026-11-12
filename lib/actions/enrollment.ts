@@ -39,13 +39,6 @@ export interface EnrollmentInput {
   full_name: string
   email: string
   phone?: string
-  /**
-   * Retained only because the form still collects it (form fields unchanged).
-   * IGNORED: no account exists until an admin approves, and approval issues
-   * a fresh crypto-generated temporary password (see approveApplication).
-   * The applicant's chosen password is never stored or used.
-   */
-  password: string
   knowledge_level?: 'beginner' | 'intermediate' | 'advanced'
   desired_course?: string
   reason?: string

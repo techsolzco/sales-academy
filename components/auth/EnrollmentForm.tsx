@@ -97,7 +97,6 @@ export function EnrollmentForm() {
     full_name: '',
     email: '',
     phone: '',
-    password: '',
     knowledge_level: '',
     desired_course: '',
     reason: '',
@@ -305,10 +304,6 @@ export function EnrollmentForm() {
             <div>
               <label className={labelClass}>{t('register.phone')}</label>
               <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>{t('register.password')}</label>
-              <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className={inputClass} />
             </div>
 
             {/* Social Links */}

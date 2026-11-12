@@ -27,6 +27,10 @@ export function EnrollmentManager({ initialApplications }: { initialApplications
   const [showRejectInputFor, setShowRejectInputFor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)  // per-row loading
+  // Temp password of the most recently approved applicant (B9) — shown so the
+  // admin can share it on WhatsApp; it is also emailed to the applicant.
+  const [approvedCreds, setApprovedCreds] = useState<{ email: string; tempPassword?: string; existingAccount: boolean } | null>(null)
+  const [copied, setCopied] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -52,9 +56,12 @@ export function EnrollmentManager({ initialApplications }: { initialApplications
     setError(null)
     try {
       const result = await approveApplication(id)
-      if (result?.error) {
+      if (result.error) {
         setError(result.error)
-      } else {
+      } else if (result.data) {
+        // B9: surface the temp password so the admin can share it on WhatsApp
+        // (it is also emailed to the applicant by approveApplication).
+        setApprovedCreds({ email: result.data.email, tempPassword: result.data.tempPassword, existingAccount: result.data.existingAccount })
         // Optimistically update the row so UI refreshes immediately
         setApplications(prev => prev.map(a => a.id === id ? { ...a, status: 'approved' as const } : a))
         setExpandedId(null)
@@ -88,6 +95,28 @@ export function EnrollmentManager({ initialApplications }: { initialApplications
 
   return (
     <div className="space-y-6">
+      {approvedCreds && (
+        <div className="rounded-xl border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-900/20 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold text-green-800 dark:text-green-200">Application approved — {approvedCreds.email}</p>
+              {approvedCreds.tempPassword ? (
+                <>
+                  <p className="mt-1 text-sm text-green-700 dark:text-green-300">Temporary password (also emailed to the applicant — share on WhatsApp if needed):</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <code className="px-2 py-1 rounded bg-white dark:bg-gray-800 border border-green-200 dark:border-green-800 text-sm font-mono select-all">{approvedCreds.tempPassword}</code>
+                    <button onClick={async () => { await navigator.clipboard.writeText(approvedCreds.tempPassword!); setCopied(true); setTimeout(() => setCopied(false), 2000) }} className="px-3 py-1 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition">{copied ? 'Copied!' : 'Copy'}</button>
+                  </div>
+                  <p className="mt-1 text-xs text-green-600 dark:text-green-400">Ask the intern to change it after first login.</p>
+                </>
+              ) : (
+                <p className="mt-1 text-sm text-green-700 dark:text-green-300">This applicant already had an account — no new password was issued and their existing password is unchanged.</p>
+              )}
+            </div>
+            <button onClick={() => setApprovedCreds(null)} className="text-green-600 dark:text-green-400 hover:text-green-800 text-lg leading-none" aria-label="Dismiss">×</button>
+          </div>
+        </div>
+      )}
       <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
         {['all', 'pending', 'approved', 'rejected'].map(f => (
           <button
