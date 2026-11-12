@@ -13,7 +13,7 @@ export default async function DashboardLeaderboardPage() {
   
   if (!user) return null
 
-  const entries = await fetchLeaderboard()
+  const { data: entries, error } = await fetchLeaderboard()
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
@@ -22,7 +22,13 @@ export default async function DashboardLeaderboardPage() {
         <p className="text-gray-500 mt-1">See how you rank against other sales professionals.</p>
       </div>
       
-      <LeaderboardTable entries={entries} currentUserId={user.id} />
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          Leaderboard could not be loaded: {error}
+        </div>
+      ) : (
+        <LeaderboardTable entries={entries ?? []} currentUserId={user.id} />
+      )}
     </div>
   )
 }

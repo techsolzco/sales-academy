@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import Link from 'next/link'
 import { ArrowLeft, Image, Link as LinkIcon, FileText, Star, Trophy, ExternalLink } from 'lucide-react'
 import { AssignmentSubmitForm } from '@/components/assignments/AssignmentSubmitForm'
@@ -8,8 +8,10 @@ export const dynamic = 'force-dynamic'
 
 export default async function AssignmentStudentDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  // B39: use getEffectiveUser() (impersonation-aware) like the other training
+  // pages, so an admin previewing as a student reads/writes progress for the
+  // impersonated student, not the admin's own rows.
+  const { userId } = await getEffectiveUser()
 
   const { data: assignment } = await supabase
     .from('assignments')
@@ -24,7 +26,7 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
     .from('assignment_submissions')
     .select('*')
     .eq('assignment_id', params.id)
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .maybeSingle()
 
   // Content items (study list)
@@ -41,19 +43,24 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
   }
   const hasContent = (contentItems || []).length > 0
 
-  // Quiz attempt
+  // Quiz attempt — latest attempt plus total count, so a failed attempt gets
+  // a retake path (B42) that still respects the attempt limit (B65).
+  // NOTE: 3 is the code default MAX_QUIZ_ATTEMPTS in lib/actions/quizzes.ts —
+  // the quizzes table has no max_attempts column; keep in sync.
+  const MAX_QUIZ_ATTEMPTS = 3
   let quizAttempt: { passed: boolean; percentage: number } | null = null
+  let quizAttemptCount = 0
   if (assignment.quiz?.id) {
-    const { data: attempt } = await supabase
+    const { data: attempts } = await supabase
       .from('quiz_attempts')
       .select('passed, percentage')
       .eq('quiz_id', assignment.quiz.id)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('completed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (attempt) quizAttempt = attempt
+    quizAttemptCount = attempts?.length ?? 0
+    if (attempts?.length) quizAttempt = attempts[0]
   }
+  const quizAttemptsRemaining = Math.max(0, MAX_QUIZ_ATTEMPTS - quizAttemptCount)
 
   const typeEmoji: Record<string, string> = { faq: '❓', script: '💬', objection: '🛡️' }
   const typeLabel: Record<string, string> = { faq: 'FAQ', script: 'Script', objection: 'Objection' }
@@ -151,10 +158,30 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
                 <p className="text-xs text-gray-500 dark:text-gray-400">Required quiz · Pass score: {assignment.quiz.pass_score}%</p>
               </div>
             </div>
-            {quizAttempt ? (
+            {quizAttempt?.passed ? (
               <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${quizAttempt.passed ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                 {quizAttempt.passed ? '✓ Passed' : '✗ Failed'} ({quizAttempt.percentage}%)
               </span>
+            ) : quizAttempt ? (
+              /* B42: failed attempt gets a retake path (while attempts remain),
+                 not just the failure badge. */
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  ✗ Failed ({quizAttempt.percentage}%)
+                </span>
+                {quizAttemptsRemaining > 0 ? (
+                  <Link
+                    href={`/dashboard/quiz/${assignment.quiz.id}`}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                  >
+                    Retake Quiz ({quizAttemptsRemaining} attempt{quizAttemptsRemaining !== 1 ? 's' : ''} left)
+                  </Link>
+                ) : (
+                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                    No attempts left ({MAX_QUIZ_ATTEMPTS} used)
+                  </span>
+                )}
+              </div>
             ) : (
               <Link
                 href={`/dashboard/quiz/${assignment.quiz.id}`}

@@ -24,7 +24,7 @@ export default async function QuizStudentPage({ params }: { params: { id: string
   const questionIds = (questions || []).map((q: any) => q.id)
   let options: any[] = []
   if (questionIds.length > 0) {
-    const { data: opts } = await supabase.from('quiz_options').select('*').in('question_id', questionIds).order('order_index')
+    const { data: opts } = await supabase.from('quiz_options').select('id, question_id, option_text, order_index').in('question_id', questionIds).order('order_index')
     options = opts || []
   }
   const fullQuiz = {
@@ -63,7 +63,19 @@ export default async function QuizStudentPage({ params }: { params: { id: string
       )}
 
       <div className="py-8">
-        <QuizTaker quiz={fullQuiz} />
+        {/* attemptCount / maxAttempts / bestScore feed the QuizTaker limit UI (B65).
+            NOTE: 3 is the code default MAX_QUIZ_ATTEMPTS in lib/actions/quizzes.ts —
+            the quizzes table has no max_attempts column; keep in sync. */}
+        <QuizTaker
+          quiz={{
+            ...fullQuiz,
+            attemptCount: attempts?.length ?? 0,
+            maxAttempts: 3,
+            bestScore: bestAttempt
+              ? { score: bestAttempt.score, maxScore: bestAttempt.max_score, percentage: bestAttempt.percentage, passed: bestAttempt.passed }
+              : null,
+          }}
+        />
       </div>
     </div>
   )

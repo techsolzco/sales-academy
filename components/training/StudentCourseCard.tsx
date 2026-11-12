@@ -11,6 +11,17 @@ interface StudentCourseCardProps {
   difficulty: Difficulty | null
   lessonCount: number
   completedCount: number
+  // Required KB reviews (faqs/scripts/objections linked to the course's tool).
+  // B35: the card % must use the SAME definition as the course page
+  // (app/dashboard/training/[courseId]/page.tsx):
+  //   pct = (completed lessons + completed required KB reviews)
+  //         / (all lessons + all required KB reads)
+  // Callers pass these counts; when omitted they default to 0 and the card
+  // falls back to lessons-only. NOTE: app/dashboard/training/page.tsx still
+  // passes lessons-only, so cards on that list can still read higher than the
+  // course header until that caller is updated to pass the review counts.
+  reviewCount?: number
+  completedReviewCount?: number
   durationMinutes: number | null
   dueDate: string | null
 }
@@ -31,12 +42,17 @@ const gradients = [
 
 export function StudentCourseCard({
   id, title, description, thumbnail_url, category, difficulty,
-  lessonCount, completedCount, durationMinutes, dueDate,
+  lessonCount, completedCount, reviewCount = 0, completedReviewCount = 0,
+  durationMinutes, dueDate,
 }: StudentCourseCardProps) {
   const gradient = gradients[id.charCodeAt(0) % gradients.length]
-  const pct = lessonCount > 0 ? Math.round((completedCount / lessonCount) * 100) : 0
-  const isComplete = pct === 100 && lessonCount > 0
-  const isStarted = completedCount > 0
+  // B35 — same definition as the course page: lessons + required KB reviews.
+  // A card must never say "Complete" while the course header says < 100%.
+  const totalItems = lessonCount + reviewCount
+  const completedItems = completedCount + completedReviewCount
+  const pct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0
+  const isComplete = pct === 100 && totalItems > 0
+  const isStarted = completedItems > 0
 
   return (
     <Link
@@ -92,7 +108,9 @@ export function StudentCourseCard({
         <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 mb-3 flex-wrap">
           <span className="flex items-center gap-1">
             <BookOpen className="w-3 h-3" />
-            {completedCount}/{lessonCount} lessons
+            {reviewCount > 0
+              ? `${completedItems}/${totalItems} items`
+              : `${completedCount}/${lessonCount} lessons`}
           </span>
           {durationMinutes && (
             <span className="flex items-center gap-1">

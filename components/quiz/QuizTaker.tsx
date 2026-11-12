@@ -8,6 +8,10 @@ interface Props {
   quiz: any
 }
 
+// NOTE: keep in sync with MAX_QUIZ_ATTEMPTS in lib/actions/quizzes.ts
+// (the quizzes table has no max_attempts column — 3 is the code default).
+const DEFAULT_MAX_ATTEMPTS = 3
+
 export function QuizTaker({ quiz }: Props) {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -16,11 +20,20 @@ export function QuizTaker({ quiz }: Props) {
     passed: boolean; correctCount: number; totalCount: number
   } | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Attempts used before this session (from the page) + attempts made here.
+  const [attemptsUsed, setAttemptsUsed] = useState<number>(quiz.attemptCount ?? 0)
+  const maxAttempts: number = quiz.maxAttempts ?? DEFAULT_MAX_ATTEMPTS
+  const attemptsRemaining = Math.max(0, maxAttempts - attemptsUsed)
+  const bestScore = quiz.bestScore ?? null
 
   const handleSelect = (questionId: string, optionId: string) =>
     setAnswers(prev => ({ ...prev, [questionId]: optionId }))
 
   const handleSubmit = async () => {
+    if (attemptsRemaining <= 0) {
+      setSubmitError(`Attempt limit reached — you have already used all ${maxAttempts} attempts for this quiz.`)
+      return
+    }
     const questionCount = quiz.questions?.length || 0
     if (Object.keys(answers).length < questionCount) {
       alert(`Please answer all ${questionCount} questions before submitting.`)
@@ -34,6 +47,9 @@ export function QuizTaker({ quiz }: Props) {
       if (res.error) {
         setSubmitError(res.error)
       } else if (res.data) {
+        // Count this attempt locally so Try Again / remaining stay correct
+        // without waiting for a page refresh.
+        setAttemptsUsed(prev => prev + 1)
         setResult({
           score: res.data.score,
           totalPoints: res.data.maxScore,
@@ -48,6 +64,31 @@ export function QuizTaker({ quiz }: Props) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // B65: limit exhausted before starting — no new attempt is possible.
+  if (!result && attemptsRemaining <= 0) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 sm:py-12 px-4 sm:px-6">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 sm:p-10 text-center">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+            <XCircle className="w-10 h-10 sm:w-12 sm:h-12" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">No attempts left</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-2 text-sm sm:text-base">
+            You have used all {maxAttempts} attempts for this quiz.
+          </p>
+          {bestScore && (
+            <p className="text-gray-400 dark:text-gray-500 text-xs sm:text-sm mb-6 sm:mb-8">
+              Best score: {bestScore.score} / {bestScore.maxScore} ({Math.round(bestScore.percentage)}%) · {bestScore.passed ? 'Passed' : 'Not passed'}
+            </p>
+          )}
+          <a href="/dashboard/quiz" className="inline-block px-6 py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors text-center text-sm sm:text-base">
+            Back to Quizzes
+          </a>
+        </div>
+      </div>
+    )
   }
 
   if (result) {
@@ -82,12 +123,20 @@ export function QuizTaker({ quiz }: Props) {
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3">
-            <button
-              onClick={() => { setResult(null); setAnswers({}) }}
-              className="px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base"
-            >
-              Try Again
-            </button>
+            {/* B65: "Try Again" respects the attempt limit — once the last
+                attempt is used, there is no retake from this screen. */}
+            {attemptsRemaining > 0 ? (
+              <button
+                onClick={() => { setResult(null); setAnswers({}) }}
+                className="px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base"
+              >
+                Try Again ({attemptsRemaining} attempt{attemptsRemaining !== 1 ? 's' : ''} left)
+              </button>
+            ) : (
+              <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                You have used all {maxAttempts} attempts for this quiz.
+              </p>
+            )}
             <a href="/dashboard/quiz" className="px-6 py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors text-center text-sm sm:text-base">
               Back to Quizzes
             </a>
@@ -104,6 +153,10 @@ export function QuizTaker({ quiz }: Props) {
         {quiz.description && <p className="text-gray-500 dark:text-gray-400">{quiz.description}</p>}
         <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
           {quiz.questions?.length || 0} questions · Passing score: {quiz.pass_score}%
+        </p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+          Attempts used: {attemptsUsed} of {maxAttempts} · {attemptsRemaining} remaining
+          {bestScore ? ` · Best score: ${bestScore.score}/${bestScore.maxScore} (${Math.round(bestScore.percentage)}%)` : ''}
         </p>
       </div>
 
@@ -161,10 +214,10 @@ export function QuizTaker({ quiz }: Props) {
       <div className="flex justify-end">
         <button
           onClick={handleSubmit}
-          disabled={isSubmitting || Object.keys(answers).length < (quiz.questions?.length || 0)}
+          disabled={isSubmitting || attemptsRemaining <= 0 || Object.keys(answers).length < (quiz.questions?.length || 0)}
           className="w-full sm:w-auto bg-brand-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-center"
         >
-          {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+          {isSubmitting ? 'Submitting...' : attemptsRemaining <= 0 ? 'No Attempts Left' : 'Submit Quiz'}
         </button>
       </div>
     </div>

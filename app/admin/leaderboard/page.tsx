@@ -13,7 +13,7 @@ export default async function AdminLeaderboardPage() {
   if (!user) return null
 
   // Fetch all leaderboard entries for admin
-  const entries = await fetchLeaderboard()
+  const { data: entries, error } = await fetchLeaderboard()
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
@@ -22,7 +22,13 @@ export default async function AdminLeaderboardPage() {
         <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">View the complete rankings for all users across the platform.</p>
       </div>
       
-      <LeaderboardTable entries={entries} />
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          Leaderboard could not be loaded: {error}
+        </div>
+      ) : (
+        <LeaderboardTable entries={entries ?? []} />
+      )}
     </div>
   )
 }
