@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { submitEnrollmentApplication } from '@/lib/actions/enrollment'
+import { requestEmailOtp, verifyEmailOtp } from '@/lib/actions/email-otp'
 import { Loader2, CheckCircle2, Camera, Instagram, Facebook, Linkedin, MessageCircle } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -19,6 +20,78 @@ export function EnrollmentForm() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Email OTP verification (must complete before the application can proceed)
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [otpVerified, setOtpVerified] = useState(false)
+  const [verifiedEmail, setVerifiedEmail] = useState('')
+  const [otpBusy, setOtpBusy] = useState(false)
+  const [otpError, setOtpError] = useState<string | null>(null)
+  const [otpInfo, setOtpInfo] = useState<string | null>(null)
+  const [resendIn, setResendIn] = useState(0)
+
+  // 60s resend countdown
+  useEffect(() => {
+    if (resendIn <= 0) return
+    const timer = setTimeout(() => setResendIn(resendIn - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendIn])
+
+  // Changing the email after verification invalidates the verification
+  const handleEmailChange = (value: string) => {
+    setFormData(prev => ({ ...prev, email: value }))
+    if (otpVerified && value.trim().toLowerCase() !== verifiedEmail) {
+      setOtpVerified(false)
+      setVerifiedEmail('')
+      setOtpSent(false)
+      setOtpCode('')
+      setOtpInfo(null)
+      setOtpError('Email changed — please verify the new email address.')
+    }
+  }
+
+  const handleSendOtp = async () => {
+    const cleanEmail = formData.email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setOtpError('Please enter a valid email address first.')
+      return
+    }
+    setOtpBusy(true)
+    setOtpError(null)
+    setOtpInfo(null)
+    const result = await requestEmailOtp(cleanEmail, formData.full_name.trim() || undefined)
+    setOtpBusy(false)
+    if (result.error) {
+      setOtpError(result.error)
+      return
+    }
+    setOtpSent(true)
+    setOtpCode('')
+    setResendIn(60)
+    setOtpInfo('Verification code sent — check your inbox (it expires in 10 minutes).')
+  }
+
+  const handleVerifyOtp = async () => {
+    const cleanEmail = formData.email.trim().toLowerCase()
+    if (!/^\d{6}$/.test(otpCode.trim())) {
+      setOtpError('Please enter the 6-digit code sent to your email.')
+      return
+    }
+    setOtpBusy(true)
+    setOtpError(null)
+    setOtpInfo(null)
+    const result = await verifyEmailOtp(cleanEmail, otpCode.trim())
+    setOtpBusy(false)
+    if (result.error) {
+      setOtpError(result.error)
+      return
+    }
+    setOtpVerified(true)
+    setVerifiedEmail(cleanEmail)
+    setOtpInfo(null)
+    setOtpError(null)
+  }
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -46,6 +119,11 @@ export function EnrollmentForm() {
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault()
+    // Email must be OTP-verified before the rest of the application proceeds.
+    if (!otpVerified) {
+      setOtpError('Please verify your email with the 6-digit code before continuing.')
+      return
+    }
     setStep(2)
   }
 
@@ -80,6 +158,15 @@ export function EnrollmentForm() {
     }
 
     const cleanEmail = formData.email.trim().toLowerCase()
+
+    // Server enforces this too — the UI must never submit an unverified email.
+    if (!otpVerified || cleanEmail !== verifiedEmail) {
+      setLoading(false)
+      alert('Please verify your email with the 6-digit code before submitting.')
+      setStep(1)
+      return
+    }
+
     const result = await submitEnrollmentApplication({
       ...formData,
       email: cleanEmail,
@@ -93,22 +180,9 @@ export function EnrollmentForm() {
       return
     }
 
-    // Automatically log in the user with their newly registered credentials
-    try {
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password: formData.password,
-      })
-      if (!signInErr) {
-        window.location.href = '/dashboard'
-        return
-      }
-    } catch {
-      // Fallback to success screen
-    }
-
+    // Approval model: no account exists yet and nobody is signed in.
+    // The application is pending review; the admin approves it and the
+    // applicant receives login credentials by email.
     setLoading(false)
     setSuccess(true)
   }
@@ -117,8 +191,8 @@ export function EnrollmentForm() {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
         <CheckCircle2 className="w-16 h-16 text-brand-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Account Created! 🎉</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Your registration is complete. You can now log in using your email and password.</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Application Submitted!</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">Thank you for applying. Our team will review your application within 1–2 business days. If approved, you will receive your login credentials by email.</p>
         <button
           onClick={() => router.push('/auth/login')}
           className="bg-brand-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-brand-700 transition"
@@ -180,7 +254,53 @@ export function EnrollmentForm() {
             </div>
             <div>
               <label className={labelClass}>{t('register.email')}</label>
-              <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={inputClass} />
+              <input required type="email" value={formData.email} onChange={e => handleEmailChange(e.target.value)} className={inputClass} />
+            </div>
+            {/* Email verification (OTP) — required before continuing */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 p-3 space-y-2">
+              {otpVerified ? (
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">✓ Email verified: {verifiedEmail}</p>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={otpBusy || resendIn > 0}
+                      className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition disabled:opacity-60"
+                    >
+                      {otpBusy ? 'Sending…' : otpSent ? (resendIn > 0 ? `Resend code (${resendIn}s)` : 'Resend code') : 'Send Verification Code'}
+                    </button>
+                    {otpSent && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 self-center">Code expires in 10 minutes.</span>
+                    )}
+                  </div>
+                  {otpSent && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="6-digit code"
+                        value={otpCode}
+                        onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className={`${inputClass} tracking-[0.5em] font-mono`}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyOtp}
+                        disabled={otpBusy || otpCode.length !== 6}
+                        className="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition disabled:opacity-60"
+                      >
+                        {otpBusy ? 'Verifying…' : 'Verify'}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+              {otpError && <p className="text-sm text-red-600 dark:text-red-400">{otpError}</p>}
+              {otpInfo && <p className="text-sm text-green-600 dark:text-green-400">{otpInfo}</p>}
+              {!otpVerified && <p className="text-xs text-gray-500 dark:text-gray-400">We will send a 6-digit code to your email. You must verify it before continuing.</p>}
             </div>
             <div>
               <label className={labelClass}>{t('register.phone')}</label>
