@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { ActionResult, EnrollmentApplication } from '@/types'
+import { sendAdminNewSalesmanEmail, sendWelcomeEmail } from '@/lib/email'
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -129,7 +130,7 @@ export async function submitEnrollmentApplication(
   // Notify admins
   const { data: admins } = await serviceClient
     .from('profiles')
-    .select('id')
+    .select('id, email')
     .eq('role', 'admin')
 
   if (admins && admins.length > 0) {
@@ -141,6 +142,22 @@ export async function submitEnrollmentApplication(
       link: '/admin/salesmen',
     }))
     await serviceClient.from('notifications').insert(notifs)
+  }
+
+  // Email the new intern + every admin (best-effort: never fails registration)
+  try {
+    await sendWelcomeEmail({ fullName, email: cleanEmail })
+    const adminEmails = (admins ?? [])
+      .map((a) => a.email)
+      .filter((e): e is string => !!e)
+    await sendAdminNewSalesmanEmail({
+      fullName,
+      email: cleanEmail,
+      phone: input.phone?.trim() || null,
+      adminEmails,
+    })
+  } catch (err) {
+    console.error('Registration email error:', err)
   }
 
   return { data: undefined }
