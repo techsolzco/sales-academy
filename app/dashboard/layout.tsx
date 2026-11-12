@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { triggerDailyAssignments } from '@/lib/actions/assignment-rules'
 import { getAiTrainingSettings } from '@/lib/actions/ai-assist'
 import { SITE_NAME } from '@/lib/config/site'
 

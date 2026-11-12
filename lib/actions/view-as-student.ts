@@ -80,9 +80,15 @@ export async function startViewAsStudent(targetUserId: string): Promise<ActionRe
   }
 }
 
-// Stop impersonation — clear cookies
+// Stop impersonation — clear cookies.
+// B76 — now requires a live session (consistent with startViewAsStudent
+// via requireAdmin). Clearing your own cookie is harmless, but an
+// unauthenticated call should not silently succeed.
 export async function stopViewAsStudent(): Promise<ActionResult> {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
     const cookieStore = await cookies()
     cookieStore.delete('view_as_user_id')
     cookieStore.delete('view_as_user_name')

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fetchConversations, getOrCreateConversation, fetchMessages, fetchAdminUsers } from '@/lib/actions/chat'
 import { ConversationList, ConversationWithMeta } from '@/components/chat/ConversationList'
@@ -9,6 +10,20 @@ import type { DirectMessage } from '@/types'
 import { MessageSquarePlus, Loader2 } from 'lucide-react'
 
 export default function DashboardChatPage() {
+  // B46: useSearchParams requires a Suspense boundary in App Router pages.
+  return (
+    <Suspense fallback={
+      <div className="h-[calc(100vh-64px)] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+      </div>
+    }>
+      <DashboardChatPageInner />
+    </Suspense>
+  )
+}
+
+function DashboardChatPageInner() {
+  const searchParams = useSearchParams()
   const [conversations, setConversations] = useState<ConversationWithMeta[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<NonNullable<ConversationWithMeta['otherUser']> | null>(null)
@@ -26,8 +41,21 @@ export default function DashboardChatPage() {
       const convs = await fetchConversations() as ConversationWithMeta[]
       setConversations(convs)
       setIsLoading(false)
+      // B46: honour the ?c=<conversationId> deep link sent in chat
+      // notifications — select that conversation on load instead of
+      // ignoring the param. Unknown / non-participant ids are ignored
+      // (they will not be in this user's conversation list).
+      const requestedId = searchParams.get('c')
+      if (requestedId) {
+        const target = convs.find(c => c.id === requestedId)
+        if (target?.otherUser) {
+          await handleSelectConversation(target.id, target.otherUser)
+        }
+      }
     }
     init()
+    // Only run once on mount; searchParams is read at load time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSelectConversation = async (id: string, otherUser: NonNullable<ConversationWithMeta['otherUser']>) => {

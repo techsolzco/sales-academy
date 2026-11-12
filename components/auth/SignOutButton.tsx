@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { stopViewAsStudent } from '@/lib/actions/view-as-student'
 import { LogOut } from 'lucide-react'
 
 export function SignOutButton() {
@@ -9,6 +10,16 @@ export function SignOutButton() {
   const supabase = createClient()
 
   async function handleSignOut() {
+    // B76 — clear the impersonation cookie BEFORE signing out, while
+    // the session is still live (stopViewAsStudent now requires one).
+    // Without this, the 2h view_as_user_id cookie survived sign-out and
+    // a second admin on the same browser inherited the impersonation.
+    // Sign-out itself proceeds even if the cookie clear fails.
+    try {
+      await stopViewAsStudent()
+    } catch {
+      // Non-fatal: still sign out below.
+    }
     await supabase.auth.signOut()
     router.push('/auth/login')
     router.refresh()

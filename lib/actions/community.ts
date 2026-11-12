@@ -19,11 +19,23 @@ export async function fetchCommunityPosts(): Promise<CommunityPost[]> {
       )
     `)
     .eq('is_deleted', false)
+    // B71: deleted replies must not be returned with the post.
+    .eq('replies.is_deleted', false)
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(50)
 
-  return (data ?? []) as CommunityPost[]
+  // B48: supply replies_count (count of the nested, non-deleted replies) so
+  // the feed can show the real reply count instead of always 0. Sorted
+  // oldest-first so a thread reads top-down.
+  const posts = (data ?? []) as unknown as (CommunityPost & { replies_count?: number })[]
+  return posts.map((post) => ({
+    ...post,
+    replies: [...(post.replies ?? [])].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    ),
+    replies_count: (post.replies ?? []).length,
+  }))
 }
 
 export async function createPost(
@@ -94,7 +106,9 @@ export async function pinPost(postId: string): Promise<ActionResult> {
     .eq('id', postId)
 
   if (error) return { error: error.message }
+  // B71: revalidate BOTH portals so the other side does not go stale.
   revalidatePath('/admin/community')
+  revalidatePath('/dashboard/community')
   return { data: undefined }
 }
 
@@ -134,6 +148,8 @@ export async function deleteReply(replyId: string): Promise<ActionResult> {
   const { error } = await query
   if (error) return { error: error.message }
 
+  // B71: revalidate BOTH portals so the other side does not go stale.
   revalidatePath('/dashboard/community')
+  revalidatePath('/admin/community')
   return { data: undefined }
 }
