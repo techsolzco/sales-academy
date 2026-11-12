@@ -46,6 +46,7 @@ export default async function TrainingPage({
 
   const courses = coursesData ?? []
   const courseIds = courses.map(c => c.id)
+  const toolIds = Array.from(new Set(courses.map(c => c.tool_id).filter(Boolean))) as string[]
 
   // 2. Fetch course assignments, modules, and lessons for courses
   const [{ data: assignments }, { data: modules }] = await Promise.all([
@@ -60,13 +61,14 @@ export default async function TrainingPage({
 
   const moduleIds = (modules ?? []).map(m => m.id)
   const { data: lessons } = moduleIds.length > 0
-    ? await supabase.from('lessons').select('id, module_id').is('deleted_at', null).in('module_id', moduleIds)
+    ? await supabase.from('lessons').select('id, module_id, status').is('deleted_at', null).in('module_id', moduleIds)
     : { data: [] }
 
   const moduleCoursMap = Object.fromEntries((modules ?? []).map(m => [m.id, m.course_id]))
   const lessonsByCourse = (lessons ?? []).reduce<Record<string, string[]>>((acc, l) => {
     const cid = moduleCoursMap[l.module_id]
-    if (cid) {
+    // B35: count only published lessons — same denominator as the course page.
+    if (cid && (l as any).status === 'published') {
       if (!acc[cid]) acc[cid] = []
       acc[cid].push(l.id)
     }
@@ -92,6 +94,9 @@ export default async function TrainingPage({
     { data: rawGeneralObjections },
     { data: rawGeneralFaqs },
     { data: reviewsData },
+    { data: rawToolScripts },
+    { data: rawToolObjections },
+    { data: rawToolFaqs },
   ] = await Promise.all([
     supabase
       .from('scripts')
@@ -119,11 +124,35 @@ export default async function TrainingPage({
       .from('kb_reviews')
       .select('content_type, content_id')
       .eq('user_id', userId),
+    // B35: tool-linked KB items for the course cards — same definition as
+    // the course page (published, non-deleted; drafts never count as required).
+    toolIds.length > 0
+      ? supabase.from('scripts').select('id, tool_id').is('deleted_at', null).eq('status', 'published').in('tool_id', toolIds)
+      : Promise.resolve({ data: [] as { id: string; tool_id: string }[] }),
+    toolIds.length > 0
+      ? supabase.from('objections').select('id, tool_id').is('deleted_at', null).eq('status', 'published').in('tool_id', toolIds)
+      : Promise.resolve({ data: [] as { id: string; tool_id: string }[] }),
+    toolIds.length > 0
+      ? supabase.from('faqs').select('id, tool_id').is('deleted_at', null).eq('status', 'published').in('tool_id', toolIds)
+      : Promise.resolve({ data: [] as { id: string; tool_id: string }[] }),
   ])
 
   const reviewedScripts = (reviewsData ?? []).filter(r => r.content_type === 'script').map(r => r.content_id)
   const reviewedObjections = (reviewsData ?? []).filter(r => r.content_type === 'objection').map(r => r.content_id)
   const reviewedFaqs = (reviewsData ?? []).filter(r => r.content_type === 'faq').map(r => r.content_id)
+
+  // B35: per-course required KB reviews — same definition as the course page
+  // (published, non-deleted FAQs/Scripts/Objections linked to the course's
+  // tool_id). Draft items are shown on the course page but never counted.
+  const requiredIdsByCourse = new Map<string, string[]>()
+  for (const item of [...(rawToolScripts ?? []), ...(rawToolObjections ?? []), ...(rawToolFaqs ?? [])] as any[]) {
+    for (const course of courses) {
+      if (course.tool_id && course.tool_id === item.tool_id) {
+        requiredIdsByCourse.set(course.id, [...(requiredIdsByCourse.get(course.id) ?? []), item.id])
+      }
+    }
+  }
+  const reviewedSet = new Set([...reviewedScripts, ...reviewedObjections, ...reviewedFaqs])
 
   const generalScripts = (rawGeneralScripts ?? []).sort((a, b) =>
     scriptTypePriority(a.script_type) - scriptTypePriority(b.script_type) ||
@@ -146,6 +175,8 @@ export default async function TrainingPage({
             const allLessons = lessonsByCourse[course.id] ?? []
             const completedLessonsCount = allLessons.filter(id => completedSet.has(id)).length
             const assignment = assignmentByCourse[course.id]
+            const requiredIds = requiredIdsByCourse.get(course.id) ?? []
+            const completedReviewsCount = requiredIds.filter(id => reviewedSet.has(id)).length
 
             return (
               <StudentCourseCard
@@ -158,6 +189,8 @@ export default async function TrainingPage({
                 difficulty={course.difficulty ?? null}
                 lessonCount={allLessons.length}
                 completedCount={completedLessonsCount}
+                reviewCount={requiredIds.length}
+                completedReviewCount={completedReviewsCount}
                 durationMinutes={course.estimated_duration_minutes ?? null}
                 dueDate={assignment?.due_date ?? null}
               />

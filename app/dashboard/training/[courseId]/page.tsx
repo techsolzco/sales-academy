@@ -44,13 +44,19 @@ export default async function TrainingCoursePage({
       .select('*, lessons(*)')
       .is('deleted_at', null)
       .eq('course_id', params.courseId)
-      .order('order_index'),
+      .order('order_index')
+      .order('order_index', { referencedTable: 'lessons', ascending: true }),
   ])
 
   if (!course) notFound()
 
+  // Soft-deleted lessons never count toward totals and never render as
+  // links (B32) — the lesson page 404s on them, so they must be excluded
+  // here, matching app/dashboard/training/page.tsx.
   const allLessonIds = (modules ?? []).flatMap(m =>
-    (m.lessons as { id: string }[]).map(l => l.id)
+    (m.lessons as { id: string; deleted_at: string | null }[])
+      .filter(l => !l.deleted_at)
+      .map(l => l.id)
   )
 
   const { data: progress } = allLessonIds.length > 0
@@ -68,12 +74,16 @@ export default async function TrainingCoursePage({
   const totalLessons = allLessonIds.length
   const completedCount = allLessonIds.filter(id => completedIds.has(id)).length
 
-  // Fetch required reading (KB items)
+  // Fetch required reading (KB items). Per commit 89d71a05 (2026-09-10) the
+  // tool's FAQs/Scripts/Objections are deliberately DISPLAYED regardless of
+  // publish status — the fetches below keep no status filter. But the
+  // "Required Reading" COUNT (the denominator of the course %) must only
+  // count published items: a draft is not required reading (B33).
   let requiredReads: Array<{ id: string, title: string, type: string }> = []
   let faqs = null
   let scripts = null
   let objections = null
-  
+
   if (course.tool_id) {
     const [
       faqsRes,
@@ -84,14 +94,17 @@ export default async function TrainingCoursePage({
       supabase.from('scripts').select('*').is('deleted_at', null).eq('tool_id', course.tool_id),
       supabase.from('objections').select('*').is('deleted_at', null).eq('tool_id', course.tool_id),
     ])
-    
+
     faqs = faqsRes.data
     scripts = scriptsRes.data
     objections = objectionsRes.data
 
-    if (faqs) requiredReads.push(...faqs.map(f => ({ id: f.id, title: f.question, type: 'faq' })))
-    if (scripts) requiredReads.push(...scripts.map(s => ({ id: s.id, title: s.title, type: 'script' })))
-    if (objections) requiredReads.push(...objections.map(o => ({ id: o.id, title: o.objection_text, type: 'objection' })))
+    const publishedFaqs = (faqs ?? []).filter(f => f.status === 'published')
+    const publishedScripts = (scripts ?? []).filter(s => s.status === 'published')
+    const publishedObjections = (objections ?? []).filter(o => o.status === 'published')
+    requiredReads.push(...publishedFaqs.map(f => ({ id: f.id, title: f.question, type: 'faq' })))
+    requiredReads.push(...publishedScripts.map(s => ({ id: s.id, title: s.title, type: 'script' })))
+    requiredReads.push(...publishedObjections.map(o => ({ id: o.id, title: o.objection_text, type: 'objection' })))
   }
 
   const { data: reviews } = requiredReads.length > 0 
@@ -125,16 +138,22 @@ export default async function TrainingCoursePage({
 
   const hasCuratedContent = (courseContentItems || []).length > 0
 
+  // Assignments linked by course_id OR by the course's tool_id (B34).
+  // Fetched for every tab, not just ?tab=assignments, so the nav can show
+  // the Assignments tab whenever assignments exist — independent of whether
+  // the tool has any KB content (showContentTabs).
   let assignments = null
   let submissions = null
-  if (course.tool_id && tab === 'assignments') {
-    const [aRes, sRes] = await Promise.all([
-      supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').is('deleted_at', null).eq('tool_id', course.tool_id).order('created_at', { ascending: false }),
-      supabase.from('assignment_submissions').select('assignment_id, status').eq('user_id', userId)
-    ])
-    assignments = aRes.data
-    submissions = sRes.data
-  }
+  const assignmentOrFilter = course.tool_id
+    ? `course_id.eq.${params.courseId},tool_id.eq.${course.tool_id}`
+    : `course_id.eq.${params.courseId}`
+  const [aRes, sRes] = await Promise.all([
+    supabase.from('assignments').select('*, course:courses(title), lesson:lessons(title)').is('deleted_at', null).or(assignmentOrFilter).order('created_at', { ascending: false }),
+    supabase.from('assignment_submissions').select('assignment_id, status').eq('user_id', userId)
+  ])
+  assignments = aRes.data
+  submissions = sRes.data
+  const hasAssignments = (assignments?.length ?? 0) > 0
 
   let tabContent = null
   
@@ -142,9 +161,9 @@ export default async function TrainingCoursePage({
     tabContent = (
       <div className="space-y-4 mt-6">
         {(modules ?? []).map((mod, modIndex) => {
-          const lessons = (mod.lessons as { id: string; title: string; subtitle: string | null; duration_minutes: number | null; is_required: boolean; status: string }[])
-            .filter(l => l.status === 'published')
-            .sort((a, b) => 0) // already ordered from DB
+          const lessons = (mod.lessons as { id: string; title: string; subtitle: string | null; duration_minutes: number | null; is_required: boolean; status: string; deleted_at: string | null; order_index: number | null }[])
+            .filter(l => l.status === 'published' && !l.deleted_at)
+            .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
           const modCompleted = lessons.filter(l => completedIds.has(l.id)).length
 
           return (
@@ -246,6 +265,18 @@ export default async function TrainingCoursePage({
       objection: '/dashboard/objections',
       quiz: '/dashboard/quiz',
     }
+    // No single-item detail routes exist under /dashboard for FAQs, scripts
+    // or objections — only the list pages. Each row therefore links to the
+    // list page with a fragment anchor matching the DOM id the viewer
+    // renders for that item (faq-<id>, script-<id>, obj-<id>), so the
+    // browser scrolls straight to it (B36). Quizzes have a real detail
+    // route and keep linking there directly.
+    const typeAnchor: Record<string, string> = {
+      faq: 'faq-',
+      script: 'script-',
+      objection: 'obj-',
+      quiz: '',
+    }
     tabContent = (
       <div className="mt-6 space-y-4">
         {(courseContentItems || []).length === 0 ? (
@@ -274,7 +305,7 @@ export default async function TrainingCoursePage({
                   {items.map(item => (
                     <Link
                       key={item.content_id}
-                      href={type === 'quiz' ? `/dashboard/quiz/${item.content_id}` : `${typeHref[type]}`}
+                      href={type === 'quiz' ? `/dashboard/quiz/${item.content_id}` : `${typeHref[type]}#${typeAnchor[type]}${item.content_id}`}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
                     >
                       <Circle className="w-4 h-4 text-gray-300 flex-shrink-0" />
@@ -311,7 +342,7 @@ export default async function TrainingCoursePage({
         <SalesmanObjectionViewer objections={objections ?? []} initialReviewed={reviewedIdsArray} initialToolId={course.tool_id!} />
       </div>
     )
-  } else if (tab === 'assignments' && showContentTabs) {
+  } else if (tab === 'assignments' && (showContentTabs || hasAssignments)) {
     const stats = assignments?.map(a => {
       const sub = submissions?.find(s => s.assignment_id === a.id)
       return {
@@ -337,7 +368,7 @@ export default async function TrainingCoursePage({
                   <EmptyState 
                     icon={BookOpen} 
                     title="No assignments" 
-                    description="No assignments are linked to this tool." 
+                    description="No assignments are linked to this course." 
                   />
                 </td>
               </tr>
@@ -365,6 +396,19 @@ export default async function TrainingCoursePage({
           </tbody>
         </table>
         </div>
+      </div>
+    )
+  } else {
+    // Unknown ?tab= value, or a content tab (faqs/scripts/objections/
+    // assignments) on a course with no tool KB content — never render a
+    // blank area (B72).
+    tabContent = (
+      <div className="mt-6">
+        <EmptyState
+          icon={BookOpen}
+          title="Section not found"
+          description="This section doesn't exist for this course, or there's no content here yet."
+        />
       </div>
     )
   }
@@ -412,7 +456,7 @@ export default async function TrainingCoursePage({
           >
             Lessons
           </Link>
-          {(hasCuratedContent || true) && (
+          {hasCuratedContent && (
             <Link
               href={`/dashboard/training/${course.id}?tab=study&lang=${lang}`}
               className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
@@ -448,15 +492,17 @@ export default async function TrainingCoursePage({
               >
                 Objections
               </Link>
-              <Link
-                href={`/dashboard/training/${course.id}?tab=assignments&lang=${lang}`}
-                className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-                  tab === 'assignments' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Assignments
-              </Link>
             </>
+          )}
+          {(showContentTabs || hasAssignments) && (
+            <Link
+              href={`/dashboard/training/${course.id}?tab=assignments&lang=${lang}`}
+              className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                tab === 'assignments' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Assignments
+            </Link>
           )}
         </div>
         {showContentTabs && (

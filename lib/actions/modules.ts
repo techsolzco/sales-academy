@@ -66,8 +66,16 @@ export async function updateModule(moduleId: string, courseId: string, input: Pa
 export async function deleteModule(moduleId: string, courseId: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    const { error } = await supabase.from('modules').update({ deleted_at: new Date().toISOString() }).eq('id', moduleId)
+    const deletedAt = new Date().toISOString()
+    const { error } = await supabase.from('modules').update({ deleted_at: deletedAt }).eq('id', moduleId)
     if (error) return { error: error.message }
+    // Soft-delete the module's lessons too, so no orphaned rows stay
+    // live/counted (B74).
+    const { error: lessonError } = await supabase
+      .from('lessons')
+      .update({ deleted_at: deletedAt })
+      .eq('module_id', moduleId)
+    if (lessonError) return { error: lessonError.message }
     revalidatePath(`/admin/courses/${courseId}`)
     return { data: undefined }
   } catch (e: unknown) {

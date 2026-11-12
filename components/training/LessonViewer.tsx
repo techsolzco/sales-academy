@@ -158,7 +158,12 @@ function renderBlock(block: ContentBlock) {
     case 'link':    return <LinkBlock content={c} />
     case 'quote':   return <QuoteBlock content={c} />
     case 'callout': return <CalloutBlock content={c} />
-    default: return null
+    default:
+      return (
+        <p className="text-sm text-gray-400 italic">
+          Unsupported content block type (&ldquo;{block.type}&rdquo;) — this content can&apos;t be displayed.
+        </p>
+      )
   }
 }
 
@@ -174,11 +179,17 @@ interface LessonViewerProps {
 export function LessonViewer({ lessonId, courseId, blocks, isCompleted }: LessonViewerProps) {
   const [completed, setCompleted] = useState(isCompleted)
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   function handleMarkComplete() {
+    setError(null)
     startTransition(async () => {
       const result = await markLessonComplete(lessonId, courseId)
-      if (!result.error) setCompleted(true)
+      if (!result.error) {
+        setCompleted(true)
+      } else {
+        setError(result.error || 'Could not mark this lesson complete. Please try again.')
+      }
     })
   }
 
@@ -198,6 +209,11 @@ export function LessonViewer({ lessonId, courseId, blocks, isCompleted }: Lesson
 
       {/* Mark as complete button */}
       <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-700">
+        {error && (
+          <p className="mb-3 p-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
+            {error}
+          </p>
+        )}
         {completed ? (
           <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-medium">
             <CheckCircle className="w-5 h-5" /> Lesson completed!

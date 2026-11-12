@@ -1,23 +1,15 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import Link from 'next/link'
 import { ClipboardList, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { fetchMyAssignments } from '@/lib/actions/assignments'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AssignmentsStudentPage() {
-  const supabase = await createClient()
-  const { userId } = await getEffectiveUser()
-
-  const { data: assignments } = await supabase.from('assignments').select('*, course:courses(title)').is('deleted_at', null)
-  const { data: submissions } = await supabase.from('assignment_submissions').select('*').eq('user_id', userId)
-
-  const items = assignments?.map(a => {
-    const sub = submissions?.find(s => s.assignment_id === a.id)
-    return { ...a, submission: sub }
-  }) || []
+  // B40: scoped server-side — only assignments for this student's assigned
+  // courses/tools/lessons (plus general ones), with their own submissions.
+  const items = await fetchMyAssignments()
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto">

@@ -10,7 +10,7 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
   const { data: course } = await supabase.from('courses').select('*').is('deleted_at', null).eq('id', params.id).single()
   if (!course) notFound()
 
-  // Fetch all active salesmen
+  // Fetch all active salesmen (candidates for new assignments)
   const { data: allSalesmen } = await supabase
     .from('profiles')
     .select('*')
@@ -35,14 +35,17 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
     ? await supabase.from('lessons').select('id').is('deleted_at', null).in('module_id', moduleIds)
     : { data: [] }
   const totalLessons = lessons?.length ?? 0
+  const lessonIds = (lessons ?? []).map(l => l.id)
 
-  // Fetch lesson completion per assigned user
+  // Fetch lesson completion per assigned user — scoped to THIS course's
+  // lessons only, so progress can never exceed 100% (B28)
   const assignedUserIds = (assignments ?? []).map(a => a.user_id)
-  const { data: progressRows } = assignedUserIds.length > 0
+  const { data: progressRows } = assignedUserIds.length > 0 && lessonIds.length > 0
     ? await supabase
         .from('lesson_progress')
         .select('user_id, lesson_id')
         .in('user_id', assignedUserIds)
+        .in('lesson_id', lessonIds)
         .eq('completed', true)
     : { data: [] }
 
@@ -51,8 +54,20 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
     return acc
   }, {})
 
-  // Build enriched assigned users list
-  const profileMap = Object.fromEntries((allSalesmen ?? []).map(p => [p.id, p]))
+  // Build enriched assigned users list. Assigned users are fetched
+  // regardless of status (B29): an assignee who was later deactivated or
+  // suspended must still be visible so the admin can unassign them.
+  const { data: assignedProfiles } = assignedUserIds.length > 0
+    ? await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'salesman')
+        .in('id', assignedUserIds)
+    : { data: [] }
+  const profileMap = Object.fromEntries([
+    ...(allSalesmen ?? []),
+    ...(assignedProfiles ?? []),
+  ].map(p => [p.id, p]))
   const assignedUsers = (assignments ?? [])
     .map(a => {
       const profile = profileMap[a.user_id]
@@ -62,13 +77,15 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
         full_name: profile.full_name,
         email: profile.email,
         department: profile.department,
+        status: profile.status,
         completed_lessons: progressByUser[a.user_id] ?? 0,
         total_lessons: totalLessons,
       }
     })
     .filter(Boolean) as {
       user_id: string; full_name: string; email: string;
-      department: string | null; completed_lessons: number; total_lessons: number
+      department: string | null; status: string;
+      completed_lessons: number; total_lessons: number
     }[]
 
   return (
@@ -99,6 +116,7 @@ export default async function AssignCoursePage({ params }: { params: { id: strin
           courseId={params.id}
           allSalesmen={allSalesmen ?? []}
           assignedUsers={assignedUsers}
+          totalLessons={totalLessons}
         />
       </div>
     </div>

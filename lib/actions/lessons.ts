@@ -1,8 +1,18 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import type { ActionResult, Lesson, LessonProgress, Status, Difficulty } from '@/types'
+
+function getServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -121,10 +131,19 @@ export async function markLessonComplete(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized' }
 
-  const { data, error } = await supabase
+  // Resolve the effective user: while an admin impersonates a student
+  // (View as Student), progress must land on the student, not the admin
+  // (B77). The lesson_progress INSERT policy only allows
+  // user_id = auth.uid(), so an impersonated write must go through the
+  // service client, which bypasses RLS; a normal student write keeps
+  // using the session client.
+  const { userId, isImpersonating } = await getEffectiveUser()
+  const writeClient = isImpersonating ? getServiceClient() : supabase
+
+  const { data, error } = await writeClient
     .from('lesson_progress')
     .upsert(
-      { user_id: user.id, lesson_id: lessonId, completed: true, completed_at: new Date().toISOString() },
+      { user_id: userId, lesson_id: lessonId, completed: true, completed_at: new Date().toISOString() },
       { onConflict: 'user_id,lesson_id' }
     )
     .select()
@@ -134,31 +153,63 @@ export async function markLessonComplete(
 
   // Award badges (fire & forget)
   import('@/lib/actions/badges').then(({ checkAndAwardBadge }) => {
-    checkAndAwardBadge(user.id, 'first_lesson').catch(() => {})
+    checkAndAwardBadge(userId, 'first_lesson').catch(() => {})
 
-    // Check if entire course is now complete
+    // Check if entire course is now complete. Completion is defined the
+    // same way as the course page: published, non-deleted lessons only
+    // (B38a) — draft lessons must not block the badge.
     supabase
       .from('lessons')
       .select('id, modules!inner(course_id)').is('deleted_at', null)
+      .eq('status', 'published')
       .eq('modules.course_id', courseId)
       .then(async ({ data: courseLessons }) => {
         if (!courseLessons?.length) return
         const { data: progress } = await supabase
           .from('lesson_progress')
           .select('lesson_id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .eq('completed', true)
         const completedIds = new Set((progress ?? []).map(p => p.lesson_id))
         const allDone = courseLessons.every(l => completedIds.has(l.id))
-        if (allDone) {
-          checkAndAwardBadge(user.id, 'first_course').catch(() => {})
-          // Check 5 courses
-          const { count } = await supabase
-            .from('course_assignments')
-            .select('course_id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-          if ((count ?? 0) >= 5) checkAndAwardBadge(user.id, 'five_courses').catch(() => {})
-        }
+        if (!allDone) return
+        checkAndAwardBadge(userId, 'first_course').catch(() => {})
+
+        // five_courses counts COMPLETED courses, not assigned ones (B38b):
+        // a course counts when it has at least one published, non-deleted
+        // lesson and every such lesson is complete for this user.
+        const { data: assigned } = await supabase
+          .from('course_assignments')
+          .select('course_id')
+          .eq('user_id', userId)
+        const assignedCourseIds = (assigned ?? []).map(a => a.course_id)
+        if (assignedCourseIds.length === 0) return
+        const { data: assignedModules } = await supabase
+          .from('modules')
+          .select('id, course_id')
+          .is('deleted_at', null)
+          .in('course_id', assignedCourseIds)
+        const assignedModuleIds = (assignedModules ?? []).map(m => m.id)
+        if (assignedModuleIds.length === 0) return
+        const { data: allLessons } = await supabase
+          .from('lessons')
+          .select('id, module_id')
+          .is('deleted_at', null)
+          .eq('status', 'published')
+          .in('module_id', assignedModuleIds)
+        const moduleCourseMap = Object.fromEntries((assignedModules ?? []).map(m => [m.id, m.course_id]))
+        const lessonsByCourse = (allLessons ?? []).reduce<Record<string, string[]>>((acc, l) => {
+          const cid = moduleCourseMap[l.module_id]
+          if (cid) {
+            if (!acc[cid]) acc[cid] = []
+            acc[cid].push(l.id)
+          }
+          return acc
+        }, {})
+        const completedCourses = Object.values(lessonsByCourse).filter(
+          ids => ids.length > 0 && ids.every(id => completedIds.has(id))
+        ).length
+        if (completedCourses >= 5) checkAndAwardBadge(userId, 'five_courses').catch(() => {})
       })
   }).catch(() => {})
 

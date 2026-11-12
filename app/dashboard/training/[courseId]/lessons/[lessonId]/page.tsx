@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import { LessonViewer } from '@/components/training/LessonViewer'
 import { ChevronLeft, Clock, Star, Brain } from 'lucide-react'
 import { fetchQuizForLesson } from '@/lib/actions/quizzes'
@@ -11,8 +12,11 @@ export default async function LessonViewerPage({
   params: { courseId: string; lessonId: string }
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  // Use the effective user so that, while an admin is impersonating a
+  // student (View as Student), progress is read/recorded against the
+  // student, not the admin (B39). getEffectiveUser redirects to login
+  // when there is no session.
+  const { userId } = await getEffectiveUser()
 
   const { data: lesson } = await supabase
     .from('lessons')
@@ -38,7 +42,7 @@ export default async function LessonViewerPage({
     .from('lesson_progress')
     .select('completed')
     .eq('lesson_id', params.lessonId)
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single()
 
   const isCompleted = progress?.completed ?? false

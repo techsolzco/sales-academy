@@ -98,8 +98,28 @@ export async function unpublishCourse(id: string): Promise<ActionResult<Course>>
 export async function deleteCourse(id: string): Promise<ActionResult> {
   try {
     const { supabase } = await requireAdmin()
-    const { error } = await supabase.from('courses').update({ deleted_at: new Date().toISOString() }).eq('id', id)
+    const deletedAt = new Date().toISOString()
+    const { error } = await supabase.from('courses').update({ deleted_at: deletedAt }).eq('id', id)
     if (error) return { error: error.message }
+    // Soft-delete the course's modules and lessons too, so no orphaned
+    // child rows stay live/counted (B74).
+    const { data: modules } = await supabase
+      .from('modules')
+      .select('id')
+      .eq('course_id', id)
+    const moduleIds = (modules ?? []).map(m => m.id)
+    if (moduleIds.length > 0) {
+      const { error: modError } = await supabase
+        .from('modules')
+        .update({ deleted_at: deletedAt })
+        .in('id', moduleIds)
+      if (modError) return { error: modError.message }
+      const { error: lessonError } = await supabase
+        .from('lessons')
+        .update({ deleted_at: deletedAt })
+        .in('module_id', moduleIds)
+      if (lessonError) return { error: lessonError.message }
+    }
     revalidatePath('/admin/courses')
     return { data: undefined }
   } catch (e: unknown) {

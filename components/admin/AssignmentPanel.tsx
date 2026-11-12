@@ -10,6 +10,7 @@ interface AssignedUser {
   full_name: string
   email: string
   department: string | null
+  status?: string
   completed_lessons: number
   total_lessons: number
 }
@@ -18,6 +19,7 @@ interface AssignmentPanelProps {
   courseId: string
   allSalesmen: Profile[]
   assignedUsers: AssignedUser[]
+  totalLessons: number
 }
 
 function ProgressBar({ completed, total }: { completed: number; total: number }) {
@@ -32,12 +34,25 @@ function ProgressBar({ completed, total }: { completed: number; total: number })
   )
 }
 
-export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: AssignmentPanelProps) {
+export function AssignmentPanel({ courseId, allSalesmen, assignedUsers, totalLessons }: AssignmentPanelProps) {
   const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [localAssigned, setLocalAssigned] = useState<AssignedUser[]>(assignedUsers)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  function showFeedback(message: string) {
+    setFeedback(message)
+    setError(null)
+    setTimeout(() => setFeedback(null), 3000)
+  }
+
+  function showError(message: string) {
+    setError(message)
+    setFeedback(null)
+    setTimeout(() => setError(null), 5000)
+  }
 
   const assignedIds = new Set(localAssigned.map(u => u.user_id))
 
@@ -65,11 +80,12 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
       if (!result.error) {
         const newlyAssigned = allSalesmen
           .filter(s => ids.includes(s.id))
-          .map(s => ({ user_id: s.id, full_name: s.full_name, email: s.email, department: s.department, completed_lessons: 0, total_lessons: localAssigned[0]?.total_lessons ?? 0 }))
+          .map(s => ({ user_id: s.id, full_name: s.full_name, email: s.email, department: s.department, status: s.status, completed_lessons: 0, total_lessons: totalLessons }))
         setLocalAssigned(prev => [...prev, ...newlyAssigned])
         setSelected(new Set())
-        setFeedback(`Assigned ${ids.length} salesman${ids.length !== 1 ? 'men' : ''}.`)
-        setTimeout(() => setFeedback(null), 3000)
+        showFeedback(`Assigned ${ids.length} salesman${ids.length !== 1 ? 'men' : ''}.`)
+      } else {
+        showError(result.error || 'Failed to assign salesmen. Please try again.')
       }
     })
   }
@@ -80,10 +96,11 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
       if (!result.error) {
         const newlyAssigned = allSalesmen
           .filter(s => !assignedIds.has(s.id))
-          .map(s => ({ user_id: s.id, full_name: s.full_name, email: s.email, department: s.department, completed_lessons: 0, total_lessons: localAssigned[0]?.total_lessons ?? 0 }))
+          .map(s => ({ user_id: s.id, full_name: s.full_name, email: s.email, department: s.department, status: s.status, completed_lessons: 0, total_lessons: totalLessons }))
         setLocalAssigned(prev => [...prev, ...newlyAssigned])
-        setFeedback(`Assigned all ${result.data?.count} salesmen.`)
-        setTimeout(() => setFeedback(null), 3000)
+        showFeedback(`Assigned all ${result.data?.count} salesmen.`)
+      } else {
+        showError(result.error || 'Failed to assign all salesmen. Please try again.')
       }
     })
   }
@@ -93,6 +110,9 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
       const result = await unassignUser(courseId, userId)
       if (!result.error) {
         setLocalAssigned(prev => prev.filter(u => u.user_id !== userId))
+        setError(null)
+      } else {
+        showError(result.error || 'Failed to remove assignment. Please try again.')
       }
     })
   }
@@ -115,6 +135,12 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
           </div>
         )}
 
+        {error && (
+          <div className="mb-3 flex items-center gap-2 p-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm animate-fade-in">
+            {error}
+          </div>
+        )}
+
         {localAssigned.length === 0 ? (
           <div className="text-center py-10 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
             No one assigned yet.
@@ -127,7 +153,14 @@ export function AssignmentPanel({ courseId, allSalesmen, assignedUsers }: Assign
                   {user.full_name[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.full_name}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                    {user.full_name}
+                    {user.status && user.status !== 'active' && (
+                      <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        {user.status}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user.email}</p>
                   {user.total_lessons > 0 && (
                     <div className="mt-1">
