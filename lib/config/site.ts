@@ -11,7 +11,7 @@ export const SITE_TAGLINE =
   process.env.NEXT_PUBLIC_SITE_TAGLINE ?? 'Elevate your sales performance'
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://academy.sherazakram.com'
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://academy.prowala.com'
 
 export const SUPPORT_WHATSAPP =
   process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? '923107902212'
