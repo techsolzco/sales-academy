@@ -1,6 +1,17 @@
 'use server'
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
+
+async function requireAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Forbidden')
+  return { supabase, user }
+}
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -45,6 +56,12 @@ export async function generateAndSaveToolQuiz(
   objections: Array<{ objection_text: string; recommended_response: string }>,
   scripts: Array<{ title: string; script_type: string }>
 ): Promise<void> {
+  // Admin-only. The caller-supplied userId is IGNORED for authorship:
+  // created_by is always the authenticated admin from the session.
+  // (Only live caller is lib/actions/tool-onboard.ts saveToolPackage, which
+  // is itself admin-gated and passes the same admin's id.)
+  const { user } = await requireAdmin()
+  void userId
   const sb = getServiceClient()
 
   const context = [
@@ -108,7 +125,7 @@ Make questions practical and test real sales knowledge. Mix easy and hard questi
         title: parsed.title,
         description: parsed.description,
         tool_id: toolId,
-        created_by: userId,
+        created_by: user.id,
         pass_score: 70,
       }).select('id').single()
       if (quizErr || !quiz) {

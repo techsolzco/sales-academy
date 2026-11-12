@@ -1,6 +1,17 @@
 'use server'
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
+
+async function requireAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Forbidden')
+  return { supabase, user }
+}
 
 function getServiceClient() {
   return createServiceClient(
@@ -83,7 +94,10 @@ function buildKnowledgeSummary(
 
 /**
  * Non-blocking knowledge sync — call after any FAQ/script/objection/voice note mutation.
- * Uses service role key directly, no admin session required.
+ * Uses service role key directly. Admin session REQUIRED: every live caller
+ * (faqs/objections/scripts create/update/delete) is itself admin-gated,
+ * so the session is present; a direct call without an admin session throws
+ * and is swallowed by the try/catch below (sync skipped, never fatal).
  * 
  * NO GEMINI CALL — just concatenates raw content. Instant and reliable.
  * 
@@ -93,6 +107,7 @@ function buildKnowledgeSummary(
 export async function syncToolKnowledge(toolId: string | null | undefined) {
   if (!toolId) return
   try {
+    await requireAdmin()
     const sb = getServiceClient()
     
     // Check if this tool has a manually edited summary — if so, skip auto-sync

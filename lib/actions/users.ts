@@ -1,23 +1,34 @@
 'use server'
+import { randomBytes } from 'crypto'
 import { revalidatePath } from 'next/cache'
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
+/** CSPRNG temp password: 12 random bytes -> 16 URL-safe base64 chars (96 bits of entropy). */
+function generateTempPassword(): string {
+  return randomBytes(12).toString('base64url')
+}
+
+/**
+ * @deprecated `skipAuthCheck` no longer bypasses anything (B60). The session
+ * is ALWAYS verified and the caller must be an admin; the parameter is kept
+ * only so the existing caller (app/admin/salesmen/page.tsx, a server
+ * component under the admin-only /admin route) keeps compiling. It is ignored.
+ */
 export async function fetchTeamMembers(skipAuthCheck = false) {
-  if (!skipAuthCheck) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
-    
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-      
-    if (profile?.role !== 'admin') return []
-  }
+  void skipAuthCheck
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') return []
   const sbAdmin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -58,7 +69,14 @@ export async function createUser(data: {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  const password = data.password || 'Temporary123!'
+  // Temp password (B17/S10): never a hardcoded default. If the admin supplied
+  // a password, use it; otherwise generate a per-user CSPRNG password and
+  // RETURN it to the calling admin so they can share it with the new user
+  // (no email is sent here — welcome-email delivery is part of the pending
+  // registration decision). NOTE: components/admin/CreateUserModal.tsx does
+  // not display the returned password yet — it must be updated to show it,
+  // or the admin will never see the generated password.
+  const password = data.password || generateTempPassword()
 
   const { data: authData, error: authError } = await sbAdmin.auth.admin.createUser({
     email: data.email,
@@ -77,8 +95,10 @@ export async function createUser(data: {
     return { error: 'User creation failed' }
   }
 
-  // Update profile created by the trigger
-  const { error: profileError } = await sbAdmin
+  // Update profile created by the trigger. Verify the write actually affected
+  // a row (B17): checking only `profileError` silently passes when the
+  // trigger never created a profile row and the update touches 0 rows.
+  const { data: updatedProfiles, error: profileError } = await sbAdmin
     .from('profiles')
     .update({
       role: data.role,
@@ -87,12 +107,16 @@ export async function createUser(data: {
       status: 'active'
     })
     .eq('id', authData.user.id)
+    .select('id')
 
   if (profileError) {
     return { error: 'User created but profile update failed: ' + profileError.message }
   }
+  if (!updatedProfiles || updatedProfiles.length === 0) {
+    return { error: `User created in Auth (id ${authData.user.id}) but no profile row exists to update — the creation trigger did not run. Ask an admin to repair the profile before the user signs in.` }
+  }
 
-  return { data: { id: authData.user.id } }
+  return { data: { id: authData.user.id, tempPassword: password } }
 }
 
 // â”€â”€â”€ Deactivate / reactivate a salesman â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -106,8 +130,28 @@ export async function deactivateUser(targetId: string): Promise<{ error?: string
   if (user.id === targetId) return { error: 'You cannot deactivate your own account.' }
   const { data: adminProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (adminProfile?.role !== 'admin') return { error: 'Not authorized' }
-  const { error } = await supabase.from('profiles').update({ status: 'inactive' }).eq('id', targetId)
+
+  // Service client, consistent with deleteUserPermanently (B79): the write
+  // must not depend on RLS on the anon client.
+  const sb = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  // Guard (B79): an admin cannot deactivate another admin. (Self-deactivation
+  // is already blocked above.) Admin offboarding goes through
+  // deleteUserPermanently, which carries the last-admin guard.
+  const { data: targetProfile } = await sb
+    .from('profiles').select('role').eq('id', targetId).single()
+  if (!targetProfile) return { error: 'User not found.' }
+  if (targetProfile.role === 'admin') {
+    return { error: 'Admin accounts cannot be deactivated. Use permanent delete (which guards the last admin) instead.' }
+  }
+
+  const { data: updated, error } = await sb.from('profiles').update({ status: 'inactive' }).eq('id', targetId).select('id')
   if (error) return { error: error.message }
+  if (!updated || updated.length === 0) return { error: 'User not found.' }
   revalidatePath('/admin/salesmen')
   return {}
 }

@@ -6,12 +6,28 @@ import { Upload, Loader2, ImageIcon, X } from 'lucide-react'
 interface ImageUploadProps {
   currentUrl?: string
   bucket: string
+  // Accepted for caller compatibility only — the server ignores `folder`
+  // and uses a fixed path prefix per upload kind.
   folder?: string
   onUpload: (url: string) => void
   label?: string
 }
 
-export function ImageUpload({ currentUrl, bucket, folder, onUpload, label }: ImageUploadProps) {
+// Client-side mirror of the server allowlist in app/api/upload-image/route.ts.
+// The server re-validates `kind` and resolves the bucket + path prefix
+// itself; `bucket`/`folder` are never sent, so a caller cannot pick a
+// different bucket or folder. Unknown buckets fail here before any upload.
+const KIND_BY_BUCKET: Record<string, string> = {
+  'course-thumbnails': 'course-thumbnail',
+  'tool-logos': 'tool-logo',
+  announcements: 'announcement',
+  avatars: 'avatar',
+  'assignment-files': 'assignment-file',
+}
+
+const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+
+export function ImageUpload({ currentUrl, bucket, onUpload, label }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentUrl || null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,25 +36,35 @@ export function ImageUpload({ currentUrl, bucket, folder, onUpload, label }: Ima
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) { setError('Please select an image file'); return }
-    if (file.size > 5 * 1024 * 1024) { setError('Image must be under 5MB'); return }
-    
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) { setError('Only PNG, JPEG and WebP images are allowed'); if (inputRef.current) inputRef.current.value = ''; return }
+    if (file.size > 5 * 1024 * 1024) { setError('Image must be under 5MB'); if (inputRef.current) inputRef.current.value = ''; return }
+
+    const kind = KIND_BY_BUCKET[bucket]
+    if (!kind) { setError('Unsupported upload target'); if (inputRef.current) inputRef.current.value = ''; return }
+
     setError(null)
-    setPreview(URL.createObjectURL(file))
+    // B51: no preview of the new file until the upload actually succeeds.
+    // The previously saved image (currentUrl) stays visible meanwhile.
     setUploading(true)
-    
+
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('bucket', bucket)
-    if (folder) formData.append('folder', folder)
+    formData.append('kind', kind)
 
     try {
       const res = await fetch('/api/upload-image', { method: 'POST', body: formData })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error || `Upload failed (${res.status})`)
+      // Only now — with a URL that really uploaded — show it and report it.
+      setPreview(data.url)
       onUpload(data.url)
     } catch (err: any) {
+      // B51: on failure clear the (never-set) new preview, revert to the
+      // last saved image, and show the error — never leave a preview of a
+      // file that did not upload, and never call onUpload with it.
+      setPreview(currentUrl || null)
       setError(err.message || 'Upload failed')
+      if (inputRef.current) inputRef.current.value = ''
     } finally {
       setUploading(false)
     }
@@ -71,7 +97,7 @@ export function ImageUpload({ currentUrl, bucket, folder, onUpload, label }: Ima
             <p className="text-xs text-gray-300">PNG, JPG, WebP up to 5MB</p>
           </div>
         )}
-        
+
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -81,13 +107,13 @@ export function ImageUpload({ currentUrl, bucket, folder, onUpload, label }: Ima
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
           {uploading ? 'Uploading...' : 'Choose file'}
         </button>
-        
+
         {error && <p className="text-xs text-red-500">{error}</p>}
-        
+
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp"
           className="hidden"
           onChange={handleFile}
         />

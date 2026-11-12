@@ -1,11 +1,19 @@
 'use server'
 
+import { createClient } from '@/lib/supabase/server'
 import type { ActionResult } from '@/types'
 
 const GEMINI_MODELS = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest']
 
 export async function universalTranslate(text: string, targetLanguage: string): Promise<ActionResult<string>> {
   try {
+    // Session check only — used by the authenticated staff translator widget
+    // (app/dashboard/translate). Any authenticated user can still use the
+    // Gemini proxy through this action (residual risk, same as callGemini).
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
     const key = process.env.GEMINI_API_KEY!
     const systemPrompt = `You are a professional translator. Translate the provided text to ${targetLanguage}. Provide ONLY the translated text, no explanations or quotes.`
     

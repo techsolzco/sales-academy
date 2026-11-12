@@ -24,6 +24,8 @@ async function requireAdmin() {
 
 export async function fetchPolicies(publishedOnly = false): Promise<Policy[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
   let q = supabase.from('policies').select('*').order('created_at', { ascending: false })
   if (publishedOnly) q = q.eq('is_published', true)
   const { data } = await q

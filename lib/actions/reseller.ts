@@ -3,6 +3,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+async function requireAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Forbidden')
+  return { supabase, user }
+}
+
 export type ResellerApplication = {
   id: string
   user_id: string
@@ -59,7 +69,7 @@ export async function fetchMyResellerApplication() {
 }
 
 export async function fetchResellerApplications() {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
   const { data } = await supabase
     .from('reseller_applications')
     .select(`
@@ -72,7 +82,7 @@ export async function fetchResellerApplications() {
 }
 
 export async function approveResellerApplication(id: string, salesPortalUrl?: string) {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
   
   // Get application to get user_id
   const { data: app } = await supabase
@@ -101,7 +111,7 @@ export async function approveResellerApplication(id: string, salesPortalUrl?: st
 }
 
 export async function rejectResellerApplication(id: string, reason: string) {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
   await supabase
     .from('reseller_applications')
     .update({ status: 'rejected', rejection_reason: reason })
@@ -110,7 +120,7 @@ export async function rejectResellerApplication(id: string, reason: string) {
 }
 
 export async function fetchResellers() {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, full_name, email, avatar_url, is_reseller, commissions(amount, status)')
@@ -134,13 +144,18 @@ export async function fetchResellers() {
 
 export async function fetchCommissions(resellerId?: string) {
   const supabase = await createClient()
-  let targetId = resellerId
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
 
-  if (!targetId) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
-    targetId = user.id
+  // No id = own commissions (staff reseller dashboard). An explicit id for
+  // somebody else is admin-only (admin reseller detail page).
+  let targetId = resellerId
+  if (targetId && targetId !== user.id) {
+    const { data: profile } = await supabase
+      .from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Forbidden')
   }
+  if (!targetId) targetId = user.id
 
   const { data } = await supabase
     .from('commissions')
@@ -152,7 +167,7 @@ export async function fetchCommissions(resellerId?: string) {
 }
 
 export async function addCommission(resellerId: string, amount: number, description: string) {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
   await supabase
     .from('commissions')
     .insert([{ reseller_id: resellerId, amount, description, status: 'pending' }])
@@ -160,7 +175,7 @@ export async function addCommission(resellerId: string, amount: number, descript
 }
 
 export async function markCommissionPaid(commissionId: string) {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
   await supabase
     .from('commissions')
     .update({ status: 'paid', paid_at: new Date().toISOString() })

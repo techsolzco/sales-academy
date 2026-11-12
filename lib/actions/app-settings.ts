@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache'
 
 export async function getAppSettings() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
   const { data, error } = await supabase.from('app_settings').select('*').limit(1).single()
   if (error) {
     return { welcome_message_template: `Welcome {name}! We are excited to have you join the ${SITE_NAME}.` }

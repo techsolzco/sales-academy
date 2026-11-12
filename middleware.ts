@@ -15,10 +15,19 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Fast-path: Static files and assets that don't need auth checks
+  // Public auth paths (login, register, forgot password, etc.)
+  const isPublicAuthPath =
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/register')
+
+  // Fast-path: Static files and assets that don't need auth checks.
+  // NOTE (S14/B27): the old exemption for everything under /api/auth/* is
+  // gone — no route lives under app/api/auth/ (the callback is the page
+  // route app/auth/callback/route.ts, already covered by the /auth public
+  // path). The only API route, /api/upload-image, now goes through the
+  // auth checks below like any other route.
   const isStaticAsset =
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api/auth') ||
     pathname === '/favicon.ico' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml'
@@ -29,7 +38,15 @@ export async function middleware(request: NextRequest) {
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.error('[Middleware] Supabase environment variables missing')
-    return supabaseResponse
+    // Fail CLOSED (S14/B27): never pass a protected request through with no
+    // auth possible. Public auth pages still need to render (otherwise the
+    // login page itself would redirect-loop), so only they pass through.
+    if (isPublicAuthPath) {
+      return supabaseResponse
+    }
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/auth/login'
+    return createRedirect(loginUrl)
   }
 
   try {
@@ -59,11 +76,6 @@ export async function middleware(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }))
-
-    // Public auth paths (login, register, forgot password, etc.)
-    const isPublicAuthPath =
-      pathname.startsWith('/auth') ||
-      pathname.startsWith('/register')
 
     // ── Root route ('/') fast redirect directly at the Edge ─────────────
     if (pathname === '/') {
@@ -161,8 +173,17 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   } catch (error) {
     console.error('[Middleware] Unexpected error:', error)
-    // Never crash with a 500 error page, return safe response
-    return supabaseResponse
+    // Fail CLOSED (S14/B27): on any unexpected error (DB outage, network
+    // failure, …) send the user to login instead of letting the request
+    // through to a protected page with no role check. Public auth pages
+    // pass through so a broken middleware never redirect-loops the login
+    // page itself.
+    if (isPublicAuthPath) {
+      return supabaseResponse
+    }
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/auth/login'
+    return createRedirect(loginUrl)
   }
 }
 

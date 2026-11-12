@@ -23,6 +23,25 @@ async function requireAdmin() {
   return { supabase, user }
 }
 
+async function requireAuth() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  return { supabase, user }
+}
+
+// callGemini is exported (directly invocable as a server action), so its
+// system prompt must not be caller-overridable. The only legitimate
+// server-side callers are: buildSystemPrompt() output (starts '[PERSONA]',
+// used by aiAssistField / quickCreateRecord / askAi / testAiSettings) and
+// the translator prompt in lib/actions/translate.ts. Anything else is
+// rejected — this keeps an authenticated caller from turning the Gemini
+// proxy into an arbitrary-prompt endpoint.
+const ALLOWED_SYSTEM_PROMPT_PREFIXES = [
+  '[PERSONA]',
+  'You are a translator for a Pakistani sales training app.',
+]
+
 function buildSystemPrompt(settings: AiTrainingSettings, toolContext?: string) {
   let prompt = `[PERSONA]
 ${settings.persona_instructions}
@@ -87,6 +106,12 @@ const BACKOFF_429_MS = 5000
 const BACKOFF_503_MS = 5000
 
 export async function callGemini(systemPrompt: string, userPrompt: string, jsonMode: boolean = false): Promise<string> {
+  // Session check only — NOT admin-gated: askAi (salesman Ask AI) and
+  // translateContent call this on behalf of authenticated staff.
+  await requireAuth()
+  if (!ALLOWED_SYSTEM_PROMPT_PREFIXES.some(p => systemPrompt.startsWith(p))) {
+    throw new Error('Forbidden system prompt')
+  }
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('GEMINI_API_KEY is not configured on the server.')
 
@@ -168,6 +193,11 @@ async function logUsage(userId: string, feature: 'ai_assist' | 'quick_create' | 
 }
 
 export async function getAiTrainingSettings(): Promise<AiTrainingSettings | null> {
+  // Session check only — NOT admin-gated: app/dashboard/layout.tsx calls
+  // this on every salesman page load and app/dashboard/ai-help/page.tsx
+  // reads student_ai_access_enabled from it. Any authenticated user can
+  // still read the training settings (residual risk, see audit B21).
+  await requireAuth()
   const supabase = getServiceClient()
   const { data } = await supabase.from('ai_training_settings').select('*').single()
   return data

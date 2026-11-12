@@ -4,10 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 import type { SearchResultItem } from '@/types'
 
 export async function globalSearch(query: string): Promise<{ data: SearchResultItem[] }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
   const q = query.trim().toLowerCase()
   if (!q || q.length < 2) return { data: [] }
-
-  const supabase = await createClient()
 
   // Run search queries in parallel across all published entities
   const [faqsRes, scriptsRes, objectionsRes, toolsRes, lessonsRes] = await Promise.all([

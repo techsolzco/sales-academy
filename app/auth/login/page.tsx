@@ -9,7 +9,15 @@ import { Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/'
+  // Open-redirect guard (B18): only same-origin relative paths are honoured,
+  // mirroring app/auth/callback/route.ts — and stricter: protocol-relative
+  // URLs ('//evil.example') are rejected too. Anything else falls back to
+  // the role-based default destination.
+  const rawRedirect = searchParams.get('redirectTo')
+  const redirectTo =
+    rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
+      ? rawRedirect
+      : '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,10 +50,11 @@ export default function LoginPage() {
       return
     }
 
-    if (rememberMe) {
-      localStorage.setItem('sa_remember', '1')
-    }
-
+    // NOTE (B78): the old `rememberMe` localStorage write ('sa_remember')
+    // was dead — nothing ever read it — so it was removed. Session
+    // persistence is handled by the Supabase SSR cookie client, not by this
+    // checkbox; the checkbox is now inert UI (remove it, or wire it to a
+    // real "remember me" session-length choice, in a follow-up).
     // Determine target portal directly to avoid competing redirects
     let target = redirectTo && redirectTo !== '/' ? redirectTo : null
     if (!target) {

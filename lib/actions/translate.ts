@@ -4,6 +4,34 @@ import { createClient } from '@/lib/supabase/server'
 import { callGemini } from '@/lib/actions/ai-assist'
 import { ActionResult } from '@/types'
 
+async function requireAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Forbidden')
+  return { supabase, user }
+}
+
+// Tables translateContent may touch (runtime allowlist — the TS type alone
+// does not stop a forged server-action call with another table name).
+const ALLOWED_TABLES = ['faqs', 'objections', 'scripts', 'voice_notes'] as const
+
+// Only the *_translated columns may be written by this action. Source-text,
+// status, tool/course links and every other column are never updatable here.
+// Columns verified against migrations 003/015/016 + types/index.ts. Note:
+// meaning_translated / do_not_say_translated / when_to_use_translated appear
+// in types/index.ts and in the viewer callers but have NO migration adding
+// them — if the live DB lacks them the update fails (existing behaviour),
+// it does not silently write elsewhere.
+const ALLOWED_COLUMNS: Record<string, readonly string[]> = {
+  faqs: ['question_translated', 'short_answer_translated', 'customer_ready_answer_translated'],
+  objections: ['recommended_response_translated', 'meaning_translated', 'do_not_say_translated'],
+  scripts: ['content_translated', 'when_to_use_translated'],
+  voice_notes: ['transcript_translated'],
+}
+
 /**
  * Translates content between Urdu script and English/Hinglish.
  * If text is in Roman Urdu/English, it translates to Urdu script.
@@ -20,9 +48,17 @@ export async function translateContent(
   textsToTranslate: Record<string, string>
 ): Promise<ActionResult<Record<string, string>>> {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Unauthorized' }
+    const { supabase } = await requireAdmin()
+
+    if (!(ALLOWED_TABLES as readonly string[]).includes(table)) {
+      return { error: 'Table not allowed' }
+    }
+    const allowedColumns = ALLOWED_COLUMNS[table]
+    for (const key of Object.keys(textsToTranslate)) {
+      if (!allowedColumns.includes(key)) {
+        return { error: `Column not allowed: ${key}` }
+      }
+    }
 
     const results: Record<string, string> = {}
     

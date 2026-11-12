@@ -29,12 +29,26 @@ export async function changePassword(input: {
 
   const { currentPassword, newPassword, confirmPassword } = input
 
+  // Status check (B16): a suspended/inactive user with a live session cannot
+  // change their password. A missing profile row is left to the middleware
+  // (which already redirects profile-less sessions to login) — it does not
+  // block here, so a profile-creation failure cannot lock a user out of
+  // fixing their own credentials.
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('status')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (callerProfile && callerProfile.status !== 'active') {
+    return { error: 'Your account is not active. Please contact an admin.' }
+  }
+
   // Basic validation
   if (!currentPassword) {
     return { error: 'Please enter your current password.' }
   }
-  if (!newPassword || newPassword.length < 6) {
-    return { error: 'New password must be at least 6 characters long.' }
+  if (!newPassword || newPassword.length < 8) {
+    return { error: 'New password must be at least 8 characters long.' }
   }
   if (newPassword !== confirmPassword) {
     return { error: 'New password and confirm password do not match.' }
@@ -82,6 +96,17 @@ export async function changePassword(input: {
 
   if (updateErr) {
     return { error: `Failed to update password: ${updateErr.message}` }
+  }
+
+  // Revoke other sessions (B16): a stolen session must not survive a password
+  // change. supabase-js v2 exposes signOut({ scope: 'others' }), which revokes
+  // every session except this one. Best-effort: if the call fails, the
+  // password change itself already succeeded, so log and continue rather
+  // than reporting the whole change as failed.
+  try {
+    await supabase.auth.signOut({ scope: 'others' })
+  } catch (e) {
+    console.warn('[changePassword] Failed to revoke other sessions:', e)
   }
 
   return { data: undefined }

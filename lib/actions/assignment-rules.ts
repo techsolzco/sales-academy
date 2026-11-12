@@ -134,14 +134,23 @@ export async function fetchToolExperts(toolId: string) {
 
 // ── Daily auto-assignment trigger ─────────────────────────────────────────────
 
-export async function triggerDailyAssignments(userId: string): Promise<void> {
+export async function triggerDailyAssignments(userId?: string): Promise<void> {
+  // No live caller (dead import in app/dashboard/layout.tsx). The
+  // caller-supplied userId is IGNORED: the run is always for the
+  // authenticated session user, so one user can never pre-consume (or
+  // trigger) another user's daily run via the dedup guard.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  void userId
+  const targetUserId = user.id
   const sb = getServiceClient()
 
   // Dedup guard: try to insert today's run record
   const today = new Date().toISOString().slice(0, 10) // 'YYYY-MM-DD'
   const { error: runError } = await sb
     .from('daily_assignment_runs')
-    .insert({ user_id: userId, run_date: today })
+    .insert({ user_id: targetUserId, run_date: today })
   
   // If insert fails (unique constraint), already ran today — exit
   if (runError) return
@@ -150,7 +159,7 @@ export async function triggerDailyAssignments(userId: string): Promise<void> {
   const { data: expertRows } = await sb
     .from('salesman_tool_expertise')
     .select('tool_id')
-    .eq('user_id', userId)
+    .eq('user_id', targetUserId)
   const expertToolIds = new Set((expertRows || []).map((r: any) => r.tool_id))
 
   // Fetch all enabled rules that apply to this user
@@ -167,7 +176,7 @@ export async function triggerDailyAssignments(userId: string): Promise<void> {
     
     if (rule.applies_to === 'all') return true
     if (rule.applies_to === 'specific') {
-      return (rule.users || []).some((u: any) => u.user_id === userId)
+      return (rule.users || []).some((u: any) => u.user_id === targetUserId)
     }
     return false
   })
@@ -221,7 +230,7 @@ export async function triggerDailyAssignments(userId: string): Promise<void> {
       title: `[Auto] ${toolName} Daily Study — ${today_label}`,
       instructions: `Your daily study checklist for ${toolName}. Review each item and submit your response.`,
       tool_id: rule.tool_id,
-      created_by: userId, // attribute to salesman (auto-generated)
+      created_by: targetUserId, // attribute to salesman (auto-generated)
     }).select('id').single()
 
     if (aErr || !assignment) {
@@ -239,7 +248,7 @@ export async function triggerDailyAssignments(userId: string): Promise<void> {
     // Create submission stub so salesman sees it on their dashboard
     await sb.from('assignment_submissions').insert({
       assignment_id: assignment.id,
-      user_id: userId,
+      user_id: targetUserId,
       status: 'pending',
     }).then(({ error: sErr }: any) => {
       if (sErr) console.error('[AutoAssign] Failed to create submission stub:', sErr)

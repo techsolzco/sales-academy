@@ -28,11 +28,18 @@ async function requireAdmin() {
 
 export async function fetchAnnouncements(publishedOnly = false): Promise<Announcement[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  const isAdmin = profile?.role === 'admin'
   let q = supabase
     .from('announcements')
     .select('*, profile:profiles(full_name)')
     .order('created_at', { ascending: false })
-  if (publishedOnly) q = q.eq('is_published', true)
+  // Admins see all (drafts included) when they ask for them; everyone else
+  // only ever sees published announcements, whatever was requested.
+  if (publishedOnly || !isAdmin) q = q.eq('is_published', true)
   const { data } = await q
   return (data ?? []) as Announcement[]
 }
