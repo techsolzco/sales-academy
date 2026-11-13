@@ -1,7 +1,9 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { recordLogin } from '@/lib/actions/login-history'
 import type { ActionResult } from '@/types'
 
 function getServiceClient() {
@@ -110,4 +112,35 @@ export async function changePassword(input: {
   }
 
   return { data: undefined }
+}
+
+/**
+ * Login history (audit §3 #20) — record the current user's password sign-in.
+ *
+ * The auth callback route only records PKCE/email-flow sign-ins, so the
+ * primary password login (app/auth/login/page.tsx) would otherwise never
+ * be recorded. The login page calls this fire-and-forget right after a
+ * successful signInWithPassword.
+ *
+ * The user id is derived from the session server-side — never from a
+ * client-supplied value — and the IP / user-agent come from this request's
+ * headers (x-forwarded-for first entry). Never throws to the caller in a
+ * way that can block login: recordLogin itself never throws, and the
+ * login page does not await this.
+ */
+export async function recordMyLogin(): Promise<ActionResult<{ isNewDevice: boolean }>> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const headerStore = headers()
+    const forwardedFor = headerStore.get('x-forwarded-for')
+    const ip = forwardedFor?.split(',')[0]?.trim() || null
+    const userAgent = headerStore.get('user-agent')
+
+    return await recordLogin(user.id, ip, userAgent)
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Failed to record login' }
+  }
 }

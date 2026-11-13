@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { isCourseComplete } from '@/lib/training-progress'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { ActionResult, Course, Status, Difficulty, Visibility } from '@/types'
@@ -196,6 +197,239 @@ export async function fetchCourseContentItems(
     return data as CourseContentItem[]
   } catch {
     return []
+  }
+}
+
+// ─── Course prerequisites (audit §3 #17) ────────────────────────────────────
+// Types are defined locally in this file (shared types/index.ts is not
+// edited — other agents are working in parallel).
+
+export interface PrerequisiteCourse {
+  id: string
+  title: string
+}
+
+export interface TrainingAccess {
+  course_id: string
+  locked: boolean
+  missing: PrerequisiteCourse[]
+}
+
+// Walk the prerequisite graph from `startId` following
+// course -> required_course edges. Returns true if `targetId` is reachable
+// (i.e. adding an edge into `startId`'s subtree would create a cycle).
+// Depth guard of 20: a legitimate learning path is far shorter, and the
+// guard also stops an infinite walk if the table ever holds a cycle.
+async function wouldCreateCycle(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>['supabase'],
+  startId: string,
+  targetId: string,
+): Promise<boolean> {
+  const MAX_DEPTH = 20
+  const seen = new Set<string>()
+  let frontier = [startId]
+  for (let depth = 0; depth < MAX_DEPTH && frontier.length > 0; depth++) {
+    const { data } = await supabase
+      .from('course_prerequisites')
+      .select('required_course_id')
+      .in('course_id', frontier)
+    const next = (data ?? []).map(r => r.required_course_id as string)
+    if (next.includes(targetId)) return true
+    frontier = next.filter(id => !seen.has(id))
+    next.forEach(id => seen.add(id))
+  }
+  return false
+}
+
+async function courseExists(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>['supabase'],
+  courseId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('courses')
+    .select('id')
+    .eq('id', courseId)
+    .is('deleted_at', null)
+    .maybeSingle()
+  return !!data
+}
+
+// Admin: require `requiredCourseId` before `courseId` can be opened.
+export async function addPrerequisite(
+  courseId: string,
+  requiredCourseId: string,
+): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    if (courseId === requiredCourseId) {
+      return { error: 'A course cannot require itself.' }
+    }
+    const [courseOk, requiredOk] = await Promise.all([
+      courseExists(supabase, courseId),
+      courseExists(supabase, requiredCourseId),
+    ])
+    if (!courseOk) return { error: 'Course not found.' }
+    if (!requiredOk) return { error: 'Required course not found.' }
+    // Adding courseId -> requiredCourseId creates a cycle iff
+    // requiredCourseId already (transitively) requires courseId.
+    if (await wouldCreateCycle(supabase, requiredCourseId, courseId)) {
+      return { error: 'This would create a circular prerequisite chain.' }
+    }
+    const { error } = await supabase
+      .from('course_prerequisites')
+      .insert({ course_id: courseId, required_course_id: requiredCourseId })
+    if (error) {
+      // Unique violation: the edge already exists — report it plainly
+      // instead of leaking the raw Postgres message.
+      if (error.code === '23505') return { error: 'This prerequisite is already set.' }
+      return { error: error.message }
+    }
+    revalidatePath(`/admin/courses/${courseId}`)
+    revalidatePath('/dashboard/training')
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+// Admin: drop a prerequisite edge.
+export async function removePrerequisite(
+  courseId: string,
+  requiredCourseId: string,
+): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await supabase
+      .from('course_prerequisites')
+      .delete()
+      .eq('course_id', courseId)
+      .eq('required_course_id', requiredCourseId)
+    if (error) return { error: error.message }
+    revalidatePath(`/admin/courses/${courseId}`)
+    revalidatePath('/dashboard/training')
+    return { data: undefined }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+// Any authenticated user: the courses `courseId` requires, with titles.
+export async function fetchPrerequisites(
+  courseId: string,
+): Promise<ActionResult<PrerequisiteCourse[]>> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+    const { data, error } = await supabase
+      .from('course_prerequisites')
+      .select('required_course_id, required:courses!course_prerequisites_required_course_id_fkey(id, title)')
+      .eq('course_id', courseId)
+    if (error) return { error: error.message }
+    const rows = (data ?? []) as unknown as {
+      required_course_id: string
+      required: { id: string; title: string } | null
+    }[]
+    return {
+      data: rows
+        .filter(r => r.required)
+        .map(r => ({ id: r.required!.id, title: r.required!.title })),
+    }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+// Admin: courses that can be picked as a prerequisite for `courseId`
+// (non-deleted, not itself, not already a prerequisite of it).
+export async function fetchAvailablePrerequisiteCourses(
+  courseId: string,
+): Promise<ActionResult<PrerequisiteCourse[]>> {
+  try {
+    const { supabase } = await requireAdmin()
+    const [{ data: courses }, { data: existing }] = await Promise.all([
+      supabase
+        .from('courses')
+        .select('id, title')
+        .is('deleted_at', null)
+        .neq('id', courseId)
+        .order('title', { ascending: true }),
+      supabase
+        .from('course_prerequisites')
+        .select('required_course_id')
+        .eq('course_id', courseId),
+    ])
+    const already = new Set((existing ?? []).map(r => r.required_course_id as string))
+    return {
+      data: ((courses ?? []) as PrerequisiteCourse[])
+        .filter(c => !already.has(c.id)),
+    }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
+}
+
+// Session user: lock state for every published, non-deleted course. A
+// course is locked when any of its prerequisites is not complete for the
+// user ("complete" = lib/training-progress.ts isCourseComplete). Admins
+// viewing as a student still see their own (session) lock state here — the
+// training pages resolve impersonation separately via getEffectiveUser.
+export async function fetchTrainingAccess(): Promise<ActionResult<TrainingAccess[]>> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+    const { data: courses, error } = await supabase
+      .from('courses')
+      .select('id, title')
+      .is('deleted_at', null)
+      .eq('status', 'published')
+    if (error) return { error: error.message }
+    const courseList = (courses ?? []) as { id: string; title: string }[]
+    if (courseList.length === 0) return { data: [] }
+    const titleById = new Map(courseList.map(c => [c.id, c.title]))
+
+    const { data: edges, error: edgesError } = await supabase
+      .from('course_prerequisites')
+      .select('course_id, required_course_id')
+      .in('course_id', courseList.map(c => c.id))
+    if (edgesError) return { error: edgesError.message }
+
+    // Titles of required courses that are themselves unpublished/deleted
+    // are not in titleById — fetch them so a locked course still names
+    // what is missing.
+    const requiredIds = Array.from(new Set((edges ?? []).map(e => e.required_course_id as string)))
+    const missingTitleIds = requiredIds.filter(id => !titleById.has(id))
+    if (missingTitleIds.length > 0) {
+      const { data: reqCourses } = await supabase
+        .from('courses')
+        .select('id, title')
+        .in('id', missingTitleIds)
+      for (const c of (reqCourses ?? []) as { id: string; title: string }[]) {
+        titleById.set(c.id, c.title)
+      }
+    }
+
+    const prereqsByCourse = new Map<string, string[]>()
+    for (const e of (edges ?? []) as { course_id: string; required_course_id: string }[]) {
+      prereqsByCourse.set(e.course_id, [...(prereqsByCourse.get(e.course_id) ?? []), e.required_course_id])
+    }
+
+    const access: TrainingAccess[] = []
+    for (const course of courseList) {
+      const prereqIds = prereqsByCourse.get(course.id) ?? []
+      const missing: PrerequisiteCourse[] = []
+      for (const prereqId of prereqIds) {
+        const complete = await isCourseComplete(user.id, prereqId, supabase)
+        if (!complete) {
+          missing.push({ id: prereqId, title: titleById.get(prereqId) ?? 'Unknown course' })
+        }
+      }
+      access.push({ course_id: course.id, locked: missing.length > 0, missing })
+    }
+    return { data: access }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
   }
 }
 

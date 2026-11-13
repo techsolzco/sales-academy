@@ -2,6 +2,7 @@ import { SITE_NAME } from '@/lib/config/site'
 import { getAppSettings } from '@/lib/actions/app-settings'
 import { AppSettingsManager } from '@/components/admin/AppSettingsManager'
 import { ChangePasswordForm } from '@/components/settings/ChangePasswordForm'
+import { MfaSetup } from '@/components/auth/MfaSetup'
 
 export default async function AdminSettingsPage() {
   const settings = await getAppSettings()
@@ -14,6 +15,8 @@ export default async function AdminSettingsPage() {
       </div>
 
       <ChangePasswordForm />
+
+      <MfaSetup />
 
       <AppSettingsManager initialWelcome={settings?.welcome_message_template || 'Welcome {name}!'} />
     </div>

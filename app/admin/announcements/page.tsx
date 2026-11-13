@@ -1,11 +1,11 @@
-import { fetchAnnouncements } from '@/lib/actions/announcements'
+import { fetchAllAnnouncements } from '@/lib/actions/announcements'
 import { AnnouncementManager } from '@/components/admin/AnnouncementManager'
 import { Breadcrumb } from '@/components/admin/Breadcrumb'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminAnnouncementsPage() {
-  const announcements = await fetchAnnouncements()
+  const announcements = await fetchAllAnnouncements()
   return (
     <div className="px-4 py-5 md:p-8 max-w-4xl">
       <Breadcrumb crumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Announcements' }]} />

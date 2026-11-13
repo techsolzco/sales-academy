@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
+import { isCourseComplete } from '@/lib/training-progress'
 import { CheckCircle, Circle, Lock, ChevronLeft, Clock, BookOpen, AlertCircle } from 'lucide-react'
 import { ReviewButton } from './ReviewButton'
 import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
@@ -49,6 +50,25 @@ export default async function TrainingCoursePage({
   ])
 
   if (!course) notFound()
+
+  // Prerequisites (§3 #17): a locked viewer never sees lesson content —
+  // only a banner naming the required courses (with links). Completion
+  // uses the shared isCourseComplete definition, evaluated for the
+  // effective user (impersonated student when an admin views as one).
+  const { data: prereqEdges } = await supabase
+    .from('course_prerequisites')
+    .select('required_course_id, required:courses!course_prerequisites_required_course_id_fkey(id, title)')
+    .eq('course_id', params.courseId)
+  const lockedMissing: { id: string; title: string }[] = []
+  for (const edge of (prereqEdges ?? []) as unknown as {
+    required_course_id: string
+    required: { id: string; title: string } | null
+  }[]) {
+    if (!edge.required) continue
+    const complete = await isCourseComplete(userId, edge.required_course_id, supabase)
+    if (!complete) lockedMissing.push({ id: edge.required.id, title: edge.required.title })
+  }
+  const isLocked = lockedMissing.length > 0
 
   // Soft-deleted lessons never count toward totals and never render as
   // links (B32) — the lesson page 404s on them, so they must be excluded
@@ -446,6 +466,34 @@ export default async function TrainingCoursePage({
         </div>
       </div>
 
+      {/* Prerequisites (§3 #17): locked viewers see a locked banner with
+          the required courses (linked) instead of the tabs / lesson
+          content — the direct URL must not bypass the list-page lock. */}
+      {isLocked ? (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm p-6 mt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="w-5 h-5 text-amber-500" />
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">This course is locked</h2>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Complete the following course{lockedMissing.length !== 1 ? 's' : ''} first to unlock this course:
+          </p>
+          <ul className="space-y-2">
+            {lockedMissing.map(req => (
+              <li key={req.id}>
+                <Link
+                  href={`/dashboard/training/${req.id}`}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 text-sm font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition"
+                >
+                  <Lock className="w-4 h-4 flex-shrink-0" />
+                  {req.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
         <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <Link
@@ -514,6 +562,8 @@ export default async function TrainingCoursePage({
 
       {/* Tab Content */}
       {tabContent}
+        </>
+      )}
     </div>
   )
 }

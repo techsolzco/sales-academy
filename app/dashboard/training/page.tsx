@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveUser } from '@/lib/auth/get-effective-user'
+import { fetchTrainingAccess } from '@/lib/actions/courses'
 import { BookOpen } from 'lucide-react'
 import { getGreeting } from '@/lib/utils'
 import { StudentCourseCard } from '@/components/training/StudentCourseCard'
@@ -47,6 +48,13 @@ export default async function TrainingPage({
   const courses = coursesData ?? []
   const courseIds = courses.map(c => c.id)
   const toolIds = Array.from(new Set(courses.map(c => c.tool_id).filter(Boolean))) as string[]
+
+  // Prerequisites (§3 #17): lock state per course for the viewer. A failed
+  // fetch degrades to "all unlocked" rather than hiding every course.
+  const accessResult = await fetchTrainingAccess()
+  const accessByCourse = new Map(
+    (accessResult.data ?? []).map(a => [a.course_id, a])
+  )
 
   // 2. Fetch course assignments, modules, and lessons for courses
   const [{ data: assignments }, { data: modules }] = await Promise.all([
@@ -177,6 +185,7 @@ export default async function TrainingPage({
             const assignment = assignmentByCourse[course.id]
             const requiredIds = requiredIdsByCourse.get(course.id) ?? []
             const completedReviewsCount = requiredIds.filter(id => reviewedSet.has(id)).length
+            const access = accessByCourse.get(course.id)
 
             return (
               <StudentCourseCard
@@ -193,6 +202,8 @@ export default async function TrainingPage({
                 completedReviewCount={completedReviewsCount}
                 durationMinutes={course.estimated_duration_minutes ?? null}
                 dueDate={assignment?.due_date ?? null}
+                locked={access?.locked ?? false}
+                missingTitles={(access?.missing ?? []).map(m => m.title)}
               />
             )
           })}

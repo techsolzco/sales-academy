@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
+import { recordMyLogin } from '@/lib/actions/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -50,6 +51,13 @@ export default function LoginPage() {
       return
     }
 
+    // Login history (function #20): record the password sign-in
+    // fire-and-forget — the callback route only records PKCE/email-flow
+    // sign-ins, so without this the primary password login would never
+    // be recorded. recordMyLogin derives the user from the session
+    // server-side; a failure is logged and never blocks the login.
+    recordMyLogin().catch((err) => console.error('[login] recordMyLogin failed', err))
+
     // NOTE (B78): the old `rememberMe` localStorage write ('sa_remember')
     // was dead — nothing ever read it — so it was removed. Session
     // persistence is handled by the Supabase SSR cookie client, not by this
@@ -65,6 +73,22 @@ export default function LoginPage() {
         .maybeSingle()
 
       target = profile?.role === 'admin' ? '/admin' : '/dashboard'
+    }
+
+    // MFA (function #19): if the user has an enrolled verified TOTP factor
+    // but this session is still password-only (aal1), send them to the
+    // verify step instead of the portal. Users with no enrolled factor are
+    // unaffected — login proceeds exactly as before. Any failure of the AAL
+    // check fails open (proceed to the portal); the middleware enforces MFA
+    // on protected routes as a second layer.
+    try {
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2') {
+        window.location.href = `/auth/mfa-verify?next=${encodeURIComponent(target)}`
+        return
+      }
+    } catch {
+      // Fail open — see above.
     }
 
     // Hard navigation guarantees fresh SSR, updated cookies, correct theme, and zero UI tearing

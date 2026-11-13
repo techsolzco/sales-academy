@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Edit, Trash2, Megaphone, Loader2, Paperclip, Eye, EyeOff } from 'lucide-react'
 import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/lib/actions/announcements'
@@ -13,6 +13,8 @@ type FormState = {
   attachment_url: string
   attachment_name: string
   target_role: 'all' | 'salesman' | 'admin'
+  publish_at: string
+  expires_at: string
 }
 
 const defaultForm: FormState = {
@@ -21,6 +23,34 @@ const defaultForm: FormState = {
   attachment_url: '',
   attachment_name: '',
   target_role: 'all',
+  publish_at: '',
+  expires_at: '',
+}
+
+/** Stored ISO timestamp -> "YYYY-MM-DDTHH:mm" for datetime-local inputs. */
+function toLocalInput(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** datetime-local value -> ISO string, or null when blank. */
+function toIso(value: string): string | null {
+  if (!value) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+type ScheduleStatus = { label: string; cls: string }
+
+function scheduleStatus(a: Announcement): ScheduleStatus {
+  if (!a.is_published) return { label: 'Draft', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' }
+  const now = Date.now()
+  if (a.publish_at && new Date(a.publish_at).getTime() > now) return { label: 'Scheduled', cls: 'bg-amber-100 text-amber-700' }
+  if (a.expires_at && new Date(a.expires_at).getTime() <= now) return { label: 'Expired', cls: 'bg-red-100 text-red-700' }
+  return { label: 'Live', cls: 'bg-emerald-100 text-emerald-700' }
 }
 
 export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncements: Announcement[] }) {
@@ -31,6 +61,9 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
   const [form, setForm] = useState<FormState>(defaultForm)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  // Refresh the list when the server re-renders with new data (after save).
+  useEffect(() => { setAnnouncements(initialAnnouncements) }, [initialAnnouncements])
 
   function openCreate() {
     setEditingId(null)
@@ -47,6 +80,8 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
       attachment_url: a.attachment_url || '',
       attachment_name: a.attachment_name || '',
       target_role: a.target_role,
+      publish_at: toLocalInput(a.publish_at),
+      expires_at: toLocalInput(a.expires_at),
     })
     setIsFormOpen(true)
     setError(null)
@@ -71,6 +106,8 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
         attachment_url: form.attachment_url || null,
         attachment_name: form.attachment_name || null,
         target_role: form.target_role,
+        publish_at: toIso(form.publish_at),
+        expires_at: toIso(form.expires_at),
       }
       let res
       if (editingId) {
@@ -125,6 +162,28 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
               <option value="salesman">Salesmen Only</option>
               <option value="admin">Admins Only</option>
             </select>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Publish at (optional)</label>
+              <input
+                type="datetime-local"
+                value={form.publish_at}
+                onChange={e => setForm(f => ({ ...f, publish_at: e.target.value }))}
+                className={inputCls}
+              />
+              <p className="text-xs text-gray-400 mt-1">Leave blank to publish immediately (when published).</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expires at (optional)</label>
+              <input
+                type="datetime-local"
+                value={form.expires_at}
+                onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))}
+                className={inputCls}
+              />
+              <p className="text-xs text-gray-400 mt-1">Leave blank and it never expires. Must be after the publish time.</p>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -181,18 +240,27 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
         </div>
       ) : (
         <div className="space-y-3">
-          {announcements.map(a => (
+          {announcements.map(a => {
+            const status = scheduleStatus(a)
+            return (
             <div key={a.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="font-semibold text-gray-900 dark:text-white">{a.title}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
-                      {a.is_published ? 'Published' : 'Draft'}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.cls}`}>
+                      {status.label}
                     </span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 font-medium">{a.target_role}</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{a.body}</p>
+                  {(a.publish_at || a.expires_at) && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      {a.publish_at && <>Publishes {new Date(a.publish_at).toLocaleString()}</>}
+                      {a.publish_at && a.expires_at && ' · '}
+                      {a.expires_at && <>Expires {new Date(a.expires_at).toLocaleString()}</>}
+                    </p>
+                  )}
                   {a.attachment_url && (
                     <a href={a.attachment_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 mt-2 text-xs text-brand-600 hover:underline">
                       <Paperclip className="w-3 h-3" />
@@ -214,7 +282,8 @@ export function AnnouncementManager({ initialAnnouncements }: { initialAnnouncem
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

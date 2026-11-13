@@ -77,6 +77,35 @@ export async function middleware(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }))
 
+    // ── MFA state helper (function #19) ──────────────────────────────────
+    // Is this session still password-only (aal1) while a verified TOTP
+    // factor exists? getAuthenticatorAssuranceLevel() is LOCAL here: it
+    // decodes the JWT's `aal` claim and reads `session.user.factors`,
+    // so it adds no network round-trip beyond the getUser() above. Any
+    // failure fails OPEN (returns false): a user without MFA must never
+    // be locked out by this check, and the login page is the primary
+    // enforcement — this guard is the second layer for anyone who
+    // reaches a protected route with an aal1 session (e.g. a stale
+    // bookmark, or a session created before MFA was enrolled).
+    const isMfaPending = async (): Promise<boolean> => {
+      try {
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+        return aal?.currentLevel === 'aal1' && aal?.nextLevel === 'aal2'
+      } catch {
+        return false
+      }
+    }
+
+    // Redirect to the MFA verify step, preserving the intended destination
+    // (validated again on the verify page — same-origin relative only).
+    const mfaRedirect = (next: string) => {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/mfa-verify'
+      url.search = ''
+      url.searchParams.set('next', next)
+      return createRedirect(url)
+    }
+
     // ── Root route ('/') fast redirect directly at the Edge ─────────────
     if (pathname === '/') {
       if (!user) {
@@ -93,6 +122,9 @@ export async function middleware(request: NextRequest) {
 
       const targetUrl = request.nextUrl.clone()
       targetUrl.pathname = profile?.role === 'admin' ? '/admin' : '/dashboard'
+      if (await isMfaPending()) {
+        return mfaRedirect(targetUrl.pathname)
+      }
       return createRedirect(targetUrl)
     }
 
@@ -107,6 +139,9 @@ export async function middleware(request: NextRequest) {
       if (profile && profile.status === 'active') {
         const targetUrl = request.nextUrl.clone()
         targetUrl.pathname = profile.role === 'admin' ? '/admin' : '/dashboard'
+        if (await isMfaPending()) {
+          return mfaRedirect(targetUrl.pathname)
+        }
         return createRedirect(targetUrl)
       }
     }
@@ -149,6 +184,19 @@ export async function middleware(request: NextRequest) {
     }
 
     const role = profile.role
+
+    // ── MFA enforcement (function #19) ──────────────────────────────────
+    // A password-only (aal1) session with an enrolled verified factor may
+    // not enter /admin or /dashboard until the verify step upgrades it to
+    // aal2. /auth/* — including /auth/mfa-verify itself — already returned
+    // above, so this cannot loop; API routes are untouched (a redirect
+    // would break them). Fail-open on any AAL-check failure (see helper).
+    if (
+      (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) &&
+      (await isMfaPending())
+    ) {
+      return mfaRedirect(request.nextUrl.pathname + request.nextUrl.search)
+    }
 
     // ── Route protection ──────────────────────────────────────────────────
     // /admin/* → admin only

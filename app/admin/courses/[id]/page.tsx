@@ -11,6 +11,7 @@ import { FAQManager } from '@/components/admin/FAQManager'
 import { ScriptManager } from '@/components/admin/ScriptManager'
 import { ObjectionManager } from '@/components/admin/ObjectionManager'
 import { CourseContentPicker } from '@/components/admin/CourseContentPicker'
+import { PrerequisiteManager } from '@/components/courses/PrerequisiteManager'
 
 import { TabLangToggle } from '@/components/ui/TabLangToggle'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -219,6 +220,12 @@ export default async function CourseDetailPage({
         </table>
       </div>
     )
+  } else if (tab === 'prerequisites') {
+    tabContent = (
+      <div className="mt-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
+        <PrerequisiteManager courseId={course.id} />
+      </div>
+    )
   } else if (tab === 'content') {
     const [
       initialItems,
@@ -309,6 +316,7 @@ export default async function CourseDetailPage({
           {[
             { key: 'lessons', label: 'Lessons' },
             { key: 'content', label: '📚 Content' },
+            { key: 'prerequisites', label: 'Prerequisites' },
             ...(showContentTabs ? [
               { key: 'faqs', label: 'FAQs' },
               { key: 'scripts', label: 'Scripts' },
