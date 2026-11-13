@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, CheckCircle, Clock, ChevronRight } from 'lucide-react'
+import { BookOpen, CheckCircle, Clock, ChevronRight, Lock } from 'lucide-react'
 import type { Difficulty } from '@/types'
 
 interface StudentCourseCardProps {
@@ -24,6 +24,10 @@ interface StudentCourseCardProps {
   completedReviewCount?: number
   durationMinutes: number | null
   dueDate: string | null
+  // Prerequisites (§3 #17): when locked the card is not a link and shows
+  // which course(s) must be completed first.
+  locked?: boolean
+  missingTitles?: string[]
 }
 
 const difficultyColors: Record<Difficulty, string> = {
@@ -43,7 +47,7 @@ const gradients = [
 export function StudentCourseCard({
   id, title, description, thumbnail_url, category, difficulty,
   lessonCount, completedCount, reviewCount = 0, completedReviewCount = 0,
-  durationMinutes, dueDate,
+  durationMinutes, dueDate, locked = false, missingTitles = [],
 }: StudentCourseCardProps) {
   const gradient = gradients[id.charCodeAt(0) % gradients.length]
   // B35 — same definition as the course page: lessons + required KB reviews.
@@ -54,11 +58,10 @@ export function StudentCourseCard({
   const isComplete = pct === 100 && totalItems > 0
   const isStarted = completedItems > 0
 
-  return (
-    <Link
-      href={`/dashboard/training/${id}`}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden group flex flex-col"
-    >
+  // Locked (§3 #17): same card chrome, but not a link — the course cannot
+  // be opened until its prerequisites are complete.
+  const cardBody = (
+    <>
       {/* Thumbnail */}
       <div className={`h-36 bg-gradient-to-br ${gradient} relative overflow-hidden flex-shrink-0`}>
         {thumbnail_url ? (
@@ -70,7 +73,11 @@ export function StudentCourseCard({
           </div>
         )}
         <div className="absolute top-3 left-3">
-          {isComplete ? (
+          {locked ? (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-gray-900/70 backdrop-blur text-white shadow-sm">
+              <Lock className="w-3 h-3" /> Locked
+            </span>
+          ) : isComplete ? (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-500 text-white shadow-sm">
               <CheckCircle className="w-3 h-3" /> Complete
             </span>
@@ -129,12 +136,36 @@ export function StudentCourseCard({
           )}
         </div>
         <div className="mt-auto">
-          <span className="flex items-center justify-center gap-1 w-full py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">
-            {isComplete ? 'Review Course' : isStarted ? 'Continue' : 'Start Course'}
-            <ChevronRight className="w-3.5 h-3.5" />
-          </span>
+          {locked ? (
+            <span className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium">
+              <Lock className="w-3.5 h-3.5" />
+              Complete {missingTitles.length > 0 ? missingTitles.join(', ') : 'the required course'} first
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-1 w-full py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">
+              {isComplete ? 'Review Course' : isStarted ? 'Continue' : 'Start Course'}
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          )}
         </div>
       </div>
+    </>
+  )
+
+  if (locked) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col opacity-90">
+        {cardBody}
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      href={`/dashboard/training/${id}`}
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden group flex flex-col"
+    >
+      {cardBody}
     </Link>
   )
 }

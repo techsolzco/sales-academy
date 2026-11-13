@@ -4,7 +4,7 @@ import { Megaphone, Paperclip, ExternalLink } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function AnnouncementsPage() {
-  const announcements = await fetchAnnouncements(true)
+  const announcements = await fetchAnnouncements()
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-3xl">
