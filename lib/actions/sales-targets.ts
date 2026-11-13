@@ -179,7 +179,11 @@ export async function fetchTargetsForMonth(
 
     const { data, error } = await supabase
       .from('sales_targets')
-      .select('user_id, month, target_amount, profiles ( full_name )')
+      // sales_targets has TWO FKs to profiles (user_id + created_by), so the
+      // embed must name the FK explicitly — an unqualified `profiles (...)`
+      // fails live with "Could not embed because more than one relationship
+      // was found for 'sales_targets' and 'profiles'" (seen 2026-11-13).
+      .select('user_id, month, target_amount, profiles!sales_targets_user_id_fkey ( full_name )')
       .eq('month', month)
       .order('target_amount', { ascending: false })
     if (error) return { error: error.message }
