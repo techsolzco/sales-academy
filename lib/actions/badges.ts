@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { Badge } from '@/types'
 
@@ -114,13 +115,20 @@ export async function checkAndAwardBadge(userId: string, slug: string): Promise<
     if (existing) return
 
     // Insert badge (upsert to avoid race conditions)
-    const { error } = await supabase
+    // S7 / migration 035: user_badges INSERT is admin-only, so the anon
+    // client insert fails RLS. The award condition was verified
+    // server-side above (hasEarned) and the caller may only award their
+    // own badge (or an admin may award any), so the writes go through
+    // the service client — never with caller-supplied data.
+    const adminClient = createAdminClient()
+    const { error } = await adminClient
       .from('user_badges')
       .insert({ user_id: userId, badge_id: badge.id })
 
     if (!error) {
-      // Notify the user about the new badge
-      await supabase.from('notifications').insert({
+      // Notify the user about the new badge (same service client: the
+      // award was already verified, and the recipient is the awardee).
+      await adminClient.from('notifications').insert({
         user_id: userId,
         title: `🏅 New Badge Earned: ${badge.name}!`,
         body: `Congratulations! You just unlocked the "${badge.name}" badge.`,

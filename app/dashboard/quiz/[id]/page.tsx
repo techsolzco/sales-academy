@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { QuizTaker } from '@/components/quiz/QuizTaker'
 import Link from 'next/link'
@@ -24,7 +25,13 @@ export default async function QuizStudentPage({ params }: { params: { id: string
   const questionIds = (questions || []).map((q: any) => q.id)
   let options: any[] = []
   if (questionIds.length > 0) {
-    const { data: opts } = await supabase.from('quiz_options').select('id, question_id, option_text, order_index').in('question_id', questionIds).order('order_index')
+    // S6 / migration 034: quiz_options SELECT is admin-only, so the anon
+    // client returns zero rows for students. Read options via the SERVICE
+    // client (server component only — never reaches the browser), scoped
+    // to this quiz's questions and selecting only the columns a student
+    // may see. is_correct is never selected here and never leaves the
+    // server; grading in submitQuizAttempt is the only place that reads it.
+    const { data: opts } = await createAdminClient().from('quiz_options').select('id, question_id, option_text, order_index').in('question_id', questionIds).order('order_index')
     options = opts || []
   }
   const fullQuiz = {

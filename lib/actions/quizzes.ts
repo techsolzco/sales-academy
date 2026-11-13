@@ -156,10 +156,7 @@ export async function fetchQuiz(id: string): Promise<(Quiz & { questions: (QuizQ
     .from('quizzes')
     .select(`
       *,
-      questions:quiz_questions(
-        *,
-        options:quiz_options(id, question_id, option_text, order_index)
-      )
+      questions:quiz_questions(*)
     `)
     .eq('id', id)
     .is('deleted_at', null)
@@ -167,10 +164,26 @@ export async function fetchQuiz(id: string): Promise<(Quiz & { questions: (QuizQ
 
   if (error || !data) return null
 
+  // S6 / migration 034: quiz_options SELECT is admin-only, so the anon
+  // client returns zero options for students. Read options via the
+  // SERVICE client, selecting only the columns a student may see —
+  // is_correct is never selected here and never leaves the server.
+  // (Grading in submitQuizAttempt is the only place that reads it.)
+  const questionIds = (data.questions || []).map((q: any) => q.id)
+  let options: any[] = []
+  if (questionIds.length > 0) {
+    const { data: opts } = await getServiceClient()
+      .from('quiz_options')
+      .select('id, question_id, option_text, order_index')
+      .in('question_id', questionIds)
+      .order('order_index')
+    options = opts || []
+  }
+
   // Sort questions and options
   const questions = (data.questions || []).map((q: any) => ({
     ...q,
-    options: (q.options || []).sort((a: any, b: any) => a.order_index - b.order_index)
+    options: options.filter((o: any) => o.question_id === q.id).sort((a: any, b: any) => a.order_index - b.order_index)
   })).sort((a: any, b: any) => a.order_index - b.order_index)
 
   // Attempt info for the caller (B65): how many attempts they have used.
@@ -421,12 +434,32 @@ export async function fetchAttemptDetail(attemptId: string): Promise<QuizAttempt
     .from('quiz_attempt_answers')
     .select(`
       *,
-      question:quiz_questions(*),
-      selected_option:quiz_options(*)
+      question:quiz_questions(*)
     `)
     .eq('attempt_id', attemptId)
 
   if (error || !data) return []
+
+  // S6 / migration 034: quiz_options SELECT is admin-only, so the anon
+  // client cannot resolve a selected_option embed for students, and
+  // quiz_options(*) would also leak is_correct. Read the selected
+  // options via the service client with only the columns a student
+  // may see, and attach them in the same shape as the old embed.
+  const selectedIds = (data as any[])
+    .map((a) => a.selected_option_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+  if (selectedIds.length > 0) {
+    const { data: opts } = await getServiceClient()
+      .from('quiz_options')
+      .select('id, question_id, option_text, order_index')
+      .in('id', Array.from(new Set(selectedIds)))
+    const byId = new Map((opts || []).map((o: any) => [o.id, o]))
+    for (const a of data as any[]) {
+      a.selected_option = byId.get(a.selected_option_id) ?? null
+    }
+  } else {
+    for (const a of data as any[]) a.selected_option = null
+  }
   return data
 }
 
