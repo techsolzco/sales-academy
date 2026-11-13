@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Brain } from 'lucide-react'
+import { Plus, Brain, Library } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { QuizDeleteButton } from './QuizDeleteButton'
 
@@ -29,13 +29,22 @@ export default async function QuizzesAdminPage({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Quizzes</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Manage quizzes and view attempts.</p>
         </div>
-        <Link
-          href="/admin/quizzes/new"
-          className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-brand-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Quiz
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/question-bank"
+            className="flex items-center gap-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            <Library className="w-4 h-4" />
+            Question Bank
+          </Link>
+          <Link
+            href="/admin/quizzes/new"
+            className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-brand-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Quiz
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">

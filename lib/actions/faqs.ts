@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ActionResult, FAQ, Status } from '@/types'
 import { syncToolKnowledge } from './sync-tool-knowledge'
+import { saveVersion } from './content-versions'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -12,7 +13,7 @@ async function requireAdmin() {
   const { data: profile } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') throw new Error('Forbidden')
-  return { supabase }
+  return { supabase, user }
 }
 
 export interface FAQInput {
@@ -59,7 +60,21 @@ export async function createFAQ(input: FAQInput): Promise<ActionResult<FAQ>> {
 
 export async function updateFAQ(id: string, input: Partial<FAQInput>): Promise<ActionResult<FAQ>> {
   try {
-    const { supabase } = await requireAdmin()
+    const { supabase, user } = await requireAdmin()
+
+    // Content versioning (#10): snapshot the current row before overwriting it.
+    // A failed snapshot must not block the update, so it only warns.
+    const { data: current } = await supabase
+      .from('faqs')
+      .select('*')
+      .eq('id', id)
+      .is('deleted_at', null)
+      .single()
+    if (current) {
+      const version = await saveVersion('faq', id, current as Record<string, unknown>, user.id)
+      if (version.error) console.warn('Content version save failed:', version.error)
+    }
+
     const { data, error } = await supabase
       .from('faqs')
       .update({ ...input, updated_at: new Date().toISOString() })
