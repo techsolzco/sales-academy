@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { FAQFormModal } from '@/components/admin/FAQFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { BulkContentImport } from '@/components/admin/BulkContentImport'
 import { deleteFAQ, bulkSoftDeleteFAQs, bulkPublishFAQs } from '@/lib/actions/faqs'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { FAQ } from '@/types'
@@ -322,6 +323,7 @@ export function FAQManager({ initialFaqs, tools = [], initialToolId }: { initial
             contentType="faq"
             onCreated={handleQuickCreate}
           />
+          <BulkContentImport contentType="faq" onImported={() => router.refresh()} />
           <button
             onClick={handleCreate}
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm flex-shrink-0"

@@ -9,7 +9,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, GraduationCap, HelpCircle, FileText, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video, Sparkles, Megaphone, ScrollText, Brain
+  LayoutDashboard, GraduationCap, HelpCircle, FileText, AlertCircle, Wrench, User, MessageSquare, BadgeCheck, Trophy, ClipboardList, Video, Sparkles, Megaphone, ScrollText, Brain, Bot
 } from 'lucide-react'
 import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
@@ -34,6 +34,7 @@ const salesmanNavItems = [
   { label: 'FAQs',        href: '/dashboard/faqs',       icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Scripts',     href: '/dashboard/scripts',    icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Objections',  href: '/dashboard/objections', icon: <AlertCircle className="w-4 h-4 flex-shrink-0" /> },
+  { label: 'Roleplay',     href: '/dashboard/roleplay',  icon: <Bot className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Assignments', href: '/dashboard/assignments', icon: <ClipboardList className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Quizzes',     href: '/dashboard/quiz',       icon: <Brain className="w-4 h-4 flex-shrink-0" /> },
   { label: 'Meetings',    href: '/dashboard/meetings',   icon: <Video className="w-4 h-4 flex-shrink-0" /> },

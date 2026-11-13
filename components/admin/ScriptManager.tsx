@@ -14,6 +14,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ScriptFormModal } from '@/components/admin/ScriptFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { BulkContentImport } from '@/components/admin/BulkContentImport'
 import { deleteScript, bulkSoftDeleteScripts, bulkPublishScripts } from '@/lib/actions/scripts'
 import type { SalesScript } from '@/types'
 
@@ -321,6 +322,7 @@ export function ScriptManager({
             contentType="script"
             onCreated={handleQuickCreate}
           />
+          <BulkContentImport contentType="script" onImported={() => router.refresh()} />
           <button
             onClick={handleCreate}
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm flex-shrink-0"

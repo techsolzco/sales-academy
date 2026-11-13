@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { SignOutButton } from '@/components/auth/SignOutButton'
 import { GlobalSearchBar } from '@/components/layout/GlobalSearchBar'
 import {
-  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText, BarChart2, Trash2, Brain
+  LayoutDashboard, Users, BookOpen, HelpCircle, FileText, AlertCircle, Wrench, Settings, MessageSquare, UserPlus, UserCheck, BadgeCheck, Trophy, ClipboardList, Video, Paintbrush, Sparkles, Key, User, Megaphone, ScrollText, BarChart2, Trash2, Brain, BellRing, Award, Library, Bot, History, TrendingUp, Target
 } from 'lucide-react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { DarkModeToggle } from '@/components/layout/DarkModeToggle'
@@ -60,9 +60,13 @@ export default async function AdminLayout({
     { label: 'FAQs',        href: '/admin/faqs',         icon: <HelpCircle className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Scripts',     href: '/admin/scripts',      icon: <FileText className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Objections',  href: '/admin/objections',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Roleplay',    href: '/admin/roleplay',     icon: <Bot className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Assignments', href: '/admin/assignments',  icon: <ClipboardList className="w-4 h-4 flex-shrink-0" />, badge: pendingSubmissions || 0 },
     { label: 'Meetings',    href: '/admin/meetings',     icon: <Video className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Reminders',   href: '/admin/reminders',    icon: <BellRing className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Quizzes',     href: '/admin/quizzes',      icon: <BookOpen className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Certificates', href: '/admin/certificates', icon: <Award className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Question Bank', href: '/admin/question-bank', icon: <Library className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Tools',       href: '/admin/tools',        icon: <Wrench className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Appearance',  href: '/admin/settings/appearance', icon: <Paintbrush className="w-4 h-4 flex-shrink-0" /> },
     { label: 'AI Training', href: '/admin/settings/ai-training', icon: <Sparkles className="w-4 h-4 flex-shrink-0" /> },
@@ -72,6 +76,10 @@ export default async function AdminLayout({
     { label: 'Policies',    href: '/admin/policies',     icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Announcements', href: '/admin/announcements', icon: <Megaphone className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Reports', href: '/admin/reports/daily', icon: <BarChart2 className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Sales Report', href: '/admin/reports/sales', icon: <TrendingUp className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Sales Targets', href: '/admin/sales-targets', icon: <Target className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Audit Logs', href: '/admin/audit-logs', icon: <ScrollText className="w-4 h-4 flex-shrink-0" /> },
+    { label: 'Login History', href: '/admin/login-history', icon: <History className="w-4 h-4 flex-shrink-0" /> },
     { label: 'Recycle Bin', href: '/admin/settings/recycle-bin', icon: <Trash2 className="w-4 h-4 flex-shrink-0" /> },
   ]
 

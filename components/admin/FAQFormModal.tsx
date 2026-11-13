@@ -6,6 +6,7 @@ import { X, Loader2 } from 'lucide-react'
 import { createFAQ, updateFAQ } from '@/lib/actions/faqs'
 import type { FAQ, Status, AiContentType } from '@/types'
 import { AiAssistButton } from '@/components/ai/AiAssistButton'
+import { ContentVersionHistory } from '@/components/admin/ContentVersionHistory'
 import { FAQ_CATEGORIES } from '@/lib/constants/faq-categories'
 
 interface FAQFormModalProps {
@@ -327,6 +328,11 @@ export function FAQFormModal({ faq, isOpen, onClose, defaultValues, tools = [] }
             </button>
           </div>
         </form>
+        {faq?.id ? (
+          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <ContentVersionHistory contentType="faq" contentId={faq.id} />
+          </div>
+        ) : null}
       </div>
     </div>
   )

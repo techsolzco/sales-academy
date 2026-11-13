@@ -8,6 +8,7 @@ import { fetchUserBadges } from '@/lib/actions/badges'
 import { User, Mail, Briefcase, ExternalLink } from 'lucide-react'
 import { ResellerApplicationForm } from '@/components/reseller/ResellerApplicationForm'
 import { fetchMyResellerApplication } from '@/lib/actions/reseller'
+import { LoginHistoryList } from '@/components/profile/LoginHistoryList'
 import Link from 'next/link'
 
 export default async function ProfilePage() {
@@ -98,6 +99,11 @@ export default async function ProfilePage() {
       <div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">My Badges</h2>
         <BadgeGrid badges={userBadges || []} />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Sign-ins</h2>
+        <LoginHistoryList />
       </div>
     </div>
   )

@@ -5,6 +5,12 @@ import { BookOpen, CheckCircle, Clock, Star } from 'lucide-react'
 import { getGreeting } from '@/lib/utils'
 import { StudentCourseCard } from '@/components/training/StudentCourseCard'
 import { fetchMyRank } from '@/lib/actions/leaderboard'
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
+import { SalesTargetCard } from '@/components/targets/SalesTargetCard'
+import { StreakCard } from '@/components/streaks/StreakCard'
+import { MySalesSummary } from '@/components/sales/MySalesSummary'
+import { SalesLogForm } from '@/components/sales/SalesLogForm'
+import { MyCertificatesSection } from '@/components/certificates/MyCertificatesSection'
 
 export default async function SalesmanDashboardPage() {
   const supabase = await createClient()
@@ -191,6 +197,23 @@ export default async function SalesmanDashboardPage() {
           ))}
         </div>
       )}
+      {/* My progress: onboarding, streak, sales target */}
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 mt-8">My Progress</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
+        <OnboardingChecklist />
+        <StreakCard />
+        <SalesTargetCard />
+      </div>
+
+      {/* My sales */}
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">My Sales</h2>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-8">
+        <MySalesSummary />
+        <SalesLogForm />
+      </div>
+
+      {/* My certificates */}
+      <MyCertificatesSection />
     </div>
   )
 }

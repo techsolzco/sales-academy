@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { fetchTeamMembers } from '@/lib/actions/users'
 import { SalesmenList } from './SalesmenList'
 import { CreateUserModal } from '@/components/admin/CreateUserModal'
+import { BulkUserImport } from '@/components/admin/BulkUserImport'
+import { ExportButtons } from '@/components/admin/ExportButtons'
 
 export default async function AdminSalesmenPage() {
   const { userId, profile } = await getEffectiveUser()
@@ -17,7 +19,11 @@ export default async function AdminSalesmenPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Users &amp; Team</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your team. Click &quot;View Portal&quot; to preview a student&apos;s exact dashboard experience.</p>
         </div>
-        <CreateUserModal />
+        <div className="flex items-center gap-2 flex-wrap">
+          <BulkUserImport />
+          <CreateUserModal />
+          <ExportButtons />
+        </div>
       </div>
       <SalesmenList salesmen={salesmen} currentUserId={userId} />
     </div>

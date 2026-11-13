@@ -6,6 +6,7 @@ import { X, Loader2 } from 'lucide-react'
 import { createObjection, updateObjection } from '@/lib/actions/objections'
 import type { Objection, Difficulty, Status, AiContentType } from '@/types'
 import { AiAssistButton } from '@/components/ai/AiAssistButton'
+import { ContentVersionHistory } from '@/components/admin/ContentVersionHistory'
 
 interface ObjectionFormModalProps {
   objection?: Objection | null
@@ -296,6 +297,11 @@ export function ObjectionFormModal({ objection, isOpen, onClose, defaultValues, 
             </button>
           </div>
         </form>
+        {objection?.id ? (
+          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <ContentVersionHistory contentType="objection" contentId={objection.id} />
+          </div>
+        ) : null}
       </div>
     </div>
   )

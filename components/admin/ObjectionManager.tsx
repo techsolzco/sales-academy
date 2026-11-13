@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ObjectionFormModal } from '@/components/admin/ObjectionFormModal'
 import { QuickCreateButton } from '@/components/ai/QuickCreateButton'
 import { ConfirmDeleteModal } from '@/components/admin/ConfirmDeleteModal'
+import { BulkContentImport } from '@/components/admin/BulkContentImport'
 import { deleteObjection, bulkSoftDeleteObjections, bulkPublishObjections } from '@/lib/actions/objections'
 import { TranslateContextWrapper } from '@/components/ui/TranslateContextWrapper'
 import type { Objection } from '@/types'
@@ -312,6 +313,7 @@ export function ObjectionManager({ initialObjections, tools = [], initialToolId 
             contentType="objection"
             onCreated={handleQuickCreate}
           />
+          <BulkContentImport contentType="objection" onImported={() => router.refresh()} />
           <button
             onClick={handleCreate}
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition shadow-sm flex-shrink-0"

@@ -6,6 +6,7 @@ import { X, Loader2 } from 'lucide-react'
 import { createScript, updateScript } from '@/lib/actions/scripts'
 import type { SalesScript, ScriptType, Status, AiContentType } from '@/types'
 import { AiAssistButton } from '@/components/ai/AiAssistButton'
+import { ContentVersionHistory } from '@/components/admin/ContentVersionHistory'
 
 const SCRIPT_TYPES: { type: ScriptType; label: string }[] = [
   { type: 'greeting', label: 'Greeting' },
@@ -265,6 +266,11 @@ export function ScriptFormModal({ script, isOpen, onClose, defaultValues, tools 
             </button>
           </div>
         </form>
+        {script?.id ? (
+          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <ContentVersionHistory contentType="script" contentId={script.id} />
+          </div>
+        ) : null}
       </div>
     </div>
   )

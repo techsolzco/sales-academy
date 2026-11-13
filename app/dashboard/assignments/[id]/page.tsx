@@ -3,6 +3,7 @@ import { getEffectiveUser } from '@/lib/auth/get-effective-user'
 import Link from 'next/link'
 import { ArrowLeft, Image, Link as LinkIcon, FileText, Star, Trophy, ExternalLink } from 'lucide-react'
 import { AssignmentSubmitForm } from '@/components/assignments/AssignmentSubmitForm'
+import { BestScoreBadge } from '@/components/quiz/BestScoreBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,8 +46,10 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
 
   // Quiz attempt — latest attempt plus total count, so a failed attempt gets
   // a retake path (B42) that still respects the attempt limit (B65).
-  // NOTE: 3 is the code default MAX_QUIZ_ATTEMPTS in lib/actions/quizzes.ts —
-  // the quizzes table has no max_attempts column; keep in sync.
+  // NOTE: 3 is the code default MAX_QUIZ_ATTEMPTS in lib/actions/quizzes.ts.
+  // Migration 049 added quizzes.max_attempts, but per-quiz enforcement in
+  // submitQuizAttempt is still pending (hold file) — until it lands the
+  // code default applies to every quiz; keep in sync.
   const MAX_QUIZ_ATTEMPTS = 3
   let quizAttempt: { passed: boolean; percentage: number } | null = null
   let quizAttemptCount = 0
@@ -156,6 +159,7 @@ export default async function AssignmentStudentDetailPage({ params }: { params: 
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{assignment.quiz.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Required quiz · Pass score: {assignment.quiz.pass_score}%</p>
+                <BestScoreBadge quizId={assignment.quiz.id} />
               </div>
             </div>
             {quizAttempt?.passed ? (
