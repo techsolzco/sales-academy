@@ -2,9 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ExternalLink, Calendar } from 'lucide-react'
-import { fetchMeeting } from '@/lib/actions/meetings'
+import { fetchMeeting, fetchMeetingAttendance, fetchMeetingNotes, fetchActionItems } from '@/lib/actions/meetings'
 import { CopyLinkButton } from '@/components/meetings/CopyLinkButton'
 import { JitsiEmbed } from '@/components/meetings/JitsiEmbed'
+import { MeetingNotes } from '@/components/meetings/MeetingNotes'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,11 +27,20 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
     )
   }
 
-  const isInvited = meeting.visibility === 'public' || meeting.invitees?.some((i: any) => i.user_id === user.id)
-  
+  // fetchMeeting returns invitees as Profile objects (id, full_name, …),
+  // not { user_id } rows — check `id`, not `user_id`.
+  const isInvited = meeting.visibility === 'public' || meeting.invitees?.some((i: any) => i.id === user.id)
+
   if (!isInvited) {
     redirect('/dashboard/meetings')
   }
+
+  const [attendanceRows, notes, actionItems] = await Promise.all([
+    fetchMeetingAttendance(params.id),
+    fetchMeetingNotes(params.id),
+    fetchActionItems(params.id),
+  ])
+  const myAttendance = attendanceRows[0]?.attendance ?? 'pending'
 
   return (
     <div className="px-4 py-5 md:p-8 max-w-5xl mx-auto space-y-6 flex flex-col h-[calc(100vh-4rem)]">
@@ -46,6 +56,17 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 {new Date(meeting.scheduled_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+              </span>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
+                myAttendance === 'present'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                  : myAttendance === 'absent'
+                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                    : myAttendance === 'late'
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+              }`}>
+                Attendance: {myAttendance}
               </span>
             </div>
             {meeting.description && (
@@ -73,6 +94,16 @@ export default async function DashboardMeetingDetailPage({ params }: { params: {
       <p className="text-center text-sm text-gray-500 dark:text-gray-400 pb-8">
         If the embed doesn't load or your browser blocks permissions, <a href={meeting.jitsi_url} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline">open in a new tab</a>.
       </p>
+
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8">
+        <MeetingNotes
+          meetingId={meeting.id}
+          notes={notes}
+          actionItems={actionItems}
+          isAdmin={false}
+          currentUserId={user.id}
+        />
+      </div>
     </div>
   )
 }

@@ -2,9 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Video, Users } from 'lucide-react'
-import { fetchMeeting } from '@/lib/actions/meetings'
+import { fetchMeeting, fetchMeetingAttendance, fetchMeetingNotes, fetchActionItems } from '@/lib/actions/meetings'
 import { CopyLinkButton } from '@/components/meetings/CopyLinkButton'
 import { DeleteMeetingButton } from '@/components/meetings/DeleteMeetingButton'
+import { AttendanceManager } from '@/components/meetings/AttendanceManager'
+import { MeetingNotes } from '@/components/meetings/MeetingNotes'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +19,12 @@ export default async function AdminMeetingDetailPage({ params }: { params: { id:
   if (profile?.role !== 'admin') redirect('/dashboard')
 
   const meeting = await fetchMeeting(params.id)
-  
+
+  const [attendanceRows, notes, actionItems] = await Promise.all([
+    fetchMeetingAttendance(params.id),
+    fetchMeetingNotes(params.id),
+    fetchActionItems(params.id),
+  ])
   if (!meeting) {
     return (
       <div className="px-4 py-5 md:p-8 text-center">
@@ -88,33 +95,28 @@ export default async function AdminMeetingDetailPage({ params }: { params: { id:
             </h2>
           </div>
 
-          {meeting.visibility === 'public' ? (
+          {attendanceRows.length > 0 ? (
+            <AttendanceManager meetingId={meeting.id} rows={attendanceRows} />
+          ) : meeting.visibility === 'public' ? (
             <div className="bg-blue-50 text-blue-700 p-4 rounded-xl border border-blue-100 flex items-start gap-3">
               <Users className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <p className="text-sm">This is a public meeting. Anyone with the link can join, so there is no specific invitee list.</p>
-            </div>
-          ) : meeting.invitees?.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {meeting.invitees.map((invitee: any) => (
-                <div key={invitee.profile.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                  {invitee.profile.avatar_url ? (
-                    <img src={invitee.profile.avatar_url} alt={invitee.profile.full_name} className="w-10 h-10 rounded-full bg-gray-200 object-cover" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">
-                      {invitee.profile.full_name?.charAt(0) || '?'}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{invitee.profile.full_name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{invitee.profile.email}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-sm">No specific invitees for this meeting.</p>
           )}
         </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 md:p-8">
+        <MeetingNotes
+          meetingId={meeting.id}
+          notes={notes}
+          actionItems={actionItems}
+          isAdmin
+          currentUserId={user.id}
+          assignees={attendanceRows.map(r => ({ id: r.user_id, full_name: r.full_name }))}
+        />
       </div>
     </div>
   )

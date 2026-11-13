@@ -1,7 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import type { ActionResult } from '@/types'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -30,7 +32,27 @@ export type Commission = {
   status: 'pending' | 'paid'
   created_at: string
   paid_at?: string
+  // Payout tracking (audit §3 #6, migration 046). payout_status mirrors
+  // `status` and is the canonical payout state going forward.
+  payout_status?: 'pending' | 'paid'
+  proof_url?: string | null
 }
+
+// Proof-upload validation — same rules as the phase-1 fixed upload path
+// (lib/actions/storage.ts): image only, 5 MB max, extension derived from
+// the validated MIME type, never from the client-supplied filename.
+const PROOF_MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+
+const PROOF_ALLOWED_MIME_TYPES = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+} as const
+
+// Dedicated bucket for payment proofs (migration 046). The fixed upload
+// path in storage.ts / /api/upload-image is admin-only, so resellers cannot
+// use it — proofs go here, under a fixed per-reseller folder.
+const COMMISSION_PROOF_BUCKET = 'commission-proofs'
 
 export async function requestResellerUpgrade(learned_summary?: string) {
   const supabase = await createClient()
@@ -166,6 +188,105 @@ export async function fetchCommissions(resellerId?: string) {
   return data || []
 }
 
+// The logged-in reseller's own commissions, with payout status and proof
+// URL (audit §3 #6). Only users flagged is_reseller may call this.
+export async function fetchMyCommissions(): Promise<ActionResult<Commission[]>> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_reseller')
+      .eq('id', user.id)
+      .single()
+    if (!profile?.is_reseller) return { error: 'Not a reseller' }
+
+    const { data, error } = await supabase
+      .from('commissions')
+      .select('*')
+      .eq('reseller_id', user.id)
+      .order('created_at', { ascending: false })
+    if (error) return { error: error.message }
+    return { data: (data || []) as Commission[] }
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Failed to load commissions' }
+  }
+}
+
+// Upload a payment-proof image for one of the caller's own commissions.
+// DEVIATION from the phase-1 fixed upload path, by design: uploadImage /
+// /api/upload-image require an admin session, so a reseller can never use
+// them. This action re-implements the same server-side validation
+// (image-only MIME allowlist, 5 MB cap, extension from MIME, random UUID
+// filename, fixed bucket + fixed per-user folder — the bucket/folder are
+// never accepted from the client) against the dedicated
+// `commission-proofs` bucket (migration 046). The upload itself goes
+// through the session client so the storage RLS policy (first folder
+// segment must equal auth.uid()) backstops the fixed path; the commissions
+// row is then updated via the service client because resellers have no
+// direct UPDATE policy on commissions (deliberate — a broad owner UPDATE
+// would let a reseller rewrite amount/status via the API).
+export async function uploadCommissionProof(
+  commissionId: string,
+  file: File
+): Promise<ActionResult<{ proof_url: string }>> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    // Ownership: the commission must exist and belong to the caller.
+    const { data: commission, error: fetchError } = await supabase
+      .from('commissions')
+      .select('id, reseller_id, payout_status, status')
+      .eq('id', commissionId)
+      .single()
+    if (fetchError || !commission) return { error: 'Commission not found' }
+    if (commission.reseller_id !== user.id) return { error: 'Forbidden' }
+    if (commission.payout_status === 'paid' || commission.status === 'paid') {
+      return { error: 'This commission is already paid' }
+    }
+
+    const ext =
+      PROOF_ALLOWED_MIME_TYPES[file.type as keyof typeof PROOF_ALLOWED_MIME_TYPES]
+    if (!ext) {
+      return { error: 'Only PNG, JPEG and WebP images are allowed' }
+    }
+    if (file.size > PROOF_MAX_FILE_SIZE) {
+      return { error: 'Image must be under 5MB' }
+    }
+
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+
+    const { error: uploadError } = await supabase.storage
+      .from(COMMISSION_PROOF_BUCKET)
+      .upload(path, buffer, { contentType: file.type, upsert: false })
+    if (uploadError) return { error: uploadError.message }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(COMMISSION_PROOF_BUCKET).getPublicUrl(path)
+
+    const admin = createAdminClient()
+    const { error: updateError } = await admin
+      .from('commissions')
+      .update({ proof_url: publicUrl })
+      .eq('id', commissionId)
+      .eq('reseller_id', user.id)
+    if (updateError) return { error: updateError.message }
+
+    revalidatePath('/dashboard/reseller')
+    revalidatePath('/admin/resellers')
+    return { data: { proof_url: publicUrl } }
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Upload failed' }
+  }
+}
+
 export async function addCommission(resellerId: string, amount: number, description: string) {
   const { supabase } = await requireAdmin()
   await supabase
@@ -174,11 +295,37 @@ export async function addCommission(resellerId: string, amount: number, descript
   revalidatePath('/admin/resellers/[id]')
 }
 
-export async function markCommissionPaid(commissionId: string) {
+export async function markCommissionPaid(
+  commissionId: string
+): Promise<ActionResult<Commission>> {
   const { supabase } = await requireAdmin()
-  await supabase
+
+  // Proof is mandatory (audit §3 #6): a commission may only be marked paid
+  // once the reseller has uploaded payment proof.
+  const { data: commission, error: fetchError } = await supabase
     .from('commissions')
-    .update({ status: 'paid', paid_at: new Date().toISOString() })
+    .select('id, proof_url, payout_status, status')
     .eq('id', commissionId)
+    .single()
+  if (fetchError || !commission) return { error: 'Commission not found' }
+  if (!commission.proof_url) {
+    return { error: 'Payment proof is required — the reseller must upload proof first' }
+  }
+  if (commission.payout_status === 'paid' || commission.status === 'paid') {
+    return { error: 'This commission is already paid' }
+  }
+
+  const { data, error } = await supabase
+    .from('commissions')
+    .update({
+      status: 'paid',
+      payout_status: 'paid',
+      paid_at: new Date().toISOString(),
+    })
+    .eq('id', commissionId)
+    .select()
+    .single()
+  if (error) return { error: error.message }
   revalidatePath('/admin/resellers/[id]')
+  return { data: data as Commission }
 }

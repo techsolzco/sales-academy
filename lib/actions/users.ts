@@ -3,11 +3,83 @@ import { randomBytes } from 'crypto'
 import { revalidatePath } from 'next/cache'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient as createServiceClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { ActionResult } from '@/types'
 
 /** CSPRNG temp password: 12 random bytes -> 16 URL-safe base64 chars (96 bits of entropy). */
 function generateTempPassword(): string {
   return randomBytes(12).toString('base64url')
+}
+
+async function requireAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Forbidden')
+  return { supabase }
+}
+
+/**
+ * Shared Auth-user + profile creation path used by `createUser` and
+ * `bulkCreateUsers` (audit §3 #4). Creates the Auth user with a per-user
+ * CSPRNG temp password (B17/S10 — never a hardcoded default), then updates
+ * the trigger-created profile row and verifies the write actually affected
+ * a row. Returns the Auth id and the temp password, which the calling admin
+ * must share with the new user (no email is sent here — the admin shares
+ * temp passwords via WhatsApp).
+ */
+async function createAuthUserWithProfile(
+  sbAdmin: SupabaseClient,
+  input: { fullName: string; email: string; phone?: string; password?: string; role: 'admin' | 'salesman' }
+): Promise<{ id: string; tempPassword: string } | { error: string }> {
+  // Temp password (B17/S10): never a hardcoded default. If the admin supplied
+  // a password, use it; otherwise generate a per-user CSPRNG password and
+  // RETURN it to the calling admin so they can share it with the new user
+  // (no email is sent here — welcome-email delivery is part of the pending
+  // registration decision).
+  const password = input.password || generateTempPassword()
+
+  const { data: authData, error: authError } = await sbAdmin.auth.admin.createUser({
+    email: input.email,
+    password: password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: input.fullName
+    }
+  })
+
+  if (authError) {
+    return { error: authError.message }
+  }
+
+  if (!authData.user) {
+    return { error: 'User creation failed' }
+  }
+
+  // Update profile created by the trigger. Verify the write actually affected
+  // a row (B17): checking only `profileError` silently passes when the
+  // trigger never created a profile row and the update touches 0 rows.
+  const { data: updatedProfiles, error: profileError } = await sbAdmin
+    .from('profiles')
+    .update({
+      role: input.role,
+      full_name: input.fullName,
+      phone: input.phone || null,
+      status: 'active'
+    })
+    .eq('id', authData.user.id)
+    .select('id')
+
+  if (profileError) {
+    return { error: 'User created but profile update failed: ' + profileError.message }
+  }
+  if (!updatedProfiles || updatedProfiles.length === 0) {
+    return { error: `User created in Auth (id ${authData.user.id}) but no profile row exists to update — the creation trigger did not run. Ask an admin to repair the profile before the user signs in.` }
+  }
+
+  return { id: authData.user.id, tempPassword: password }
 }
 
 /**
@@ -69,54 +141,141 @@ export async function createUser(data: {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Temp password (B17/S10): never a hardcoded default. If the admin supplied
-  // a password, use it; otherwise generate a per-user CSPRNG password and
-  // RETURN it to the calling admin so they can share it with the new user
-  // (no email is sent here — welcome-email delivery is part of the pending
-  // registration decision). NOTE: components/admin/CreateUserModal.tsx does
-  // not display the returned password yet — it must be updated to show it,
+  // NOTE: components/admin/CreateUserModal.tsx displays the returned
+  // password once so the admin can share it — it must be updated to show it,
   // or the admin will never see the generated password.
-  const password = data.password || generateTempPassword()
-
-  const { data: authData, error: authError } = await sbAdmin.auth.admin.createUser({
+  const result = await createAuthUserWithProfile(sbAdmin, {
+    fullName: data.fullName,
     email: data.email,
-    password: password,
-    email_confirm: true,
-    user_metadata: {
-      full_name: data.fullName
-    }
+    phone: data.phone,
+    password: data.password,
+    role: data.role,
   })
 
-  if (authError) {
-    return { error: authError.message }
+  if ('error' in result) {
+    return { error: result.error }
   }
 
-  if (!authData.user) {
-    return { error: 'User creation failed' }
-  }
+  return { data: { id: result.id, tempPassword: result.tempPassword } }
+}
 
-  // Update profile created by the trigger. Verify the write actually affected
-  // a row (B17): checking only `profileError` silently passes when the
-  // trigger never created a profile row and the update touches 0 rows.
-  const { data: updatedProfiles, error: profileError } = await sbAdmin
-    .from('profiles')
-    .update({
-      role: data.role,
-      full_name: data.fullName,
-      phone: data.phone || null,
-      status: 'active'
-    })
-    .eq('id', authData.user.id)
-    .select('id')
+// ─── Bulk user import (CSV) — audit §3 #4 ───────────────────────────────────
+// Admin only. Creates many salesman accounts in one call, reusing the exact
+// creation path as createUser (createAuthUserWithProfile) so every user gets
+// their own CSPRNG temp password. One bad row never stops the batch: each
+// row is validated, duplicate-checked and created independently, and the
+// result reports per-row success/failure. Temp passwords are returned to
+// the admin in the result — the admin shares them via WhatsApp (no email
+// is sent here).
 
-  if (profileError) {
-    return { error: 'User created but profile update failed: ' + profileError.message }
-  }
-  if (!updatedProfiles || updatedProfiles.length === 0) {
-    return { error: `User created in Auth (id ${authData.user.id}) but no profile row exists to update — the creation trigger did not run. Ask an admin to repair the profile before the user signs in.` }
-  }
+export interface BulkUserRow {
+  full_name: string
+  email: string
+  phone?: string
+}
 
-  return { data: { id: authData.user.id, tempPassword: password } }
+export interface BulkCreatedUser {
+  email: string
+  full_name: string
+  tempPassword: string
+}
+
+export interface BulkFailedRow {
+  /** 1-based row number in the submitted batch (header row excluded). */
+  row: number
+  email: string
+  reason: string
+}
+
+export interface BulkCreateUsersResult {
+  created: BulkCreatedUser[]
+  failed: BulkFailedRow[]
+}
+
+const BULK_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const MAX_BULK_ROWS = 200
+
+export async function bulkCreateUsers(rows: BulkUserRow[]): Promise<ActionResult<BulkCreateUsersResult>> {
+  try {
+    await requireAdmin()
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return { error: 'No rows to import.' }
+    }
+    if (rows.length > MAX_BULK_ROWS) {
+      return { error: `Too many rows (${rows.length}). Import at most ${MAX_BULK_ROWS} users at a time.` }
+    }
+
+    const sbAdmin = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    // One query up front: all existing profile emails, so duplicates against
+    // the database are caught without a query per row.
+    const { data: existingProfiles, error: existingError } = await sbAdmin
+      .from('profiles')
+      .select('email')
+    if (existingError) {
+      return { error: 'Could not check existing users: ' + existingError.message }
+    }
+    const existingEmails = new Set(
+      (existingProfiles ?? [])
+        .map((p) => String(p.email ?? '').trim().toLowerCase())
+        .filter(Boolean)
+    )
+
+    const seenInFile = new Set<string>()
+    const created: BulkCreatedUser[] = []
+    const failed: BulkFailedRow[] = []
+
+    for (let i = 0; i < rows.length; i++) {
+      const rowNo = i + 1
+      const fullName = (rows[i]?.full_name ?? '').trim()
+      const email = (rows[i]?.email ?? '').trim()
+      const phone = (rows[i]?.phone ?? '').trim()
+
+      if (!fullName) {
+        failed.push({ row: rowNo, email, reason: 'Full name is empty.' })
+        continue
+      }
+      if (!email || !BULK_EMAIL_RE.test(email)) {
+        failed.push({ row: rowNo, email, reason: 'Invalid email address.' })
+        continue
+      }
+      const key = email.toLowerCase()
+      if (seenInFile.has(key)) {
+        failed.push({ row: rowNo, email, reason: 'Duplicate email in this file.' })
+        continue
+      }
+      seenInFile.add(key)
+      if (existingEmails.has(key)) {
+        failed.push({ row: rowNo, email, reason: 'A user with this email already exists.' })
+        continue
+      }
+
+      // Same creation path as single-user createUser: per-user CSPRNG temp
+      // password, Auth user + verified profile write.
+      const result = await createAuthUserWithProfile(sbAdmin, {
+        fullName,
+        email,
+        phone: phone || undefined,
+        role: 'salesman',
+      })
+      if ('error' in result) {
+        failed.push({ row: rowNo, email, reason: result.error })
+        continue
+      }
+      existingEmails.add(key)
+      created.push({ email, full_name: fullName, tempPassword: result.tempPassword })
+    }
+
+    if (created.length > 0) revalidatePath('/admin/salesmen')
+    return { data: { created, failed } }
+  } catch (e: unknown) {
+    return { error: (e as Error).message }
+  }
 }
 
 // â”€â”€â”€ Deactivate / reactivate a salesman â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

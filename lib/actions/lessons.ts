@@ -151,6 +151,12 @@ export async function markLessonComplete(
 
   if (error) return { error: error.message }
 
+  // Certificates (audit §3 #1): issue a certificate if the course is now
+  // 100% complete. Fire & forget — it must NEVER fail markLessonComplete.
+  import('@/lib/actions/certificates').then(({ issueCertificateIfComplete }) => {
+    issueCertificateIfComplete(userId, courseId).catch(() => {})
+  }).catch(() => {})
+
   // Award badges (fire & forget)
   import('@/lib/actions/badges').then(({ checkAndAwardBadge }) => {
     checkAndAwardBadge(userId, 'first_lesson').catch(() => {})

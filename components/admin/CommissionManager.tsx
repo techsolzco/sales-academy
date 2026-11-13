@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Commission, addCommission, markCommissionPaid } from '@/lib/actions/reseller'
-import { Check, Plus, DollarSign } from 'lucide-react'
+import { Check, Plus, DollarSign, ExternalLink } from 'lucide-react'
 
 export function CommissionManager({
   resellerId,
@@ -16,6 +16,8 @@ export function CommissionManager({
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
+  const [markPaidError, setMarkPaidError] = useState<string | null>(null)
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null)
 
   const totalPaid = commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0)
   const totalPending = commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0)
@@ -34,7 +36,16 @@ export function CommissionManager({
   }
 
   const handleMarkPaid = async (id: string) => {
-    await markCommissionPaid(id)
+    setMarkPaidError(null)
+    setMarkingPaidId(id)
+    try {
+      // markCommissionPaid requires an uploaded payment proof (audit §3 #6);
+      // without one it returns an error instead of marking paid.
+      const result = await markCommissionPaid(id)
+      if (result.error) setMarkPaidError(result.error)
+    } finally {
+      setMarkingPaidId(null)
+    }
   }
 
   return (
@@ -94,15 +105,38 @@ export function CommissionManager({
         <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">Commission History</h3>
         </div>
+        {markPaidError && (
+          <div className="mx-4 mt-4 px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+            {markPaidError}
+          </div>
+        )}
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {commissions.length === 0 ? (
             <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">No commissions recorded yet.</div>
           ) : (
-            commissions.map((comm) => (
+            commissions.map((comm) => {
+              const payoutStatus = comm.payout_status ?? comm.status
+              const isPaid = payoutStatus === 'paid'
+              return (
               <div key={comm.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">{comm.description}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{new Date(comm.created_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {new Date(comm.created_at).toLocaleDateString()}
+                    {isPaid && comm.paid_at ? ` · Paid ${new Date(comm.paid_at).toLocaleDateString()}` : ''}
+                  </p>
+                  {comm.proof_url ? (
+                    <a
+                      href={comm.proof_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 mt-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> View payment proof
+                    </a>
+                  ) : (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">No payment proof uploaded yet</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="font-semibold text-gray-900 dark:text-gray-100">${comm.amount.toFixed(2)}</span>
@@ -111,18 +145,25 @@ export function CommissionManager({
                   }`}>
                     {comm.status.toUpperCase()}
                   </span>
-                  {comm.status === 'pending' && (
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                    isPaid ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                  }`}>
+                    PAYOUT {payoutStatus.toUpperCase()}
+                  </span>
+                  {!isPaid && (
                     <button
                       onClick={() => handleMarkPaid(comm.id)}
-                      className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition"
-                      title="Mark as Paid"
+                      disabled={markingPaidId === comm.id || !comm.proof_url}
+                      className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={comm.proof_url ? 'Mark as Paid' : 'Payment proof required before marking paid'}
                     >
                       <Check className="w-5 h-5" />
                     </button>
                   )}
                 </div>
               </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>

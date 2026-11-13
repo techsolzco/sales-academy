@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { fetchCommissions, fetchMyResellerApplication } from '@/lib/actions/reseller'
+import { fetchCommissions, fetchMyCommissions, fetchMyResellerApplication } from '@/lib/actions/reseller'
 import { CommissionLedger } from '@/components/reseller/CommissionLedger'
+import { CommissionPayoutCard } from '@/components/reseller/CommissionPayoutCard'
 import { ExternalLink, Rocket } from 'lucide-react'
 import Link from 'next/link'
 
@@ -23,6 +24,10 @@ export default async function SalesPartnerPage() {
 
   const commissions = await fetchCommissions()
   const application = await fetchMyResellerApplication()
+  // Payout tracking (audit §3 #6): same rows plus payout_status/proof_url.
+  const payoutResult = await fetchMyCommissions()
+  const payoutCommissions = payoutResult.data ?? commissions
+  const payoutError = payoutResult.error
 
   const totalPaid = commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0)
   const totalPending = commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0)
@@ -67,6 +72,17 @@ export default async function SalesPartnerPage() {
           totalPaid={totalPaid} 
           totalPending={totalPending} 
         />
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Payout Status</h2>
+        {payoutError ? (
+          <div className="px-4 py-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+            Could not load payout details: {payoutError}
+          </div>
+        ) : (
+          <CommissionPayoutCard commissions={payoutCommissions} />
+        )}
       </div>
     </div>
   )

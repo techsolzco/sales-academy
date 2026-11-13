@@ -475,3 +475,332 @@ export async function fetchSalesmen(): Promise<Profile[]> {
     return []
   }
 }
+
+// ─── Attendance tracking (audit §3 #3) ────────────────────────────────────
+
+export type AttendanceStatus = 'pending' | 'present' | 'absent' | 'late'
+
+const ATTENDANCE_STATUSES: AttendanceStatus[] = ['pending', 'present', 'absent', 'late']
+
+export interface MeetingAttendanceRow {
+  user_id: string
+  full_name: string | null
+  email: string | null
+  avatar_url: string | null
+  attendance: AttendanceStatus
+  attendance_marked_at: string | null
+}
+
+export interface AttendanceStats {
+  user_id: string
+  present: number
+  absent: number
+  late: number
+  pending: number
+  marked_total: number
+  attendance_percentage: number | null
+}
+
+function toAttendanceRow(r: any): MeetingAttendanceRow {
+  const p = r.profile ?? {}
+  return {
+    user_id: r.user_id as string,
+    full_name: p.full_name ?? null,
+    email: p.email ?? null,
+    avatar_url: p.avatar_url ?? null,
+    attendance: (r.attendance ?? 'pending') as AttendanceStatus,
+    attendance_marked_at: r.attendance_marked_at ?? null,
+  }
+}
+
+export async function markAttendance(
+  meetingId: string,
+  userId: string,
+  status: AttendanceStatus
+): Promise<ActionResult> {
+  try {
+    const { user } = await requireAdmin()
+    void user
+    if (!ATTENDANCE_STATUSES.includes(status)) return { error: 'Invalid attendance status' }
+
+    const serviceClient = getServiceClient()
+    const { data: invitee } = await serviceClient
+      .from('meeting_invitees')
+      .select('meeting_id, user_id')
+      .eq('meeting_id', meetingId)
+      .eq('user_id', userId)
+      .single()
+    if (!invitee) return { error: 'User is not an invitee of this meeting' }
+
+    const { error } = await serviceClient
+      .from('meeting_invitees')
+      .update({ attendance: status, attendance_marked_at: new Date().toISOString() })
+      .eq('meeting_id', meetingId)
+      .eq('user_id', userId)
+    if (error) return { error: error.message }
+
+    revalidatePath(`/admin/meetings/${meetingId}`)
+    revalidatePath(`/dashboard/meetings/${meetingId}`)
+    revalidatePath('/admin/meetings')
+    revalidatePath('/dashboard/meetings')
+    return { data: undefined }
+  } catch {
+    return { error: 'Not authorized' }
+  }
+}
+
+export async function fetchMeetingAttendance(meetingId: string): Promise<MeetingAttendanceRow[]> {
+  try {
+    const { supabase, user } = await requireAuth()
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const isAdmin = profile?.role === 'admin'
+
+    if (isAdmin) {
+      const serviceClient = getServiceClient()
+      const { data, error } = await serviceClient
+        .from('meeting_invitees')
+        .select('user_id, attendance, attendance_marked_at, profile:profiles(full_name, email, avatar_url)')
+        .eq('meeting_id', meetingId)
+        .order('attendance_marked_at', { ascending: false, nullsFirst: false })
+      if (error || !data) return []
+      return (data as any[]).map(toAttendanceRow)
+    }
+
+    // Non-admin invitee: only their own row, and only if they are invited.
+    const { data, error } = await supabase
+      .from('meeting_invitees')
+      .select('user_id, attendance, attendance_marked_at, profile:profiles(full_name, email, avatar_url)')
+      .eq('meeting_id', meetingId)
+      .eq('user_id', user.id)
+      .single()
+    if (error || !data) return []
+    return [toAttendanceRow(data as any)]
+  } catch {
+    return []
+  }
+}
+
+export async function fetchAttendanceStats(userId?: string): Promise<ActionResult<AttendanceStats>> {
+  try {
+    const { supabase, user } = await requireAuth()
+    const targetId = userId ?? user.id
+    if (targetId !== user.id) {
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      if (profile?.role !== 'admin') return { error: 'Not authorized' }
+    }
+
+    // Admin ALL policy on meeting_invitees lets an admin read any user's
+    // rows; a non-admin reads only their own (own SELECT policy).
+    const { data, error } = await supabase
+      .from('meeting_invitees')
+      .select('attendance')
+      .eq('user_id', targetId)
+    if (error) return { error: error.message }
+
+    const rows = (data ?? []) as any[]
+    const present = rows.filter(r => r.attendance === 'present').length
+    const absent = rows.filter(r => r.attendance === 'absent').length
+    const late = rows.filter(r => r.attendance === 'late').length
+    const pending = rows.filter(r => !r.attendance || r.attendance === 'pending').length
+    const markedTotal = present + absent + late
+    return {
+      data: {
+        user_id: targetId,
+        present,
+        absent,
+        late,
+        pending,
+        marked_total: markedTotal,
+        attendance_percentage: markedTotal === 0 ? null : Math.round((present / markedTotal) * 100),
+      },
+    }
+  } catch {
+    return { error: 'Not authorized' }
+  }
+}
+
+// ─── Meeting notes + action items (audit §3 #16) ──────────────────────────
+
+export interface MeetingNote {
+  id: string
+  meeting_id: string
+  author_id: string
+  body: string
+  created_at: string
+  author?: { full_name: string | null; avatar_url: string | null }
+}
+
+export interface MeetingActionItem {
+  id: string
+  meeting_id: string
+  title: string
+  assignee_id: string | null
+  due_date: string | null
+  done: boolean
+  created_at: string
+  assignee?: { full_name: string | null } | null
+}
+
+// Admin, or an invitee of the meeting. Public-meeting visitors who were not
+// invited get no notes/action items (matches the audit spec).
+async function canAccessMeetingContent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  meetingId: string
+): Promise<boolean> {
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+  if (profile?.role === 'admin') return true
+  const { data } = await supabase
+    .from('meeting_invitees')
+    .select('meeting_id')
+    .eq('meeting_id', meetingId)
+    .eq('user_id', userId)
+    .single()
+  return !!data
+}
+
+export async function addMeetingNote(meetingId: string, body: string): Promise<ActionResult<MeetingNote>> {
+  try {
+    const { supabase, user } = await requireAdmin()
+    const trimmed = body.trim()
+    if (!trimmed) return { error: 'Note cannot be empty' }
+
+    const { data: meeting } = await supabase.from('meetings').select('id').eq('id', meetingId).single()
+    if (!meeting) return { error: 'Meeting not found' }
+
+    const serviceClient = getServiceClient()
+    const { data, error } = await serviceClient
+      .from('meeting_notes')
+      .insert({ meeting_id: meetingId, author_id: user.id, body: trimmed })
+      .select()
+      .single()
+    if (error || !data) return { error: error?.message || 'Failed to add note' }
+
+    revalidatePath(`/admin/meetings/${meetingId}`)
+    revalidatePath(`/dashboard/meetings/${meetingId}`)
+    return { data: data as MeetingNote }
+  } catch {
+    return { error: 'Not authorized' }
+  }
+}
+
+export async function fetchMeetingNotes(meetingId: string): Promise<MeetingNote[]> {
+  try {
+    const { supabase, user } = await requireAuth()
+    if (!(await canAccessMeetingContent(supabase, user.id, meetingId))) return []
+
+    const serviceClient = getServiceClient()
+    const { data, error } = await serviceClient
+      .from('meeting_notes')
+      .select('id, meeting_id, author_id, body, created_at, author:profiles(full_name, avatar_url)')
+      .eq('meeting_id', meetingId)
+      .order('created_at', { ascending: false })
+    if (error || !data) return []
+    return (data as any[]).map((n: any) => ({
+      id: n.id,
+      meeting_id: n.meeting_id,
+      author_id: n.author_id,
+      body: n.body,
+      created_at: n.created_at,
+      author: n.author ?? undefined,
+    })) as MeetingNote[]
+  } catch {
+    return []
+  }
+}
+
+export async function addActionItem(
+  meetingId: string,
+  input: { title: string; assignee_id?: string; due_date?: string }
+): Promise<ActionResult<MeetingActionItem>> {
+  try {
+    const { supabase, user } = await requireAdmin()
+    void user
+    const title = input.title.trim()
+    if (!title) return { error: 'Action item title cannot be empty' }
+
+    const { data: meeting } = await supabase.from('meetings').select('id').eq('id', meetingId).single()
+    if (!meeting) return { error: 'Meeting not found' }
+
+    if (input.assignee_id) {
+      const { data: assignee } = await supabase.from('profiles').select('id').eq('id', input.assignee_id).single()
+      if (!assignee) return { error: 'Assignee not found' }
+    }
+
+    const serviceClient = getServiceClient()
+    const { data, error } = await serviceClient
+      .from('meeting_action_items')
+      .insert({
+        meeting_id: meetingId,
+        title,
+        assignee_id: input.assignee_id || null,
+        due_date: input.due_date || null,
+      })
+      .select()
+      .single()
+    if (error || !data) return { error: error?.message || 'Failed to add action item' }
+
+    revalidatePath(`/admin/meetings/${meetingId}`)
+    revalidatePath(`/dashboard/meetings/${meetingId}`)
+    return { data: data as MeetingActionItem }
+  } catch {
+    return { error: 'Not authorized' }
+  }
+}
+
+export async function toggleActionItem(itemId: string, done: boolean): Promise<ActionResult> {
+  try {
+    const { supabase, user } = await requireAuth()
+    const serviceClient = getServiceClient()
+    const { data: item } = await serviceClient
+      .from('meeting_action_items')
+      .select('id, meeting_id, assignee_id')
+      .eq('id', itemId)
+      .single()
+    if (!item) return { error: 'Action item not found' }
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const isAdmin = profile?.role === 'admin'
+    if (!isAdmin && item.assignee_id !== user.id) return { error: 'Not authorized' }
+
+    const { error } = await serviceClient
+      .from('meeting_action_items')
+      .update({ done })
+      .eq('id', itemId)
+    if (error) return { error: error.message }
+
+    revalidatePath(`/admin/meetings/${item.meeting_id}`)
+    revalidatePath(`/dashboard/meetings/${item.meeting_id}`)
+    return { data: undefined }
+  } catch {
+    return { error: 'Not authorized' }
+  }
+}
+
+export async function fetchActionItems(meetingId: string): Promise<MeetingActionItem[]> {
+  try {
+    const { supabase, user } = await requireAuth()
+    if (!(await canAccessMeetingContent(supabase, user.id, meetingId))) return []
+
+    const serviceClient = getServiceClient()
+    const { data, error } = await serviceClient
+      .from('meeting_action_items')
+      .select('id, meeting_id, title, assignee_id, due_date, done, created_at, assignee:profiles(full_name)')
+      .eq('meeting_id', meetingId)
+      .order('done', { ascending: true })
+      .order('created_at', { ascending: true })
+    if (error || !data) return []
+    return (data as any[]).map((i: any) => ({
+      id: i.id,
+      meeting_id: i.meeting_id,
+      title: i.title,
+      assignee_id: i.assignee_id,
+      due_date: i.due_date,
+      done: i.done,
+      created_at: i.created_at,
+      assignee: i.assignee ?? null,
+    })) as MeetingActionItem[]
+  } catch {
+    return []
+  }
+}
