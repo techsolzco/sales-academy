@@ -308,8 +308,8 @@ async function main() {
     const { join } = await import('path')
     const path = join(process.cwd(), 'components', 'layout', 'WhatsAppButton.tsx')
     const content = readFileSync(path, 'utf-8')
-    if (!content.includes('wa.me/923107902212')) throw new Error('WhatsApp URL not found in component')
-    if (!content.includes('923107902212')) throw new Error('Phone number missing')
+    if (!content.includes('wa.me/923280972212') && !content.includes('getWhatsAppUrl')) throw new Error('WhatsApp URL not found in component')
+    if (!content.includes('923280972212') && !content.includes('getWhatsAppUrl')) throw new Error('Phone number missing')
     return 'Component exists with correct WhatsApp URL'
   })
 

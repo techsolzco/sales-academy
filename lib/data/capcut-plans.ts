@@ -168,3 +168,17 @@ export function getPlansForCourse(courseId: string): CoursePlan[] {
   }
   return []
 }
+
+export const CAPCUT_ENROLMENT_WHATSAPP = '923280972212'
+
+export function getCapCutWhatsAppEnrolmentUrl(plan: CoursePlan): string {
+  const message = `Assalam-o-Alaikum, I want to enrol in the CapCut Pro course plan:
+- Plan: ${plan.name}
+- Price: ${plan.priceDisplay}
+- Devices: ${plan.devices}
+- Duration: ${plan.duration}
+- AI Credits: ${plan.aiCredits}
+
+I am attaching my payment screenshot for manual verification. Please activate my enrolment.`
+  return `https://wa.me/923280972212?text=${encodeURIComponent(message)}`
+}

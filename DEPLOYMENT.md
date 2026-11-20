@@ -22,7 +22,7 @@ Update **only** these vars — no code changes needed:
 NEXT_PUBLIC_SITE_NAME=Academy ProWala          # or whatever you want to call it
 NEXT_PUBLIC_SITE_TAGLINE=Elevate your sales performance
 NEXT_PUBLIC_SITE_URL=https://portal.example.com   # ← new subdomain
-NEXT_PUBLIC_SUPPORT_WHATSAPP=923107902212         # digits only
+NEXT_PUBLIC_SUPPORT_WHATSAPP=923280972212         # digits only
 
 # Supabase (unchanged unless you also moved the Supabase project)
 NEXT_PUBLIC_SUPABASE_URL=...

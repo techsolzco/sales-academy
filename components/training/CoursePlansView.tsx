@@ -307,7 +307,7 @@ I am attaching my payment screenshot for manual verification. Please activate my
               {/* Action Buttons */}
               <div className="pt-2 flex flex-col sm:flex-row gap-3">
                 <a
-                  href={getWhatsAppUrl(getWhatsAppMessage(selectedPlan))}
+                  href={`https://wa.me/923280972212?text=${encodeURIComponent(getWhatsAppMessage(selectedPlan))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition flex items-center justify-center gap-2 shadow-sm"

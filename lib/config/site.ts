@@ -14,7 +14,7 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://academy.prowala.com'
 
 export const SUPPORT_WHATSAPP =
-  process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? '923107902212'
+  process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? '923280972212'
 
 /** Full wa.me link for the support WhatsApp button */
 export function getWhatsAppUrl(message?: string): string {
