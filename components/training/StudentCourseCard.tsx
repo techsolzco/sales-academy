@@ -57,6 +57,7 @@ export function StudentCourseCard({
   const pct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0
   const isComplete = pct === 100 && totalItems > 0
   const isStarted = completedItems > 0
+  const isCapCut = id === 'c9f4c3a1-7e82-4f91-b384-5a2d8e41a001' || title?.toLowerCase().includes('capcut')
 
   // Locked (§3 #17): same card chrome, but not a link — the course cannot
   // be opened until its prerequisites are complete.
@@ -91,6 +92,13 @@ export function StudentCourseCard({
             </span>
           )}
         </div>
+        {isCapCut && (
+          <div className="absolute top-3 right-3">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-purple-600/90 backdrop-blur text-white shadow-sm border border-white/20">
+              💎 7 Plans
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Progress bar */}
@@ -111,6 +119,12 @@ export function StudentCourseCard({
         )}
         {description && (
           <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{description}</p>
+        )}
+        {isCapCut && (
+          <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/30 border border-purple-200/60 dark:border-purple-800/60 flex items-center justify-between text-xs text-purple-700 dark:text-purple-300 font-semibold">
+            <span>💎 7 Enrolment Plans</span>
+            <span className="font-bold text-purple-900 dark:text-purple-100">From Rs 249</span>
+          </div>
         )}
         <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 mb-3 flex-wrap">
           <span className="flex items-center gap-1">
@@ -143,7 +157,7 @@ export function StudentCourseCard({
             </span>
           ) : (
             <span className="flex items-center justify-center gap-1 w-full py-2 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-medium group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition">
-              {isComplete ? 'Review Course' : isStarted ? 'Continue' : 'Start Course'}
+              {isCapCut ? 'View Course & Plans' : isComplete ? 'Review Course' : isStarted ? 'Continue' : 'Start Course'}
               <ChevronRight className="w-3.5 h-3.5" />
             </span>
           )}

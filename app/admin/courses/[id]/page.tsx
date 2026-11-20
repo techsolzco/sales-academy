@@ -12,6 +12,8 @@ import { ScriptManager } from '@/components/admin/ScriptManager'
 import { ObjectionManager } from '@/components/admin/ObjectionManager'
 import { CourseContentPicker } from '@/components/admin/CourseContentPicker'
 import { PrerequisiteManager } from '@/components/courses/PrerequisiteManager'
+import { CoursePlansView } from '@/components/training/CoursePlansView'
+import { CAPCUT_COURSE_ID } from '@/lib/data/capcut-plans'
 
 import { TabLangToggle } from '@/components/ui/TabLangToggle'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -49,6 +51,8 @@ export default async function CourseDetailPage({
   ])
 
   if (!course) notFound()
+
+  const isCapCut = course.id === CAPCUT_COURSE_ID || course.title?.toLowerCase().includes('capcut')
 
   const showContentTabs = course.tool_id !== null
   // Content picker always available regardless of tool linkage
@@ -256,6 +260,12 @@ export default async function CourseDetailPage({
         />
       </div>
     )
+  } else if (tab === 'plans' && isCapCut) {
+    tabContent = (
+      <div className="mt-4">
+        <CoursePlansView courseTitle={course.title} />
+      </div>
+    )
   }
 
   return (
@@ -291,6 +301,14 @@ export default async function CourseDetailPage({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
+            {isCapCut && (
+              <Link
+                href={`/admin/courses/${course.id}?tab=plans`}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium hover:bg-purple-100 transition"
+              >
+                💎 7 Plans
+              </Link>
+            )}
             <Link href={`/admin/courses/${course.id}/assign`} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 dark:text-gray-500 text-sm font-medium hover:bg-gray-50 dark:bg-gray-900 transition">
               <UserPlus className="w-4 h-4" /> Assign
             </Link>
@@ -317,6 +335,7 @@ export default async function CourseDetailPage({
             { key: 'lessons', label: 'Lessons' },
             { key: 'content', label: '📚 Content' },
             { key: 'prerequisites', label: 'Prerequisites' },
+            ...(isCapCut ? [{ key: 'plans', label: '💎 Enrolment Plans (7)' }] : []),
             ...(showContentTabs ? [
               { key: 'faqs', label: 'FAQs' },
               { key: 'scripts', label: 'Scripts' },

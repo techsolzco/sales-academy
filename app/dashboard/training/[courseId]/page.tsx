@@ -8,6 +8,8 @@ import { ReviewButton } from './ReviewButton'
 import { SalesmanFAQViewer } from '@/components/training/SalesmanFAQViewer'
 import { SalesmanScriptViewer } from '@/components/training/SalesmanScriptViewer'
 import { SalesmanObjectionViewer } from '@/components/training/SalesmanObjectionViewer'
+import { CoursePlansView } from '@/components/training/CoursePlansView'
+import { CAPCUT_COURSE_ID } from '@/lib/data/capcut-plans'
 
 import { TabLangToggle } from '@/components/ui/TabLangToggle'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -69,6 +71,8 @@ export default async function TrainingCoursePage({
     if (!complete) lockedMissing.push({ id: edge.required.id, title: edge.required.title })
   }
   const isLocked = lockedMissing.length > 0
+
+  const isCapCut = course.id === CAPCUT_COURSE_ID || course.title?.toLowerCase().includes('capcut')
 
   // Soft-deleted lessons never count toward totals and never render as
   // links (B32) — the lesson page 404s on them, so they must be excluded
@@ -418,6 +422,12 @@ export default async function TrainingCoursePage({
         </div>
       </div>
     )
+  } else if (tab === 'plans' && isCapCut) {
+    tabContent = (
+      <div className="mt-6">
+        <CoursePlansView courseTitle={course.title} />
+      </div>
+    )
   } else {
     // Unknown ?tab= value, or a content tab (faqs/scripts/objections/
     // assignments) on a course with no tool KB content — never render a
@@ -461,9 +471,30 @@ export default async function TrainingCoursePage({
         <div className="text-xs text-gray-400 mt-2 flex flex-wrap gap-3">
           <span>{completedCount} of {totalLessons} lessons done</span>
           {requiredReads.length > 0 && (
-            <span>â€¢ {completedReviewsCount} of {requiredReads.length} required reviews done</span>
+            <span>• {completedReviewsCount} of {requiredReads.length} required reviews done</span>
           )}
         </div>
+        {isCapCut && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200/60 dark:border-purple-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">💎</span>
+              <div>
+                <p className="text-xs font-bold text-purple-900 dark:text-purple-200">
+                  7 Enrolment Plans Available (From Rs 249/week)
+                </p>
+                <p className="text-[11px] text-purple-700 dark:text-purple-300 mt-0.5">
+                  Mobile & PC plans with 500k Ready Reels + 50 Apps + PC Softwares. Manual verification enrolment.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/dashboard/training/${course.id}?tab=plans`}
+              className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-sm transition shrink-0"
+            >
+              View 7 Plans →
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Prerequisites (§3 #17): locked viewers see a locked banner with
@@ -504,6 +535,16 @@ export default async function TrainingCoursePage({
           >
             Lessons
           </Link>
+          {isCapCut && (
+            <Link
+              href={`/dashboard/training/${course.id}?tab=plans`}
+              className={`pb-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+                tab === 'plans' ? 'border-brand-600 text-brand-600 font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              💎 Enrolment Plans (7)
+            </Link>
+          )}
           {hasCuratedContent && (
             <Link
               href={`/dashboard/training/${course.id}?tab=study&lang=${lang}`}
